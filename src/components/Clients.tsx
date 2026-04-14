@@ -359,6 +359,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [newNote, setNewNote] = useState("");
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all"|"policy"|"quote"|"document"|"email"|"call"|"note">("all");
+  const [activityLogs, setActivityLogs] = useState(mockActivity);
+  const [addActivityOpen, setAddActivityOpen] = useState(false);
+  const [newActivityType, setNewActivityType] = useState<"policy"|"quote"|"document"|"email"|"call"|"note">("call");
+  const [newActivityAction, setNewActivityAction] = useState("");
+  const [newActivityDesc, setNewActivityDesc] = useState("");
 
   /* Colours */
   const c = {
@@ -506,7 +511,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const clientPolicies = selected ? mockPolicies.filter(p => p.clientId === selected.id && (!detailSearch || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyType.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
   const clientQuotes   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
   const clientDocs     = selected ? mockDocuments.filter(d => d.clientId === selected.id && (!detailSearch || d.name.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
-  const clientActivity = selected ? mockActivity.filter(a => a.clientId === selected.id) : [];
+  const clientActivity = selected ? activityLogs.filter(a => a.clientId === selected.id) : [];
   const clientNotes    = selected ? notes.filter(n => n.clientId === selected.id) : [];
 
   /* ══════════════════════ LIST VIEW ══════════════════════ */
@@ -981,55 +986,65 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* ── ACTIVITY ── */}
       {detailTab === "activity" && (() => {
+        // Icons matching the tab icons exactly
         const iconMap: Record<string, React.ReactNode> = {
           policy:   <Shield className="w-3.5 h-3.5" style={{ color:"#74C3B7" }} />,
-          quote:    <ClipboardList className="w-3.5 h-3.5" style={{ color:"#A78BFA" }} />,
-          document: <FileText className="w-3.5 h-3.5" style={{ color:"#60A5FA" }} />,
+          quote:    <FileText className="w-3.5 h-3.5" style={{ color:"#A78BFA" }} />,
+          document: <FolderOpen className="w-3.5 h-3.5" style={{ color:"#60A5FA" }} />,
           email:    <Mail className="w-3.5 h-3.5" style={{ color:"#F59E0B" }} />,
           call:     <Phone className="w-3.5 h-3.5" style={{ color:"#34D399" }} />,
-          note:     <StickyNote className="w-3.5 h-3.5" style={{ color:"#F97316" }} />,
+          note:     <CopyPlus className="w-3.5 h-3.5" style={{ color:"#F97316" }} />,
         };
         const bgMap: Record<string, string> = {
           policy:"rgba(116,195,183,0.12)", quote:"rgba(167,139,250,0.12)",
           document:"rgba(96,165,250,0.12)", email:"rgba(245,158,11,0.12)",
           call:"rgba(52,211,153,0.12)", note:"rgba(249,115,22,0.12)",
         };
-        const labelMap: Record<string, string> = {
-          all:"All", policy:"Policy", quote:"Quote",
-          document:"Document", email:"Email", call:"Call", note:"Note",
-        };
         const colorMap: Record<string, string> = {
           all: c.teal, policy:"#74C3B7", quote:"#A78BFA",
           document:"#60A5FA", email:"#F59E0B", call:"#34D399", note:"#F97316",
+        };
+        const labelMap: Record<string, string> = {
+          all:"All", policy:"Policy", quote:"Quote",
+          document:"Document", email:"Email", call:"Call", note:"Note",
         };
         const filteredActivity = activityFilter === "all"
           ? clientActivity
           : clientActivity.filter(a => a.type === activityFilter);
         return (
           <div className="flex flex-col flex-1 min-h-0">
-            {/* Filter pills */}
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              {(["all","policy","quote","document","email","call","note"] as const).map(f => {
-                const active = activityFilter === f;
-                return (
-                  <button key={f} onClick={() => setActivityFilter(f)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
-                    style={{
-                      fontFamily: FONT,
-                      background: active ? `${colorMap[f]}20` : c.mutedBg,
-                      border: `1px solid ${active ? colorMap[f] : c.border}`,
-                      color: active ? colorMap[f] : c.muted,
-                    }}>
-                    {f !== "all" && iconMap[f]}
-                    {labelMap[f]}
-                    <span className="ml-0.5 text-[10px] rounded-full px-1.5 py-0.5"
-                      style={{ background: active ? `${colorMap[f]}25` : c.border, color: active ? colorMap[f] : c.sub }}>
-                      {f === "all" ? clientActivity.length : clientActivity.filter(a => a.type === f).length}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Filter pills + Add button */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                {(["all","policy","quote","document","email","call","note"] as const).map(f => {
+                  const active = activityFilter === f;
+                  const count = f === "all" ? clientActivity.length : clientActivity.filter(a => a.type === f).length;
+                  return (
+                    <button key={f} onClick={() => setActivityFilter(f)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-normal transition-all"
+                      style={{
+                        fontFamily: FONT,
+                        background: active ? `${colorMap[f]}15` : c.mutedBg,
+                        border: `1px solid ${active ? colorMap[f] : c.border}`,
+                        color: active ? colorMap[f] : c.muted,
+                      }}>
+                      {f !== "all" && iconMap[f]}
+                      {labelMap[f]}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full ml-0.5"
+                        style={{ background: active ? `${colorMap[f]}20` : isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB", color: active ? colorMap[f] : c.sub }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => setAddActivityOpen(true)}
+                className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white flex-shrink-0"
+                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                <Plus className="w-3.5 h-3.5" />Add Activity
+              </button>
             </div>
+
             {/* Timeline */}
             <div className="flex-1 overflow-y-auto rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
               {filteredActivity.length === 0 ? (
@@ -1057,6 +1072,80 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </div>
               ))}
             </div>
+
+            {/* Add Activity Modal */}
+            {addActivityOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background:"rgba(0,0,0,0.4)" }}
+                onClick={() => setAddActivityOpen(false)}>
+                <div className="w-[480px] rounded-2xl shadow-2xl p-6" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}
+                  onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-[16px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Add Activity</h3>
+                    <button onClick={() => setAddActivityOpen(false)} style={{ color:c.muted }}><X className="w-4 h-4" /></button>
+                  </div>
+                  {/* Type selector */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {(["call","email","note","policy","quote","document"] as const).map(t => {
+                      const active = newActivityType === t;
+                      return (
+                        <button key={t} onClick={() => setNewActivityType(t)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-normal transition-all capitalize"
+                          style={{
+                            fontFamily: FONT,
+                            background: active ? `${colorMap[t]}15` : c.mutedBg,
+                            border: `1px solid ${active ? colorMap[t] : c.border}`,
+                            color: active ? colorMap[t] : c.muted,
+                          }}>
+                          {iconMap[t]}{labelMap[t]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Action title */}
+                  <div className="mb-3">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ fontFamily:FONT, color:c.muted }}>Title</label>
+                    <input value={newActivityAction} onChange={e => setNewActivityAction(e.target.value)}
+                      placeholder="e.g. Phone call with client"
+                      className="w-full outline-none rounded-xl px-3 py-2.5 text-[13px]"
+                      style={{ fontFamily:FONT, background:c.inputBg, border:`1px solid ${c.border}`, color:c.text }} />
+                  </div>
+                  {/* Description */}
+                  <div className="mb-5">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ fontFamily:FONT, color:c.muted }}>Description</label>
+                    <textarea value={newActivityDesc} onChange={e => setNewActivityDesc(e.target.value)}
+                      placeholder="Describe what happened..."
+                      rows={3}
+                      className="w-full outline-none resize-none rounded-xl px-3 py-2.5 text-[13px]"
+                      style={{ fontFamily:FONT, background:c.inputBg, border:`1px solid ${c.border}`, color:c.text }} />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => setAddActivityOpen(false)}
+                      className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                      style={{ fontFamily:FONT, background:c.mutedBg, border:`1px solid ${c.border}`, color:c.muted }}>Cancel</button>
+                    <button onClick={() => {
+                      if (!newActivityAction.trim() || !selected) return;
+                      const now = new Date();
+                      const ts = `${now.toLocaleDateString()} ${now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}`;
+                      const entry: ActivityLog = {
+                        id: Date.now().toString(),
+                        action: newActivityAction.trim(),
+                        description: newActivityDesc.trim() || "",
+                        timestamp: ts,
+                        user: "Jane Smith",
+                        clientId: selected.id,
+                        type: newActivityType,
+                      };
+                      setActivityLogs(prev => [entry, ...prev]);
+                      setNewActivityAction(""); setNewActivityDesc(""); setAddActivityOpen(false);
+                    }}
+                      className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
+                      style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                      Add Activity
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
