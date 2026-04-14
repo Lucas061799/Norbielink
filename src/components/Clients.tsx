@@ -6,7 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
-  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -760,12 +760,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-5" style={{ borderBottom: `1px solid ${c.border}` }}>
-        {detailTabBtn("overview",   "Overview",   FileText)}
-        {detailTabBtn("quotes",     "Quotes",     ClipboardList)}
+        {detailTabBtn("overview",   "Overview",   ClipboardList)}
+        {detailTabBtn("quotes",     "Quotes",     FileText)}
         {detailTabBtn("policies",   "Policies",   Shield)}
-        {detailTabBtn("documents",  "Documents",  FileStack)}
+        {detailTabBtn("documents",  "Documents",  FolderOpen)}
+        {detailTabBtn("notes",      "Notes",      NotebookPen)}
         {detailTabBtn("activity",   "Activity",   Activity)}
-        {detailTabBtn("notes",      "Notes",      StickyNote)}
       </div>
 
       {/* ── OVERVIEW ── */}
