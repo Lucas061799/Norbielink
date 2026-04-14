@@ -6,6 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -23,10 +24,11 @@ interface Client {
   totalPremium: number; activePolicies: number; pendingQuotes: number;
   notes?: string; tags?: string[]; industry?: string; website?: string;
 }
-interface Quote { id: string; quoteId: string; policyType: string; status: "Pending"|"Approved"|"Declined"|"Expired"; createdDate: string; premium: number; clientId: string; }
-interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; }
-interface Document { id: string; name: string; type: string; uploadDate: string; size: string; clientId: string; }
-interface ActivityLog { id: string; action: string; description: string; timestamp: string; user: string; clientId: string; }
+interface Quote { id: string; quoteId: string; policyType: string; status: "Pending"|"Approved"|"Declined"|"Expired"|"Sold/Issued"|"Incomplete"; createdDate: string; premium: number; clientId: string; applicant: string; dba?: string; effectiveDate?: string; lob: string; producer: string; }
+interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"|"Upcoming Renewal"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; applicant: string; dba?: string; lob: string; producer: string; createdDate: string; }
+interface Document { id: string; name: string; type: string; uploadDate: string; size: string; clientId: string; category: string; }
+interface ActivityLog { id: string; action: string; description: string; timestamp: string; user: string; clientId: string; type: "policy"|"quote"|"document"|"email"|"call"|"note"; }
+interface Note { id: string; content: string; author: string; timestamp: string; clientId: string; }
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
@@ -37,32 +39,51 @@ const mockClients: Client[] = [
   { id:"5", type:"Individual", firstName:"Maria", lastName:"Rodriguez", email:"maria.r@email.com", phone:"(555) 567-8901", address:{street:"654 Palm Avenue",city:"Miami",state:"FL",zipCode:"33101"}, status:"Inactive", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2023-08-15", lastActivity:"2024-01-20", isStarred:false, totalPremium:8500, activePolicies:1, pendingQuotes:0 },
 ];
 const mockQuotes: Quote[] = [
-  { id:"1", quoteId:"Q-2024-001", policyType:"Commercial Auto", status:"Pending", createdDate:"2024-04-10", premium:15000, clientId:"1" },
-  { id:"2", quoteId:"Q-2024-015", policyType:"General Liability", status:"Approved", createdDate:"2024-04-05", premium:8000, clientId:"3" },
-  { id:"3", quoteId:"Q-2024-016", policyType:"Workers Compensation", status:"Pending", createdDate:"2024-04-08", premium:12000, clientId:"3" },
+  { id:"1", quoteId:"QMWC123456789", policyType:"Commercial Auto", status:"Sold/Issued", createdDate:"2024-05-01", premium:15000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", effectiveDate:"2024-01-01", lob:"Worker's Comp", producer:"Jane Smith" },
+  { id:"2", quoteId:"QMWC111222333", policyType:"General Liability", status:"Declined", createdDate:"2024-01-01", premium:8000, clientId:"1", applicant:"Joe Smith", dba:"Tech Solutions Inc.", effectiveDate:"2024-06-15", lob:"General Liability", producer:"Joe Smith" },
+  { id:"3", quoteId:"QMWC111222333", policyType:"Workers Compensation", status:"Incomplete", createdDate:"2024-06-15", premium:12000, clientId:"1", applicant:"Elvis Prestley", dba:"TechSol", effectiveDate:"2024-07-01", lob:"Vacant Risks", producer:"Elvis Prestley" },
+  { id:"4", quoteId:"QMWC111222333", policyType:"Property Insurance", status:"Incomplete", createdDate:"2024-07-01", premium:9500, clientId:"1", applicant:"Elvis Prestley", dba:"TechSol", effectiveDate:"2024-07-01", lob:"Worker's Comp", producer:"Elvis Prestley" },
+  { id:"5", quoteId:"QAA987654321-1", policyType:"Cyber Liability", status:"Incomplete", createdDate:"2024-07-01", premium:6200, clientId:"1", applicant:"Joe Smith", dba:"Tech Solutions Inc.", effectiveDate:"2024-07-01", lob:"General Liability", producer:"Joe Smith" },
+  { id:"6", quoteId:"QAA987654321-1", policyType:"Umbrella", status:"Pending", createdDate:"2025-03-01", premium:4800, clientId:"1", applicant:"Elvis Prestley", dba:"TechSol", effectiveDate:"2025-03-01", lob:"Vacant Risks", producer:"Elvis Prestley" },
+  { id:"7", quoteId:"Q-2024-015", policyType:"General Liability", status:"Approved", createdDate:"2024-04-05", premium:8000, clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-05-01", lob:"General Liability", producer:"Sarah Johnson" },
+  { id:"8", quoteId:"Q-2024-016", policyType:"Workers Compensation", status:"Pending", createdDate:"2024-04-08", premium:12000, clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-06-01", lob:"Worker's Comp", producer:"Sarah Johnson" },
 ];
 const mockPolicies: Policy[] = [
-  { id:"1", policyNumber:"POL-2024-1001", policyType:"General Liability", status:"Active", effectiveDate:"2024-01-01", expirationDate:"2025-01-01", premium:15000, clientId:"1" },
-  { id:"2", policyNumber:"POL-2024-1002", policyType:"Commercial Auto", status:"Active", effectiveDate:"2024-02-01", expirationDate:"2025-02-01", premium:18000, clientId:"1" },
-  { id:"3", policyNumber:"POL-2024-1003", policyType:"Property Insurance", status:"Active", effectiveDate:"2024-01-15", expirationDate:"2025-01-15", premium:12000, clientId:"1" },
-  { id:"4", policyNumber:"POL-2023-0856", policyType:"Auto Insurance", status:"Active", effectiveDate:"2023-09-01", expirationDate:"2024-09-01", premium:7000, clientId:"2" },
-  { id:"5", policyNumber:"POL-2023-0857", policyType:"Homeowners", status:"Active", effectiveDate:"2023-10-01", expirationDate:"2024-10-01", premium:5000, clientId:"2" },
+  { id:"1", policyNumber:"POL-2024-1001", policyType:"General Liability", status:"Active", effectiveDate:"2024-01-01", expirationDate:"2025-01-01", premium:15000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", lob:"General Liability", producer:"Jane Smith", createdDate:"2024-01-01" },
+  { id:"2", policyNumber:"POL-2024-1002", policyType:"Commercial Auto", status:"Active", effectiveDate:"2024-02-01", expirationDate:"2025-02-01", premium:18000, clientId:"1", applicant:"Joe Smith", dba:"Tech Solutions Inc.", lob:"Commercial Auto", producer:"Joe Smith", createdDate:"2024-02-01" },
+  { id:"3", policyNumber:"POL-2024-1003", policyType:"Property Insurance", status:"Active", effectiveDate:"2024-01-15", expirationDate:"2025-01-15", premium:12000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", lob:"Property", producer:"Jane Smith", createdDate:"2024-01-15" },
+  { id:"4", policyNumber:"POL-2023-0856", policyType:"Auto Insurance", status:"Upcoming Renewal", effectiveDate:"2023-09-01", expirationDate:"2024-09-01", premium:7000, clientId:"2", applicant:"John Anderson", lob:"Auto Insurance", producer:"Mike Chen", createdDate:"2023-09-01" },
+  { id:"5", policyNumber:"POL-2023-0857", policyType:"Homeowners", status:"Expired", effectiveDate:"2023-10-01", expirationDate:"2024-10-01", premium:5000, clientId:"2", applicant:"John Anderson", lob:"Homeowners", producer:"Mike Chen", createdDate:"2023-10-01" },
+  { id:"6", policyNumber:"POL-2024-2201", policyType:"Workers Compensation", status:"Active", effectiveDate:"2024-03-01", expirationDate:"2025-03-01", premium:22000, clientId:"4", applicant:"Mike Chen", dba:"Metro LLC", lob:"Worker's Comp", producer:"Jane Smith", createdDate:"2024-03-01" },
 ];
 const mockDocuments: Document[] = [
-  { id:"1", name:"Certificate of Insurance", type:"PDF", uploadDate:"2024-04-05", size:"2.3 MB", clientId:"1" },
-  { id:"2", name:"Policy Application", type:"PDF", uploadDate:"2024-03-20", size:"1.8 MB", clientId:"1" },
-  { id:"3", name:"Loss Run Report", type:"PDF", uploadDate:"2024-02-15", size:"3.5 MB", clientId:"1" },
+  { id:"1", name:"Certificate of Insurance", type:"PDF", uploadDate:"2024-04-05", size:"2.3 MB", clientId:"1", category:"Certificate" },
+  { id:"2", name:"Policy Application - GL Coverage", type:"PDF", uploadDate:"2024-03-20", size:"1.8 MB", clientId:"1", category:"Application" },
+  { id:"3", name:"Loss Run Report 2023", type:"PDF", uploadDate:"2024-02-15", size:"3.5 MB", clientId:"1", category:"Loss Run" },
+  { id:"4", name:"Commercial Auto Schedule", type:"XLSX", uploadDate:"2024-02-10", size:"0.9 MB", clientId:"1", category:"Schedule" },
+  { id:"5", name:"Signed Broker of Record Letter", type:"PDF", uploadDate:"2024-01-18", size:"0.4 MB", clientId:"1", category:"Authorization" },
+  { id:"6", name:"W-9 Form", type:"PDF", uploadDate:"2024-01-15", size:"0.2 MB", clientId:"1", category:"Tax" },
 ];
 const mockActivity: ActivityLog[] = [
-  { id:"1", action:"Policy Renewed", description:"Policy POL-2024-1001 renewed for another year", timestamp:"2024-04-10 10:30 AM", user:"Jane Smith", clientId:"1" },
-  { id:"2", action:"Quote Requested", description:"New quote requested for Commercial Auto coverage", timestamp:"2024-04-10 09:15 AM", user:"System", clientId:"1" },
-  { id:"3", action:"Document Uploaded", description:"Certificate of Insurance uploaded", timestamp:"2024-04-05 02:45 PM", user:"Jane Smith", clientId:"1" },
-  { id:"4", action:"Email Sent", description:"Renewal reminder sent to client", timestamp:"2024-04-03 11:00 AM", user:"System", clientId:"1" },
-  { id:"5", action:"Phone Call", description:"Discussed coverage options and policy updates", timestamp:"2024-04-01 03:30 PM", user:"Jane Smith", clientId:"1" },
+  { id:"1", action:"Policy Renewed", description:"Policy POL-2024-1001 (General Liability) renewed for another year", timestamp:"2024-04-10 10:30 AM", user:"Jane Smith", clientId:"1", type:"policy" },
+  { id:"2", action:"Quote Requested", description:"New quote requested for Commercial Auto coverage — $15,000 estimated premium", timestamp:"2024-04-10 09:15 AM", user:"System", clientId:"1", type:"quote" },
+  { id:"3", action:"Note Added", description:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto.", timestamp:"2024-04-08 03:00 PM", user:"Jane Smith", clientId:"1", type:"note" },
+  { id:"4", action:"Document Uploaded", description:"Certificate of Insurance uploaded and sent to client", timestamp:"2024-04-05 02:45 PM", user:"Jane Smith", clientId:"1", type:"document" },
+  { id:"5", action:"Email Sent", description:"Renewal reminder email sent for policies expiring within 90 days", timestamp:"2024-04-03 11:00 AM", user:"System", clientId:"1", type:"email" },
+  { id:"6", action:"Phone Call", description:"Discussed coverage options and upcoming policy updates with principal", timestamp:"2024-04-01 03:30 PM", user:"Jane Smith", clientId:"1", type:"call" },
+  { id:"7", action:"Quote Approved", description:"General Liability quote Q-2024-015 approved — $8,000 premium", timestamp:"2024-03-28 01:15 PM", user:"Mike Chen", clientId:"1", type:"quote" },
+  { id:"8", action:"Document Uploaded", description:"Policy Application for GL Coverage submitted and filed", timestamp:"2024-03-20 10:00 AM", user:"Jane Smith", clientId:"1", type:"document" },
+  { id:"9", action:"Policy Issued", description:"Commercial Auto policy POL-2024-1002 issued and bound", timestamp:"2024-02-01 09:00 AM", user:"System", clientId:"1", type:"policy" },
+];
+const mockNotes: Note[] = [
+  { id:"1", content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1" },
+  { id:"2", content:"Renewal documents sent via email. Waiting for signature on updated contract. Expected completion by end of week.", author:"Mike Chen", timestamp:"2026-04-03T10:15:00", clientId:"1" },
+  { id:"3", content:"Outstanding performance this quarter — 25% increase in new policies. Discussed bonus structure for Q2.", author:"Sarah Johnson", timestamp:"2026-04-01T16:45:00", clientId:"1" },
+  { id:"4", content:"Prospect meeting scheduled for next Tuesday at 2PM. Client is interested in Workers Comp and General Liability bundle.", author:"Jane Smith", timestamp:"2026-03-28T09:00:00", clientId:"3" },
 ];
 
 type ViewType = "list" | "detail";
-type DetailTab = "overview" | "policies" | "quotes" | "documents" | "activity";
+type DetailTab = "overview" | "policies" | "quotes" | "documents" | "activity" | "notes";
 type FilterStatus = "All" | "Active" | "Inactive" | "Prospect" | "Starred" | "Business" | "Individual";
 type SortKey = "name" | "status" | "lastActivity" | "activePolicies" | "assignedAgent" | "type" | null;
 type SortDir = "asc" | "desc";
@@ -217,6 +238,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [notes, setNotes] = useState<Note[]>(mockNotes);
+  const [newNote, setNewNote] = useState("");
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
 
   /* Colours */
   const c = {
@@ -318,14 +342,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     const upColor   = active && sortDir === "asc"  ? c.text : c.sub;
     const downColor = active && sortDir === "desc" ? c.text : c.sub;
     return (
-      <span className="inline-flex items-center gap-[2px] ml-1 flex-shrink-0" style={{ verticalAlign: "middle" }}>
+      <span className="inline-flex items-center ml-1 flex-shrink-0" style={{ verticalAlign: "middle", gap: 1 }}>
         {/* Up arrow */}
-        <svg width="8" height="11" viewBox="0 0 8 11" fill="none">
-          <path d="M4 10V2M4 2L1.5 4.5M4 2L6.5 4.5" stroke={upColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+          <path d="M3.5 9V2M3.5 2L1.5 4M3.5 2L5.5 4" stroke={upColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
         {/* Down arrow */}
-        <svg width="8" height="11" viewBox="0 0 8 11" fill="none">
-          <path d="M4 1V9M4 9L1.5 6.5M4 9L6.5 6.5" stroke={downColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+          <path d="M3.5 1V8M3.5 8L1.5 6M3.5 8L5.5 6" stroke={downColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </span>
     );
@@ -365,6 +389,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const clientQuotes   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
   const clientDocs     = selected ? mockDocuments.filter(d => d.clientId === selected.id && (!detailSearch || d.name.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
   const clientActivity = selected ? mockActivity.filter(a => a.clientId === selected.id) : [];
+  const clientNotes    = selected ? notes.filter(n => n.clientId === selected.id) : [];
 
   /* ══════════════════════ LIST VIEW ══════════════════════ */
   if (view === "list") return (
@@ -429,11 +454,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header */}
         <div className="grid py-3" style={{
-          gridTemplateColumns: "28px 2fr 1fr 1.8fr 1.2fr 0.9fr 0.6fr 0.9fr 80px",
+          gridTemplateColumns: "32px 2fr 1fr 1.8fr 1.3fr 1fr 0.7fr 1.1fr 80px",
           borderBottom: `1px solid ${c.border}`,
           background: isDark ? "rgba(255,255,255,0.02)" : "#FDFDFD",
-          gap: "10px",
-          padding: "10px 0",
+          gap: "20px",
+          padding: "12px 0",
         }}>
           <div />
           {th("Client Name", "name")}
@@ -456,7 +481,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           ) : pageItems.map((cl, i) => (
             <div key={cl.id} onClick={() => openDetail(cl)}
               className="grid py-4 items-center cursor-pointer transition-colors"
-              style={{ gridTemplateColumns: "28px 2fr 1fr 1.8fr 1.2fr 0.9fr 0.6fr 0.9fr 80px", gap: "10px", borderBottom: `1px solid ${c.border}`, padding: "14px 0" }}
+              style={{ gridTemplateColumns: "32px 2fr 1fr 1.8fr 1.3fr 1fr 0.7fr 1.1fr 80px", gap: "20px", borderBottom: `1px solid ${c.border}`, padding: "18px 0" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               {/* Star */}
@@ -577,10 +602,21 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
-              style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
-              <Plus className="w-4 h-4" />New Quote
-            </button>
+            {[
+              { icon: <FileText className="w-3.5 h-3.5" />, label: "New Quote" },
+              { icon: <Shield className="w-3.5 h-3.5" />, label: "New Policy" },
+              { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Doc" },
+              { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
+              { icon: <Calendar className="w-3.5 h-3.5" />, label: "Schedule" },
+            ].map(({ icon, label }, i) => (
+              <button key={label}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
+                style={{ fontFamily: FONT, background: i === 0 ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
+                onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
+                onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}>
+                {icon}{label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -607,36 +643,16 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-5" style={{ borderBottom: `1px solid ${c.border}` }}>
         {detailTabBtn("overview",   "Overview",   FileText)}
-        {detailTabBtn("policies",   "Policies",   Shield)}
         {detailTabBtn("quotes",     "Quotes",     ClipboardList)}
+        {detailTabBtn("policies",   "Policies",   Shield)}
         {detailTabBtn("documents",  "Documents",  FileStack)}
         {detailTabBtn("activity",   "Activity",   Activity)}
+        {detailTabBtn("notes",      "Notes",      StickyNote)}
       </div>
 
       {/* ── OVERVIEW ── */}
       {detailTab === "overview" && (
         <div className="space-y-4 overflow-y-auto flex-1">
-          {/* Quick Actions */}
-          <div className="rounded-xl p-5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-            <h3 className="text-[15px] font-bold mb-4" style={{ fontFamily: FONT, color: c.text }}>Quick Actions</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { icon: <FileText className="w-3.5 h-3.5" />, label: "Create Quote" },
-                { icon: <Shield className="w-3.5 h-3.5" />, label: "Generate Policy" },
-                { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Document" },
-                { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
-                { icon: <Calendar className="w-3.5 h-3.5" />, label: "Schedule Meeting" },
-              ].map(({ icon, label }) => (
-                <button key={label} className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-colors"
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: c.mutedBg }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(116,195,183,0.4)")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
-                  {icon}{label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Client Information */}
           <div className="rounded-xl p-5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-5">
@@ -673,25 +689,58 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* ── POLICIES ── */}
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex justify-end mb-4">
-            <div className="relative"><input placeholder="Search policies..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)} style={{ ...inputSty, paddingRight: 38, width: 240 }} className="outline-none" /><Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: c.muted }} /></div>
-          </div>
-          <div className="rounded-xl overflow-hidden flex flex-col" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-            <div className="grid px-5 py-3 gap-3" style={{ gridTemplateColumns:"1.5fr 2fr 1.1fr 1.3fr 1.3fr 1.2fr 40px", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
-              {["Policy Number","Policy Type","Status","Effective","Expiration","Premium",""].map((h,i) => <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>)}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+              <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
+                className="outline-none px-3 py-2 text-[13px]"
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
+              <button className="px-4 py-2 text-[13px] font-semibold text-white flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
             </div>
-            <div className="overflow-y-auto">
+            <div className="relative">
+              <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.muted }}>
+                <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+            </div>
+            <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <RefreshCw className="w-4 h-4" /></button>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <LayoutGrid className="w-4 h-4" /></button>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <Download className="w-4 h-4" /></button>
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
+              {["Created","Submission ID","Applicant","DBA","Effective","LOB","Status","Producer"].map((h,i) => (
+                <div key={i} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
+                  style={{ fontFamily:FONT, color:c.muted }}>
+                  {h}
+                  {i !== 2 && i !== 3 && <span className="inline-flex gap-[1px] ml-0.5">
+                    <svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={c.sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={c.sub}/></svg>
+                  </span>}
+                </div>
+              ))}
+            </div>
+            <div className="overflow-y-auto flex-1">
               {clientPolicies.map((p,i,arr) => (
-                <div key={p.id} className="grid px-5 py-3.5 items-center gap-3 transition-colors"
-                  style={{ gridTemplateColumns:"1.5fr 2fr 1.1fr 1.3fr 1.3fr 1.2fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
+                <div key={p.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
+                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                  <div className="text-[12px] font-semibold font-mono" style={{ fontFamily:FONT, color:c.teal }}>{p.policyNumber}</div>
-                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>{p.policyType}</div>
-                  <StatusBadge status={p.status} isDark={isDark} />
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.createdDate).toLocaleDateString()}</div>
+                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{p.policyNumber}</div>
+                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.dba || "—"}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.expirationDate).toLocaleDateString()}</div>
-                  <div className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>${p.premium.toLocaleString()}</div>
-                  <ActionMenu isDark={isDark} items={["View Details","Download Policy","Renew Policy"]} menuId={`policy-${p.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.lob}</div>
+                  <StatusBadge status={p.status} isDark={isDark} />
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.producer}</div>
                 </div>
               ))}
             </div>
@@ -702,24 +751,62 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* ── QUOTES ── */}
       {detailTab === "quotes" && (
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex justify-end mb-4">
-            <div className="relative"><input placeholder="Search quotes..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)} style={{ ...inputSty, paddingRight: 38, width: 240 }} className="outline-none" /><Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: c.muted }} /></div>
-          </div>
-          <div className="rounded-xl overflow-hidden flex flex-col" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-            <div className="grid px-5 py-3 gap-3" style={{ gridTemplateColumns:"1.5fr 2.5fr 1.1fr 1.5fr 1.5fr 40px", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
-              {["Quote ID","Policy Type","Status","Created","Premium",""].map((h,i) => <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>)}
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+              <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
+                className="outline-none px-3 py-2 text-[13px]"
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
+              <button className="px-4 py-2 text-[13px] font-semibold text-white flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
             </div>
-            <div className="overflow-y-auto">
+            <div className="relative">
+              <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.muted }}>
+                <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+            </div>
+            <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
+              {["Created","Submission ID","Applicant","DBA","Effective","LOB","Status","Producer"].map((h,i) => (
+                <div key={i} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
+                  style={{ fontFamily:FONT, color:c.muted }}>
+                  {h}
+                  {i !== 2 && i !== 3 && <span className="inline-flex gap-[1px] ml-0.5">
+                    <svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={c.sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={c.sub}/></svg>
+                  </span>}
+                </div>
+              ))}
+            </div>
+            <div className="overflow-y-auto flex-1">
               {clientQuotes.map((q,i,arr) => (
-                <div key={q.id} className="grid px-5 py-3.5 items-center gap-3 transition-colors"
-                  style={{ gridTemplateColumns:"1.5fr 2.5fr 1.1fr 1.5fr 1.5fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
+                <div key={q.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
+                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                  <div className="text-[12px] font-semibold font-mono" style={{ fontFamily:FONT, color:c.teal }}>{q.quoteId}</div>
-                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>{q.policyType}</div>
-                  <StatusBadge status={q.status} isDark={isDark} />
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(q.createdDate).toLocaleDateString()}</div>
-                  <div className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>${q.premium.toLocaleString()}</div>
-                  <ActionMenu isDark={isDark} items={["View Details","Convert to Policy","Download Quote"]} menuId={`quote-${q.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{q.quoteId}</div>
+                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.dba || "—"}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.effectiveDate ? new Date(q.effectiveDate).toLocaleDateString() : "—"}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.lob}</div>
+                  <StatusBadge status={q.status} isDark={isDark} />
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.producer}</div>
                 </div>
               ))}
             </div>
@@ -731,19 +818,38 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "documents" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between mb-4">
-            <div className="relative"><input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)} style={{ ...inputSty, paddingRight: 38, width: 240 }} className="outline-none" /><Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: c.muted }} /></div>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white" style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}><Upload className="w-4 h-4" />Upload Document</button>
-          </div>
-          <div className="rounded-xl overflow-hidden flex flex-col" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-            <div className="grid px-5 py-3 gap-3" style={{ gridTemplateColumns:"2.5fr 1fr 1.5fr 1fr 40px", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
-              {["Document Name","Type","Upload Date","Size",""].map((h,i) => <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>)}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: c.muted }} />
+              <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
+                className="outline-none pl-9 pr-4"
+                style={{ ...inputSty, width: 240 }} />
             </div>
-            <div className="overflow-y-auto">
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+              style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+              <Upload className="w-4 h-4" />Upload Document
+            </button>
+          </div>
+          <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+            <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"2.5fr 1fr 1fr 1.5fr 1fr 40px", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
+              {["Document Name","Category","Type","Upload Date","Size",""].map((h,i) => (
+                <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>
+              ))}
+            </div>
+            <div className="overflow-y-auto flex-1">
               {clientDocs.map((d,i,arr) => (
-                <div key={d.id} className="grid px-5 py-3.5 items-center gap-3 transition-colors"
-                  style={{ gridTemplateColumns:"2.5fr 1fr 1.5fr 1fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
+                <div key={d.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors"
+                  style={{ gridTemplateColumns:"2.5fr 1fr 1fr 1.5fr 1fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                  <div className="flex items-center gap-2 text-[13px]" style={{ fontFamily:FONT, color:c.text }}><FileText className="w-4 h-4 flex-shrink-0" style={{ color:c.muted }} />{d.name}</div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: d.type === "PDF" ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)" }}>
+                      {d.type === "PDF"
+                        ? <FileText className="w-4 h-4" style={{ color: "#EF4444" }} />
+                        : <FileArchive className="w-4 h-4" style={{ color: "#22C55E" }} />}
+                    </div>
+                    <span className="text-[13px] font-medium" style={{ fontFamily:FONT, color:c.text }}>{d.name}</span>
+                  </div>
+                  <div className="text-[12px] px-2 py-0.5 rounded-lg inline-block" style={{ fontFamily:FONT, color:c.teal, background:"rgba(116,195,183,0.10)" }}>{d.category}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.type}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(d.uploadDate).toLocaleDateString()}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.size}</div>
@@ -757,24 +863,139 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* ── ACTIVITY ── */}
       {detailTab === "activity" && (
-        <div className="flex-1 overflow-y-auto rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-          <h3 className="text-[15px] font-bold mb-5" style={{ fontFamily:FONT, color:c.text }}>Activity Timeline</h3>
-          {clientActivity.map((a,i) => (
-            <div key={a.id} className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className="w-2.5 h-2.5 rounded-full mt-0.5 flex-shrink-0" style={{ background:c.teal }} />
-                {i !== clientActivity.length-1 && <div className="w-px flex-1 mt-2" style={{ background:c.border }} />}
-              </div>
-              <div className="flex-1 pb-5">
-                <div className="flex items-start justify-between mb-0.5">
-                  <h4 className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{a.action}</h4>
-                  <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{a.timestamp}</span>
+        <div className="flex-1 overflow-y-auto">
+          <div className="rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+            <h3 className="text-[15px] font-bold mb-5" style={{ fontFamily:FONT, color:c.text }}>Activity Timeline</h3>
+            {clientActivity.map((a,i) => {
+              const iconMap: Record<string, React.ReactNode> = {
+                policy: <Shield className="w-3.5 h-3.5" style={{ color:"#74C3B7" }} />,
+                quote: <ClipboardList className="w-3.5 h-3.5" style={{ color:"#A78BFA" }} />,
+                document: <FileText className="w-3.5 h-3.5" style={{ color:"#60A5FA" }} />,
+                email: <Mail className="w-3.5 h-3.5" style={{ color:"#F59E0B" }} />,
+                call: <Phone className="w-3.5 h-3.5" style={{ color:"#34D399" }} />,
+                note: <StickyNote className="w-3.5 h-3.5" style={{ color:"#F97316" }} />,
+              };
+              const bgMap: Record<string, string> = {
+                policy:"rgba(116,195,183,0.12)", quote:"rgba(167,139,250,0.12)",
+                document:"rgba(96,165,250,0.12)", email:"rgba(245,158,11,0.12)",
+                call:"rgba(52,211,153,0.12)", note:"rgba(249,115,22,0.12)",
+              };
+              return (
+                <div key={a.id} className="flex gap-4">
+                  <div className="flex flex-col items-center pt-0.5">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: bgMap[a.type] || "rgba(116,195,183,0.12)" }}>
+                      {iconMap[a.type]}
+                    </div>
+                    {i !== clientActivity.length-1 && <div className="w-px flex-1 my-2" style={{ background:c.border }} />}
+                  </div>
+                  <div className="flex-1 pb-5">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4 className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{a.action}</h4>
+                      <span className="text-[11px] flex-shrink-0 ml-4" style={{ fontFamily:FONT, color:c.muted }}>{a.timestamp}</span>
+                    </div>
+                    <p className="text-[12px] mb-1" style={{ fontFamily:FONT, color:c.muted }}>{a.description}</p>
+                    <p className="text-[11px]" style={{ fontFamily:FONT, color:c.sub }}>by {a.user}</p>
+                  </div>
                 </div>
-                <p className="text-[12px] mb-0.5" style={{ fontFamily:FONT, color:c.muted }}>{a.description}</p>
-                <p className="text-[11px]" style={{ fontFamily:FONT, color:c.sub }}>by {a.user}</p>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── NOTES ── */}
+      {detailTab === "notes" && (
+        <div className="flex flex-col flex-1 min-h-0 gap-4 overflow-y-auto">
+          {/* Add Note */}
+          <div className="rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+            <h3 className="text-[15px] font-bold mb-3" style={{ fontFamily:FONT, color:c.text }}>Add New Note</h3>
+            <textarea
+              value={newNote}
+              onChange={e => setNewNote(e.target.value)}
+              placeholder="Write your note here..."
+              rows={4}
+              className="w-full outline-none resize-none rounded-xl p-3 text-[13px]"
+              style={{ fontFamily:FONT, background:c.inputBg, border:`1px solid ${c.border}`, color:c.text }}
+            />
+            <div className="flex justify-end mt-3">
+              <button
+                onClick={() => {
+                  if (!newNote.trim() || !selected) return;
+                  const n: Note = { id: Date.now().toString(), content: newNote.trim(), author: "Sarah Johnson", timestamp: new Date().toISOString(), clientId: selected.id };
+                  setNotes(prev => [n, ...prev]);
+                  setNewNote("");
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+                style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                <Plus className="w-4 h-4" />Add Note
+              </button>
+            </div>
+          </div>
+
+          {/* Notes History */}
+          {clientNotes.length > 0 && (
+            <div>
+              <h3 className="text-[14px] font-bold mb-3" style={{ fontFamily:FONT, color:c.text }}>Notes History</h3>
+              <div className="flex flex-col gap-3">
+                {clientNotes.map(n => (
+                  <div key={n.id} className="rounded-xl p-4" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                          style={{ background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                          {n.author.charAt(0)}
+                        </div>
+                        <span className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{n.author}</span>
+                        <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>·</span>
+                        <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>
+                          {new Date(n.timestamp).toLocaleDateString("en-US",{month:"numeric",day:"numeric",year:"numeric"})} at {new Date(n.timestamp).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}
+                        </span>
+                      </div>
+                      <button onClick={() => setDeleteNoteId(n.id)}
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{ color:"#EF4444" }}
+                        onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.08)")}
+                        onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-[13px] leading-relaxed" style={{ fontFamily:FONT, color:c.muted }}>{n.content}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+        </div>
+      )}
+
+      {/* ── DELETE NOTE CONFIRM ── */}
+      {deleteNoteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background:"rgba(0,0,0,0.4)" }}
+          onClick={() => setDeleteNoteId(null)}>
+          <div className="rounded-2xl p-6 w-[400px] shadow-2xl" style={{ background:c.cardBg }} onClick={e=>e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background:"rgba(239,68,68,0.10)" }}>
+                <AlertTriangle className="w-6 h-6" style={{ color:"#EF4444" }} />
+              </div>
+              <div>
+                <h3 className="text-[17px] font-bold mb-1" style={{ fontFamily:FONT, color:c.text }}>Delete Note</h3>
+                <p className="text-[13px] leading-relaxed" style={{ fontFamily:FONT, color:c.muted }}>Are you sure you want to delete this note? This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteNoteId(null)}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
+                style={{ fontFamily:FONT, background:c.mutedBg, border:`1px solid ${c.border}`, color:c.text }}>
+                Cancel
+              </button>
+              <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
+                style={{ fontFamily:FONT, background:"#EF4444" }}>
+                Delete Note
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
