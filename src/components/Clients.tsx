@@ -813,12 +813,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 999 }}>
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
-                className="outline-none px-3 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
-              <button className="px-[17px] py-[9px] text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
+                className="outline-none px-4 py-2 text-[13px]"
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "999px 0 0 999px" }} />
+              <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 999px 999px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
@@ -876,12 +876,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 999 }}>
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
-                className="outline-none px-3 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
-              <button className="px-[17px] py-[9px] text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
+                className="outline-none px-4 py-2 text-[13px]"
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "999px 0 0 999px" }} />
+              <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 999px 999px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
