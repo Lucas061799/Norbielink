@@ -41,7 +41,8 @@
       "Bash(open http://localhost:3000)",
       "Bash(git -C /Users/lucasye/Norbielink add -A)",
       "Bash(git -C /Users/lucasye/Norbielink commit -m 'Add Notes tab, redesign Quotes/Policies/Documents/Activity, fix sort arrows:*)",
-      "Bash(git -C /Users/lucasye/Norbielink commit -m 'Fix activity filter pills, fix docs search icon overlap:*)"
+      "Bash(git -C /Users/lucasye/Norbielink commit -m 'Fix activity filter pills, fix docs search icon overlap:*)",
+      "Bash(git -C /Users/lucasye/Norbielink commit -m 'Add activity data for all clients \\(clients 2-5\\):*)"
     ]
   }
 }

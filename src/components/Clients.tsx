@@ -83,6 +83,33 @@ const mockActivity: ActivityLog[] = [
   { id:"16", action:"Document Uploaded",    description:"Signed Broker of Record Letter uploaded and filed", timestamp:"2024-01-08 03:15 PM", user:"Jane Smith", clientId:"1", type:"document" },
   { id:"17", action:"Policy Issued",        description:"Commercial Auto policy POL-2024-1002 issued and bound at $18,000 annual premium", timestamp:"2024-02-01 09:00 AM", user:"System", clientId:"1", type:"policy" },
   { id:"18", action:"Email Sent",           description:"Welcome email sent with agent contact info and client portal login credentials", timestamp:"2024-01-06 08:30 AM", user:"System", clientId:"1", type:"email" },
+  // Client 2 — John Anderson
+  { id:"19", action:"Policy Renewed",       description:"Auto Insurance policy POL-2023-0856 renewed — $7,000 annual premium confirmed", timestamp:"2024-04-08 09:00 AM", user:"Mike Chen", clientId:"2", type:"policy" },
+  { id:"20", action:"Email Sent",           description:"Homeowners policy expiration notice sent — expires 2024-10-01", timestamp:"2024-04-06 10:30 AM", user:"System", clientId:"2", type:"email" },
+  { id:"21", action:"Phone Call",           description:"Discussed adding umbrella coverage on top of existing auto and homeowners policies", timestamp:"2024-03-20 02:00 PM", user:"Mike Chen", clientId:"2", type:"call" },
+  { id:"22", action:"Note Added",           description:"Client prefers to be contacted by phone, not email. Follow up in May for homeowners renewal.", timestamp:"2024-03-18 04:30 PM", user:"Mike Chen", clientId:"2", type:"note" },
+  { id:"23", action:"Document Uploaded",    description:"W-9 Form uploaded and verified for records", timestamp:"2024-02-28 11:00 AM", user:"Mike Chen", clientId:"2", type:"document" },
+  // Client 3 — Green Earth Logistics
+  { id:"24", action:"Quote Requested",      description:"General Liability quote Q-2024-015 requested — $8,000 estimated premium", timestamp:"2024-04-08 08:45 AM", user:"Sarah Johnson", clientId:"3", type:"quote" },
+  { id:"25", action:"Quote Requested",      description:"Workers Compensation quote Q-2024-016 requested — $12,000 estimated premium", timestamp:"2024-04-08 08:50 AM", user:"Sarah Johnson", clientId:"3", type:"quote" },
+  { id:"26", action:"Email Sent",           description:"Proposal package with two quote options sent to info@greenearth.com", timestamp:"2024-04-09 09:00 AM", user:"Sarah Johnson", clientId:"3", type:"email" },
+  { id:"27", action:"Phone Call",           description:"Intro call — prospect confirmed interest in GL and Workers Comp bundle. Decision expected by April 20.", timestamp:"2024-04-05 03:00 PM", user:"Sarah Johnson", clientId:"3", type:"call" },
+  { id:"28", action:"Note Added",           description:"Decision maker is the CFO. They want to compare against current carrier before committing. Strong potential.", timestamp:"2024-04-05 03:45 PM", user:"Sarah Johnson", clientId:"3", type:"note" },
+  { id:"29", action:"Document Uploaded",    description:"Prospect intake form and ACORD application uploaded for underwriting review", timestamp:"2024-04-03 02:00 PM", user:"Sarah Johnson", clientId:"3", type:"document" },
+  // Client 4 — Metro Construction LLC
+  { id:"30", action:"Policy Renewed",       description:"Workers Compensation policy POL-2024-2201 renewed at $22,000 — 3rd consecutive renewal", timestamp:"2024-04-11 10:00 AM", user:"Jane Smith", clientId:"4", type:"policy" },
+  { id:"31", action:"Phone Call",           description:"Annual coverage review — client expanding to 2 new job sites in NJ, needs updated liability limits", timestamp:"2024-04-09 02:30 PM", user:"Jane Smith", clientId:"4", type:"call" },
+  { id:"32", action:"Note Added",           description:"Metro is expanding. Owner wants to discuss adding Commercial Umbrella and Equipment Floater in Q3.", timestamp:"2024-04-09 03:00 PM", user:"Jane Smith", clientId:"4", type:"note" },
+  { id:"33", action:"Email Sent",           description:"Sent updated certificate of insurance to Metro's general contractor as requested", timestamp:"2024-04-07 11:00 AM", user:"Jane Smith", clientId:"4", type:"email" },
+  { id:"34", action:"Document Uploaded",    description:"2024 payroll summary uploaded for WC audit — $4.2M total payroll reported", timestamp:"2024-04-02 09:30 AM", user:"Jane Smith", clientId:"4", type:"document" },
+  { id:"35", action:"Quote Approved",       description:"Commercial Auto fleet quote approved — 12 vehicles, $31,000 annual premium", timestamp:"2024-03-15 01:00 PM", user:"Jane Smith", clientId:"4", type:"quote" },
+  { id:"36", action:"Email Sent",           description:"Renewal reminder sent for 5 policies expiring within 60 days", timestamp:"2024-03-01 08:00 AM", user:"System", clientId:"4", type:"email" },
+  { id:"37", action:"Policy Issued",        description:"General Liability policy issued and bound — $1M/$2M limits, $15,000 premium", timestamp:"2024-02-15 09:00 AM", user:"System", clientId:"4", type:"policy" },
+  // Client 5 — Maria Rodriguez
+  { id:"38", action:"Note Added",           description:"Client went inactive after job change. May resume coverage when new employer's benefits are confirmed.", timestamp:"2024-01-20 02:00 PM", user:"Mike Chen", clientId:"5", type:"note" },
+  { id:"39", action:"Email Sent",           description:"Re-engagement email sent with updated plan options for individual coverage", timestamp:"2024-01-18 10:00 AM", user:"Mike Chen", clientId:"5", type:"email" },
+  { id:"40", action:"Phone Call",           description:"Follow-up call — client confirmed she's reviewing options, will decide within 30 days", timestamp:"2024-01-15 03:30 PM", user:"Mike Chen", clientId:"5", type:"call" },
+  { id:"41", action:"Policy Renewed",       description:"Auto Insurance policy renewed at $8,500 for one more year pending status review", timestamp:"2023-12-01 09:00 AM", user:"Mike Chen", clientId:"5", type:"policy" },
 ];
 const mockNotes: Note[] = [
   { id:"1", content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1" },
@@ -827,7 +854,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* ── DOCUMENTS ── */}
       {detailTab === "documents" && (
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
