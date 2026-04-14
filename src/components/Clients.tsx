@@ -249,9 +249,9 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
           </div>
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: `1px solid ${border}` }}>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-[13px] font-semibold transition-colors"
+          <button onClick={onClose} className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
             style={{ fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: muted }}>Cancel</button>
-          <button className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+          <button className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
             style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Add Client</button>
         </div>
       </div>
@@ -443,7 +443,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: c.muted }} />
           </div>
           <button onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all"
+            className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
             style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
             <Plus className="w-4 h-4" />Add Client
           </button>
@@ -731,7 +731,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-3 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
-              <button className="px-4 py-2 text-[13px] font-semibold text-white flex-shrink-0"
+              <button className="px-[17px] py-[9px] text-[12px] font-normal text-white flex-shrink-0"
                 style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
             </div>
             <div className="relative">
@@ -794,7 +794,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-3 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 160 }} />
-              <button className="px-4 py-2 text-[13px] font-semibold text-white flex-shrink-0"
+              <button className="px-[17px] py-[9px] text-[12px] font-normal text-white flex-shrink-0"
                 style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>Submit</button>
             </div>
             <div className="relative">
@@ -861,7 +861,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 className="outline-none"
                 style={{ ...inputSty, paddingLeft: 34, width: 240 }} />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+            <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
               style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
               <Upload className="w-4 h-4" />Upload Document
             </button>
@@ -1002,7 +1002,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   setNotes(prev => [n, ...prev]);
                   setNewNote("");
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+                className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
                 style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
                 <Plus className="w-4 h-4" />Add Note
               </button>
@@ -1061,12 +1061,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             </div>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteNoteId(null)}
-                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
                 style={{ fontFamily:FONT, background:c.mutedBg, border:`1px solid ${c.border}`, color:c.text }}>
                 Cancel
               </button>
               <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
-                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
                 style={{ fontFamily:FONT, background:"#EF4444" }}>
                 Delete Note
               </button>
