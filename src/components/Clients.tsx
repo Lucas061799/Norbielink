@@ -500,7 +500,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* Pagination — sticky at bottom */}
       <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
-        style={{ marginLeft: "-24px", marginRight: "-24px", marginBottom: "-24px", paddingLeft: "24px", paddingRight: "24px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-24px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
         <div className="flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           Show

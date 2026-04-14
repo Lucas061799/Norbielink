@@ -52,7 +52,7 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar isDark={darkMode} />
         <main
-          className="flex-1 overflow-hidden transition-colors duration-300 p-6"
+          className="flex-1 overflow-hidden transition-colors duration-300 py-6 px-12"
           style={{ background: darkMode ? "#0F1120" : "#ffffff", display: activePage === "Clients" ? "flex" : "block", flexDirection: "column" as const, overflowY: activePage === "Clients" ? "hidden" : "auto", height: activePage === "Clients" ? "100%" : "auto" }}
         >
           {renderPage()}
