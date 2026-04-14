@@ -191,64 +191,145 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
 /* ─── Add Client Modal ───────────────────────────────────────────────────── */
 function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose: () => void; isDark: boolean }) {
   const [clientType, setClientType] = useState<"Business" | "Individual">("Business");
+  const [sameAddress, setSameAddress] = useState(true);
   if (!isOpen) return null;
   const bg = isDark ? "#191D35" : "#fff";
   const text = isDark ? "#F9FAFB" : "#1F2937";
   const muted = isDark ? "#8B8FA8" : "#6B7280";
   const border = isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB";
-  const inputBg = isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB";
-  const labelStyle: React.CSSProperties = { fontFamily: FONT, fontSize: "11px", fontWeight: 600, color: muted, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 };
-  const inputStyle: React.CSSProperties = { fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: text, width: "100%", padding: "8px 12px", borderRadius: 8, fontSize: 13, outline: "none" };
+  const inputBg = isDark ? "rgba(255,255,255,0.04)" : "#fff";
+  const sectionLabel: React.CSSProperties = { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#4B6B8A", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
+  const fieldLabel: React.CSSProperties = { fontFamily: FONT, fontSize: 11, fontWeight: 600, color: "#4B6B8A", background: bg, paddingLeft: 4, paddingRight: 4, position: "absolute" as const, top: -8, left: 10, zIndex: 1 };
+  const inputStyle: React.CSSProperties = { fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: text, width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 13, outline: "none" };
+
+  const Field = ({ label, placeholder, span2 = false, type = "text" }: { label: string; placeholder?: string; span2?: boolean; type?: string }) => (
+    <div className={span2 ? "col-span-2" : ""} style={{ position: "relative" }}>
+      <span style={fieldLabel}>{label}</span>
+      <input type={type} placeholder={placeholder} style={inputStyle} className="outline-none" />
+    </div>
+  );
+  const SelectField = ({ label, options }: { label: string; options: string[] }) => (
+    <div style={{ position: "relative" }}>
+      <span style={fieldLabel}>{label}</span>
+      <select style={{ ...inputStyle, appearance: "none" as const }} className="outline-none cursor-pointer">
+        {options.map(o => <option key={o}>{o}</option>)}
+      </select>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
-      <div className="w-[560px] max-h-[82vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: `1px solid ${border}` }}>
+      <div className="w-[760px] max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-7 py-4" style={{ borderBottom: `1px solid ${border}` }}>
           <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: text }}>Add New Client</h2>
           <button onClick={onClose} style={{ color: muted }}><X className="w-4 h-4" /></button>
         </div>
-        <div className="px-6 py-5 space-y-5">
+
+        <div className="px-7 py-6 space-y-7">
+          {/* Client Type */}
+          <div className="flex gap-2">
+            {(["Business","Individual"] as const).map(t => (
+              <button key={t} onClick={() => setClientType(t)}
+                className="flex-1 py-2.5 rounded-lg text-[12px] font-normal transition-all"
+                style={clientType === t
+                  ? { background: "linear-gradient(to bottom,#ACD697,#75C9B7)", color: "#fff", fontFamily: FONT }
+                  : { background: inputBg, border: `1px solid ${border}`, color: muted, fontFamily: FONT }}>
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {/* Account Information */}
           <div>
-            <label style={labelStyle}>Client Type</label>
-            <div className="flex gap-2">
-              {(["Business","Individual"] as const).map(t => (
-                <button key={t} onClick={() => setClientType(t)} className="flex-1 py-2 rounded-xl text-[13px] font-semibold transition-all"
-                  style={clientType === t
-                    ? { background: "linear-gradient(to bottom,#ACD697,#75C9B7)", color: "#fff", fontFamily: FONT }
-                    : { background: inputBg, border: `1px solid ${border}`, color: muted, fontFamily: FONT }}>
-                  {t}
-                </button>
-              ))}
+            <p style={{ ...sectionLabel, marginBottom: 16 }}>Account Information</p>
+            <div style={{ height: 1, background: border, marginBottom: 20 }} />
+            <div className="grid grid-cols-4 gap-x-4 gap-y-6">
+              {clientType === "Business" ? (<>
+                <Field label="Company Name" placeholder="Company Name" span2={false} />
+                <Field label="DBA or Operating Name" placeholder="DBA or Operating Name" />
+                <Field label="Contact First Name" placeholder="Contact First Name" />
+                <Field label="Contact Last Name" placeholder="Contact Last Name" />
+                <Field label="Inspection First Name" placeholder="Jane" />
+                <Field label="Inspection Last Name" placeholder="Doe" />
+                <Field label="Email" placeholder="Email@email.com" type="email" />
+                <Field label="Phone Number" placeholder="(555) 000-0000" />
+                <div className="col-span-2" style={{ position: "relative" }}>
+                  <span style={fieldLabel}>Primary Class Code</span>
+                  <input placeholder="8810 - Auto Repair Shops" style={inputStyle} className="outline-none" />
+                </div>
+                <div className="col-span-2" style={{ position: "relative", gridRow: "span 3" }}>
+                  <span style={fieldLabel}>Description of Operations</span>
+                  <textarea rows={6} placeholder="Describe business operations..." style={{ ...inputStyle, resize: "none" }} className="outline-none" />
+                </div>
+                <Field label="Federal ID # (optional)" placeholder="ABC123456" />
+                <Field label="Contractor License # (optional)" placeholder="987654321" />
+                <Field label="Gross Sales" placeholder="$10000000" />
+                <Field label="Payroll" placeholder="$2000000" />
+                <Field label="# Owners" placeholder="3" />
+                <Field label="# Employees" placeholder="5000" />
+              </>) : (<>
+                <Field label="First Name" placeholder="First Name" />
+                <Field label="Last Name" placeholder="Last Name" />
+                <Field label="Email" placeholder="Email@email.com" type="email" />
+                <Field label="Phone Number" placeholder="(555) 000-0000" />
+              </>)}
+              <div className="col-span-4 flex gap-3">
+                <div className="flex-1"><SelectField label="Assigned Agent" options={["Jane Smith","Mike Chen","Sarah Johnson"]} /></div>
+                <div className="flex-1"><SelectField label="Status" options={["Active","Inactive","Prospect"]} /></div>
+              </div>
             </div>
           </div>
-          {clientType === "Business" ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2"><label style={labelStyle}>Company Name</label><input style={inputStyle} placeholder="Enter company name" /></div>
-              <div><label style={labelStyle}>DBA Name</label><input style={inputStyle} placeholder="Optional" /></div>
-              <div><label style={labelStyle}>Industry</label><input style={inputStyle} placeholder="e.g. Technology" /></div>
+
+          {/* Physical Address */}
+          <div>
+            <p style={{ ...sectionLabel, marginBottom: 16 }}>Physical Address</p>
+            <div style={{ height: 1, background: border, marginBottom: 20 }} />
+            <div className="grid grid-cols-4 gap-x-4 gap-y-6">
+              <div className="col-span-2" style={{ position: "relative" }}>
+                <span style={fieldLabel}>Address</span>
+                <input placeholder="123 Main Street" style={inputStyle} className="outline-none" />
+              </div>
+              <Field label="City" placeholder="City" />
+              <div className="grid grid-cols-2 gap-3 col-span-1" style={{ gridColumn: "4" }}>
+                <Field label="State" placeholder="State" />
+                <Field label="Zip Code" placeholder="95661" />
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <div><label style={labelStyle}>First Name</label><input style={inputStyle} placeholder="First name" /></div>
-              <div><label style={labelStyle}>Last Name</label><input style={inputStyle} placeholder="Last name" /></div>
+          </div>
+
+          {/* Same address checkbox */}
+          <label className="flex items-center gap-3 cursor-pointer" style={{ fontFamily: FONT, fontSize: 13, color: text }}>
+            <div onClick={() => setSameAddress(!sameAddress)}
+              className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
+              style={{ background: sameAddress ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : inputBg, border: `1px solid ${sameAddress ? "#75C9B7" : border}` }}>
+              {sameAddress && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+            Mailing address is the same as the Business address.
+          </label>
+
+          {/* Mailing Address */}
+          {!sameAddress && (
+            <div>
+              <p style={{ ...sectionLabel, marginBottom: 16 }}>Mailing Address</p>
+              <div style={{ height: 1, background: border, marginBottom: 20 }} />
+              <div className="grid grid-cols-4 gap-x-4 gap-y-6">
+                <div className="col-span-2" style={{ position: "relative" }}>
+                  <span style={fieldLabel}>Address</span>
+                  <input placeholder="123 Main Street" style={inputStyle} className="outline-none" />
+                </div>
+                <Field label="City" placeholder="City" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="State" placeholder="State" />
+                  <Field label="Zip Code" placeholder="95661" />
+                </div>
+              </div>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <div><label style={labelStyle}>Email</label><input style={inputStyle} placeholder="email@example.com" /></div>
-            <div><label style={labelStyle}>Phone</label><input style={inputStyle} placeholder="(555) 000-0000" /></div>
-            <div className="col-span-2"><label style={labelStyle}>Street Address</label><input style={inputStyle} placeholder="123 Main Street" /></div>
-            <div><label style={labelStyle}>City</label><input style={inputStyle} placeholder="City" /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><label style={labelStyle}>State</label><input style={inputStyle} placeholder="CA" /></div>
-              <div><label style={labelStyle}>ZIP</label><input style={inputStyle} placeholder="00000" /></div>
-            </div>
-            <div><label style={labelStyle}>Assigned Agent</label><input style={inputStyle} placeholder="Agent name" /></div>
-            <div><label style={labelStyle}>Status</label>
-              <select style={inputStyle}><option>Active</option><option>Inactive</option><option>Prospect</option></select>
-            </div>
-          </div>
         </div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: `1px solid ${border}` }}>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-7 py-4" style={{ borderTop: `1px solid ${border}` }}>
           <button onClick={onClose} className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
             style={{ fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: muted }}>Cancel</button>
           <button className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
@@ -413,11 +494,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   /* ── DETAIL TAB BUTTON ── */
   const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string }>) => (
     <button onClick={() => { setDetailTab(tab); setDetailSearch(""); }}
-      className="flex items-center gap-1.5 px-5 py-3 text-[13px] font-semibold relative transition-colors"
-      style={{ fontFamily: FONT, color: detailTab === tab ? c.teal : c.muted }}>
-      <Icon className="w-4 h-4" />
+      className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
+      style={{ fontFamily: FONT, color: detailTab === tab ? c.teal : c.muted, letterSpacing: "0.01em" }}>
+      <Icon className="w-[15px] h-[15px]" />
       {label}
-      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full" style={{ background: c.teal }} />}
+      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: c.teal }} />}
     </button>
   );
 
