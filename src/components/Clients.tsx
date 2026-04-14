@@ -241,6 +241,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [newNote, setNewNote] = useState("");
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [activityFilter, setActivityFilter] = useState<"all"|"policy"|"quote"|"document"|"email"|"call"|"note">("all");
 
   /* Colours */
   const c = {
@@ -819,10 +820,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: c.muted }} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
-                className="outline-none pl-9 pr-4"
-                style={{ ...inputSty, width: 240 }} />
+                className="outline-none"
+                style={{ ...inputSty, paddingLeft: 34, width: 240 }} />
             </div>
             <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
               style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
@@ -862,32 +863,71 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       )}
 
       {/* ── ACTIVITY ── */}
-      {detailTab === "activity" && (
-        <div className="flex-1 overflow-y-auto">
-          <div className="rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-            <h3 className="text-[15px] font-bold mb-5" style={{ fontFamily:FONT, color:c.text }}>Activity Timeline</h3>
-            {clientActivity.map((a,i) => {
-              const iconMap: Record<string, React.ReactNode> = {
-                policy: <Shield className="w-3.5 h-3.5" style={{ color:"#74C3B7" }} />,
-                quote: <ClipboardList className="w-3.5 h-3.5" style={{ color:"#A78BFA" }} />,
-                document: <FileText className="w-3.5 h-3.5" style={{ color:"#60A5FA" }} />,
-                email: <Mail className="w-3.5 h-3.5" style={{ color:"#F59E0B" }} />,
-                call: <Phone className="w-3.5 h-3.5" style={{ color:"#34D399" }} />,
-                note: <StickyNote className="w-3.5 h-3.5" style={{ color:"#F97316" }} />,
-              };
-              const bgMap: Record<string, string> = {
-                policy:"rgba(116,195,183,0.12)", quote:"rgba(167,139,250,0.12)",
-                document:"rgba(96,165,250,0.12)", email:"rgba(245,158,11,0.12)",
-                call:"rgba(52,211,153,0.12)", note:"rgba(249,115,22,0.12)",
-              };
-              return (
+      {detailTab === "activity" && (() => {
+        const iconMap: Record<string, React.ReactNode> = {
+          policy:   <Shield className="w-3.5 h-3.5" style={{ color:"#74C3B7" }} />,
+          quote:    <ClipboardList className="w-3.5 h-3.5" style={{ color:"#A78BFA" }} />,
+          document: <FileText className="w-3.5 h-3.5" style={{ color:"#60A5FA" }} />,
+          email:    <Mail className="w-3.5 h-3.5" style={{ color:"#F59E0B" }} />,
+          call:     <Phone className="w-3.5 h-3.5" style={{ color:"#34D399" }} />,
+          note:     <StickyNote className="w-3.5 h-3.5" style={{ color:"#F97316" }} />,
+        };
+        const bgMap: Record<string, string> = {
+          policy:"rgba(116,195,183,0.12)", quote:"rgba(167,139,250,0.12)",
+          document:"rgba(96,165,250,0.12)", email:"rgba(245,158,11,0.12)",
+          call:"rgba(52,211,153,0.12)", note:"rgba(249,115,22,0.12)",
+        };
+        const labelMap: Record<string, string> = {
+          all:"All", policy:"Policy", quote:"Quote",
+          document:"Document", email:"Email", call:"Call", note:"Note",
+        };
+        const colorMap: Record<string, string> = {
+          all: c.teal, policy:"#74C3B7", quote:"#A78BFA",
+          document:"#60A5FA", email:"#F59E0B", call:"#34D399", note:"#F97316",
+        };
+        const filteredActivity = activityFilter === "all"
+          ? clientActivity
+          : clientActivity.filter(a => a.type === activityFilter);
+        return (
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Filter pills */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {(["all","policy","quote","document","email","call","note"] as const).map(f => {
+                const active = activityFilter === f;
+                return (
+                  <button key={f} onClick={() => setActivityFilter(f)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
+                    style={{
+                      fontFamily: FONT,
+                      background: active ? `${colorMap[f]}20` : c.mutedBg,
+                      border: `1px solid ${active ? colorMap[f] : c.border}`,
+                      color: active ? colorMap[f] : c.muted,
+                    }}>
+                    {f !== "all" && iconMap[f]}
+                    {labelMap[f]}
+                    <span className="ml-0.5 text-[10px] rounded-full px-1.5 py-0.5"
+                      style={{ background: active ? `${colorMap[f]}25` : c.border, color: active ? colorMap[f] : c.sub }}>
+                      {f === "all" ? clientActivity.length : clientActivity.filter(a => a.type === f).length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Timeline */}
+            <div className="flex-1 overflow-y-auto rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+              {filteredActivity.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 gap-2">
+                  <Activity className="w-8 h-8" style={{ color:c.sub }} />
+                  <span className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>No activity found</span>
+                </div>
+              ) : filteredActivity.map((a,i) => (
                 <div key={a.id} className="flex gap-4">
                   <div className="flex flex-col items-center pt-0.5">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: bgMap[a.type] || "rgba(116,195,183,0.12)" }}>
                       {iconMap[a.type]}
                     </div>
-                    {i !== clientActivity.length-1 && <div className="w-px flex-1 my-2" style={{ background:c.border }} />}
+                    {i !== filteredActivity.length-1 && <div className="w-px flex-1 my-2" style={{ background:c.border }} />}
                   </div>
                   <div className="flex-1 pb-5">
                     <div className="flex items-start justify-between mb-1">
@@ -898,11 +938,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     <p className="text-[11px]" style={{ fontFamily:FONT, color:c.sub }}>by {a.user}</p>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── NOTES ── */}
       {detailTab === "notes" && (
