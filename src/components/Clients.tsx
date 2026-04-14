@@ -6,7 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
-  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -764,7 +764,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         {detailTabBtn("quotes",     "Quotes",     FileText)}
         {detailTabBtn("policies",   "Policies",   Shield)}
         {detailTabBtn("documents",  "Documents",  FolderOpen)}
-        {detailTabBtn("notes",      "Notes",      NotebookPen)}
+        {detailTabBtn("notes",      "Notes",      CopyPlus)}
         {detailTabBtn("activity",   "Activity",   Activity)}
       </div>
 
