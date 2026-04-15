@@ -6,7 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
-  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -183,165 +183,164 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
   };
   const s = styles[status] || { color: "#9CA3AF", background: "#F3F4F6" };
   return (
-    <span className="inline-flex items-center justify-center px-2.5 py-[3px] rounded-full text-[11px] font-semibold"
-      style={{ fontFamily: FONT, minWidth: 80, textAlign: "center", ...s }}>{status}</span>
+    <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
+      style={{ fontFamily: FONT, ...s }}>{status}</span>
   );
 }
 
 /* ─── Add Client Modal ───────────────────────────────────────────────────── */
 function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose: () => void; isDark: boolean }) {
-  const [sameAddress, setSameAddress] = useState(true);
+  const [clientType, setClientType] = useState<"Business" | "Individual">("Business");
+  const [sameAddress, setSameAddress] = useState(false);
   if (!isOpen) return null;
 
-  const bg      = isDark ? "#191D35" : "#fff";
-  const text     = isDark ? "#F9FAFB" : "#1F2937";
-  const muted    = isDark ? "#8B8FA8" : "#6B7280";
-  const border   = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
-  const inputBg  = isDark ? "rgba(255,255,255,0.05)" : "#fff";
+  const bg      = isDark ? "#191D35" : "#F9FAFB";
+  const cardBg  = isDark ? "rgba(255,255,255,0.04)" : "#fff";
+  const text    = isDark ? "#F9FAFB" : "#1F2937";
+  const muted   = isDark ? "#8B8FA8" : "#6B7280";
+  const border  = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
+  const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#fff";
+  const teal    = "#74C3B7";
 
-  const labelSty: React.CSSProperties = {
-    fontFamily: FONT, fontSize: 12, fontWeight: 500,
-    color: muted, marginBottom: 6, display: "block",
-  };
-  const inputSty: React.CSSProperties = {
-    fontFamily: FONT, background: inputBg,
-    border: `1px solid ${border}`,
-    color: text, width: "100%",
-    padding: "9px 12px", borderRadius: 7,
-    fontSize: 13, outline: "none",
-  };
-  const sectionTitleSty: React.CSSProperties = {
-    fontFamily: FONT, fontSize: 15, fontWeight: 700,
-    color: text, marginBottom: 18,
-  };
+  const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: text, marginBottom: 5, display: "block" };
+  const reqStar = <span style={{ color: "#EF4444", marginLeft: 1 }}>*</span>;
+  const inpSty: React.CSSProperties = { fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: text, width: "100%", padding: "9px 12px", borderRadius: 7, fontSize: 13, outline: "none" };
+  const secCard: React.CSSProperties = { border: `1px solid ${border}`, borderRadius: 10, padding: "20px 20px 24px", background: cardBg };
+  const secTitle: React.CSSProperties = { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: text, marginBottom: 16 };
 
-  const F = ({ label, placeholder, type = "text", cols = 1 }: { label: string; placeholder?: string; type?: string; cols?: number }) => (
+  const F = ({ label, placeholder, req, type = "text", cols = 1 }: { label: string; placeholder?: string; req?: boolean; type?: string; cols?: number }) => (
     <div style={cols > 1 ? { gridColumn: `span ${cols}` } : {}}>
-      <label style={labelSty}>{label}</label>
-      <input type={type} placeholder={placeholder} style={inputSty} className="outline-none w-full" />
-    </div>
-  );
-
-  const SF = ({ label, options, cols = 1 }: { label: string; options: string[]; cols?: number }) => (
-    <div style={{ position: "relative", ...(cols > 1 ? { gridColumn: `span ${cols}` } : {}) }}>
-      <label style={labelSty}>{label}</label>
-      <select style={{ ...inputSty, appearance: "none" as const }} className="outline-none cursor-pointer w-full">
-        {options.map(o => <option key={o}>{o}</option>)}
-      </select>
-      <ChevronDown className="absolute right-3 w-3.5 h-3.5 pointer-events-none" style={{ color: muted, bottom: 10 }} />
+      <label style={lblSty}>{label}{req && reqStar}</label>
+      <input type={type} placeholder={placeholder} style={inpSty} className="outline-none w-full" />
     </div>
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={onClose}>
-      <div className="w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+      <div className="w-[680px] max-h-[92vh] flex flex-col rounded-2xl shadow-2xl"
         style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="flex items-start justify-between px-8 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${border}` }}>
+        <div className="flex items-start justify-between px-7 py-5 flex-shrink-0" style={{ borderBottom: `1px solid ${border}`, background: cardBg, borderRadius: "16px 16px 0 0" }}>
           <div>
-            <h2 style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: text, marginBottom: 3 }}>Add New Client</h2>
+            <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: text, marginBottom: 2 }}>Add New Client</h2>
             <p style={{ fontFamily: FONT, fontSize: 12, color: muted }}>Create a new client account</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg transition-colors mt-0.5"
-            style={{ color: muted }}
+          <button onClick={onClose} className="p-1 rounded-lg transition-colors mt-0.5" style={{ color: muted }}
             onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#E9EAEC")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-8 py-6 space-y-5">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-7 py-6 space-y-5">
+
+          {/* Client Type */}
+          <div>
+            <label style={{ ...lblSty, marginBottom: 8 }}>Client Type{reqStar}</label>
+            <div className="grid grid-cols-2 gap-3">
+              {(["Business", "Individual"] as const).map(t => (
+                <button key={t} onClick={() => setClientType(t)}
+                  className="flex items-center justify-center gap-2 py-[10px] rounded-lg text-[13px] font-semibold transition-all"
+                  style={clientType === t
+                    ? { background: cardBg, border: `2px solid ${teal}`, color: teal, fontFamily: FONT }
+                    : { background: cardBg, border: `1px solid ${border}`, color: text, fontFamily: FONT }}>
+                  {t === "Business" ? <Building2 className="w-4 h-4" /> : <UserCircle className="w-4 h-4" />}
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* ── Account Information ── */}
-          <div>
-            <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Account Information</p>
-            <div style={{ height: 1, background: border, marginBottom: 20 }} />
-            <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-              <F label="Company Name"              placeholder="Company Name" />
-              <F label="DBA or Operating Name"     placeholder="DBA or Operating Name" />
-              <F label="Contact First Name"        placeholder="Contact First Name" />
-              <F label="Contact Last Name"         placeholder="Contact Last Name" />
-              <F label="Email"                     placeholder="Email@email.com" type="email" />
-              <F label="Phone Number"              placeholder="(555) 000-0000" />
-              <F label="Inspection First Name"     placeholder="Jane" />
-              <F label="Inspection Last Name"      placeholder="Doe" />
-              <SF label="Assigned Agent"           options={["Jane Smith","Mike Chen","Sarah Johnson"]} />
-              <F label="Primary Class Code"        placeholder="8810 - Auto Repair Shops" cols={3} />
-              <div style={{ gridColumn: "span 3" }}>
-                <label style={labelSty}>Description of Operations</label>
-                <textarea rows={3} placeholder="Describe business operations..."
-                  style={{ ...inputSty, resize: "none" }}
-                  className="outline-none w-full" />
+          <div style={secCard}>
+            <p style={secTitle}>Account Information</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+              <F label="Company Name"   placeholder="Enter company name" req />
+              <F label="DBA Name or Operating Name" placeholder="Doing business as" />
+              <F label="Contact First Name" placeholder="Enter first name" />
+              <F label="Contact Last Name"  placeholder="Enter last name" />
+              <F label="Inspection First Name" placeholder="Enter first name" />
+              <F label="Inspection Last Name"  placeholder="Enter last name" />
+              <F label="Email"           placeholder="email@example.com" type="email" req />
+              <F label="Phone"           placeholder="(555) 123-4567" req />
+              <F label="Website"         placeholder="www.example.com" />
+              <div />
+              <F label="Primary Class Code" placeholder="(555) 123-4567" req />
+              <div style={{ gridColumn: "span 1", gridRow: "span 2" }}>
+                <label style={lblSty}>Description of Operations</label>
+                <textarea rows={4} placeholder="Installation, maintenance, and repair of water, sewage, and drainage systems in residential and commercial properties..."
+                  style={{ ...inpSty, resize: "none", height: "calc(100% - 22px)" }} className="outline-none w-full" />
               </div>
-              <F label="Federal ID # (optional)"         placeholder="ABC123456" />
+              <div />
+              <F label="Federal ID # (optional)" placeholder="ABC123456" req />
               <F label="Contractor License # (optional)" placeholder="987654321" />
-              <SF label="Status" options={["Active","Inactive","Prospect"]} />
-              <F label="Gross Sales"   placeholder="$10,000,000" />
-              <F label="Payroll"       placeholder="$2,000,000" />
-              <div />
-              <F label="# Owners"     placeholder="3" />
-              <F label="# Employees"  placeholder="5000" />
-              <div />
+              <F label="Gross Sales" placeholder="email@example.com" req />
+              <F label="Payroll"     placeholder="(555) 123-4567" req />
+              <F label="# Owners"    placeholder="email@example.com" />
+              <F label="# Employees" placeholder="www.example.com" />
             </div>
           </div>
 
           {/* ── Physical Address ── */}
-          <div>
-            <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Physical Address</p>
-            <div style={{ height: 1, background: border, marginBottom: 20 }} />
-            <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-              <F label="Address" placeholder="123 Main Street" cols={3} />
-              <F label="City"     placeholder="City" />
-              <F label="State"    placeholder="State" />
-              <F label="Zip Code" placeholder="95661" />
+          <div style={secCard}>
+            <p style={secTitle}>Physical Address</p>
+            <div className="grid gap-y-4">
+              <F label="Street Address" placeholder="123 Main Street" req />
+              <div className="grid grid-cols-3 gap-x-4">
+                <F label="City" placeholder="City" req />
+                <F label="State" placeholder="" req />
+                <F label="ZIP Code" placeholder="12345" req />
+              </div>
             </div>
           </div>
 
-          {/* Same address checkbox */}
-          <label className="flex items-center gap-3 cursor-pointer select-none px-1"
-            style={{ fontFamily: FONT, fontSize: 13, color: muted }}>
-            <div onClick={() => setSameAddress(!sameAddress)}
-              className="w-[18px] h-[18px] rounded-md flex items-center justify-center flex-shrink-0 transition-all"
-              style={{
-                background: sameAddress ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : inputBg,
-                border: `1px solid ${sameAddress ? "#75C9B7" : border}`,
-              }}>
-              {sameAddress && (
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </div>
-            Mailing address is the same as the Business address.
-          </label>
-
           {/* ── Mailing Address ── */}
-          {!sameAddress && (
-            <div>
-              <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Mailing Address</p>
-              <div style={{ height: 1, background: border, marginBottom: 20 }} />
-              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-                <F label="Address" placeholder="123 Main Street" cols={3} />
-                <F label="City"     placeholder="City" />
-                <F label="State"    placeholder="State" />
-                <F label="Zip Code" placeholder="95661" />
+          <div style={secCard}>
+            <div className="flex items-center justify-between mb-4">
+              <p style={{ ...secTitle, marginBottom: 0 }}>Mailing Address</p>
+              <label className="flex items-center gap-2 cursor-pointer select-none" style={{ fontFamily: FONT, fontSize: 12, color: teal }}>
+                <div onClick={() => setSameAddress(!sameAddress)}
+                  className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
+                  style={{ background: sameAddress ? teal : "transparent", border: `1.5px solid ${sameAddress ? teal : border}` }}>
+                  {sameAddress && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+                Same as Physical Address
+              </label>
+            </div>
+            <div className="grid gap-y-4">
+              <F label="Street Address" placeholder="123 Main Street" />
+              <div className="grid grid-cols-3 gap-x-4">
+                <F label="City" placeholder="City" />
+                <F label="State" placeholder="" />
+                <F label="ZIP Code" placeholder="12345" />
               </div>
             </div>
-          )}
+          </div>
+
+          {/* ── Additional Information ── */}
+          <div style={secCard}>
+            <p style={secTitle}>Additional Information</p>
+            <div>
+              <label style={lblSty}>Notes</label>
+              <textarea rows={3} placeholder="Additional notes about this client..."
+                style={{ ...inpSty, resize: "none" }} className="outline-none w-full" />
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-8 py-5" style={{ borderTop: `1px solid ${border}` }}>
+        <div className="flex items-center justify-between px-7 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${border}`, background: cardBg, borderRadius: "0 0 16px 16px" }}>
           <button onClick={onClose}
-            className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, background: "transparent", border: `1px solid ${border}`, color: muted }}>
+            className="px-5 py-[8px] rounded-lg text-[12px] font-normal transition-colors"
+            style={{ fontFamily: FONT, border: `1px solid ${border}`, color: text, background: cardBg }}>
             Cancel
           </button>
-          <button className="px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white"
+          <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"
             style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
-            Add Client
+            Create Client
           </button>
         </div>
       </div>
@@ -379,6 +378,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [zoomTime, setZoomTime] = useState("14:00");
   const [zoomDuration, setZoomDuration] = useState("30");
   const [zoomNotes, setZoomNotes] = useState("");
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editingAddr, setEditingAddr] = useState(false);
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
 
   /* Colours */
   const c = {
@@ -741,9 +743,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </div>
           <div className="flex items-center gap-2">
             {[
-              { icon: <FileText className="w-3.5 h-3.5" />, label: "New Quote" },
-              { icon: <Shield className="w-3.5 h-3.5" />, label: "New Policy" },
-              { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Doc" },
+              { icon: <FileText className="w-3.5 h-3.5" />, label: "Create Quote" },
+              { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Document" },
               { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
               { icon: <Video className="w-3.5 h-3.5" />, label: "Zoom Meeting" },
             ].map(({ icon, label }, i) => (
@@ -765,7 +766,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         {[
           { label: "Total Premium", value: `$${selected.totalPremium.toLocaleString()}`, icon: <DollarSign className="w-5 h-5" style={{ color: c.teal }} />, extra: <TrendingUp className="w-4 h-4" style={{ color: "#0EA882" }} /> },
           { label: "Active Policies", value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
-          { label: "Pending Quotes", value: String(selected.pendingQuotes), icon: <ClipboardList className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
+          { label: "Upcoming Renewals", value: String(selected.pendingQuotes), icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
           { label: "Assigned Agent", value: selected.assignedAgent, icon: <UserCircle className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
         ].map((card, i) => (
           <div key={i} className="rounded-xl p-4" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -790,40 +791,243 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       </div>
 
       {/* ── OVERVIEW ── */}
-      {detailTab === "overview" && (
+      {detailTab === "overview" && (() => {
+        const inpSty: React.CSSProperties = { fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.text, width: "100%", padding: "8px 12px", borderRadius: 7, fontSize: 13, outline: "none" };
+        const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: c.muted, marginBottom: 4, display: "block" };
+        const viewField = (label: string, value: string | undefined, tealColor?: boolean) => (
+          <div>
+            <div className="text-[12px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>{label}:</div>
+            <div className="text-[13px]" style={{ fontFamily: FONT, color: tealColor ? c.teal : c.text }}>{value || "—"}</div>
+          </div>
+        );
+        const editField = (label: string, key: string, placeholder?: string) => (
+          <div>
+            <label style={lblSty}>{label}:</label>
+            <input value={editFields[key] || ""} onChange={e => setEditFields(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} style={inpSty} className="outline-none" />
+          </div>
+        );
+        const editSelect = (label: string, key: string, options: string[]) => (
+          <div style={{ position: "relative" }}>
+            <label style={lblSty}>{label}:</label>
+            <select value={editFields[key] || options[0]} onChange={e => setEditFields(f => ({ ...f, [key]: e.target.value }))} style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer">
+              {options.map(o => <option key={o}>{o}</option>)}
+            </select>
+            <ChevronDown className="absolute right-3 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted, bottom: 10 }} />
+          </div>
+        );
+        const startEditInfo = () => {
+          setEditFields({
+            companyName: selected.companyName || "", dbaName: selected.dbaName || "", agencyType: selected.type,
+            contactName: selected.type === "Business" ? "" : `${selected.firstName || ""} ${selected.lastName || ""}`.trim(),
+            inspectionName: "", email: selected.email, phone: selected.phone, websiteUrl: selected.website || "",
+            primaryClassCode: "", federalId: "", contractorLicense: "",
+            grossSales: "", payroll: "", owners: "", employees: "",
+            firstName: selected.firstName || "", lastName: selected.lastName || "",
+          });
+          setEditingInfo(true);
+        };
+        const startEditAddr = () => {
+          setEditFields(f => ({
+            ...f, street: selected.address.street, city: selected.address.city, state: selected.address.state, zipCode: selected.address.zipCode,
+            mailStreet: selected.address.street, mailCity: selected.address.city, mailState: selected.address.state, mailZip: selected.address.zipCode,
+            sameAddr: "true",
+          }));
+          setEditingAddr(true);
+        };
+
+        return (
         <div className="space-y-4 overflow-y-auto flex-1">
           {/* Client Information */}
-          <div className="rounded-xl p-5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Client Information</h3>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
-                <Pencil className="w-3.5 h-3.5" />Edit
-              </button>
+              {!editingInfo ? (
+                <button onClick={startEditInfo} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  <Pencil className="w-3.5 h-3.5" />Edit
+                </button>
+              ) : (
+                <button onClick={() => setEditingInfo(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  <Pencil className="w-3.5 h-3.5" />Cancel Edit
+                </button>
+              )}
             </div>
-            <div className="grid gap-x-8 gap-y-5" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              {selected.type === "Business" ? (<>
-                <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Company Name:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.companyName}</div></div>
-                {selected.dbaName && <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>DBA Name:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.dbaName}</div></div>}
-                {selected.industry && <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Industry:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.industry}</div></div>}
-                {selected.website && <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Website:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.teal }}>{selected.website}</div></div>}
-              </>) : (<>
-                <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>First Name:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.firstName}</div></div>
-                <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Last Name:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.lastName}</div></div>
-              </>)}
-              <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Email Address:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.email}</div></div>
-              <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Phone Number:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.phone}</div></div>
-              <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Assigned Agent:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.assignedAgent}</div></div>
-              <div><div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Client Since:</div><div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{new Date(selected.createdDate).toLocaleDateString()}</div></div>
-              <div className="col-span-3" style={{ borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-                <div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ fontFamily: FONT, color: c.muted }}>Agency Address:</div>
-                <div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.address.street}</div>
-                <div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.address.city}, {selected.address.state} {selected.address.zipCode}</div>
+
+            {!editingInfo ? (
+              /* ── View Mode ── */
+              <div className="grid gap-x-8 gap-y-5" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                {selected.type === "Business" ? (<>
+                  {viewField("Company Name", selected.companyName)}
+                  {viewField("DBA Name or Operating Name", selected.dbaName)}
+                  {viewField("Agency Type", selected.type, true)}
+                  {viewField("Contact Name", "")}
+                  {viewField("Inspection Name", "")}
+                  <div />
+                  {viewField("Email", selected.email)}
+                  {viewField("Phone Number", selected.phone)}
+                  {viewField("Website Url", selected.website, true)}
+                  {viewField("Primary Class Code", "")}
+                  {viewField("Federal ID # (optional)", "")}
+                  {viewField("Contractor License # (optional)", "")}
+                  {viewField("Gross Sales", "")}
+                  {viewField("Payroll", "")}
+                  {viewField("# Owners", "")}
+                  {viewField("# Employees", "")}
+                </>) : (<>
+                  {viewField("First Name", selected.firstName)}
+                  {viewField("Last Name", selected.lastName)}
+                  {viewField("Agency Type", selected.type, true)}
+                  {viewField("Email", selected.email)}
+                  {viewField("Phone Number", selected.phone)}
+                </>)}
               </div>
+            ) : (
+              /* ── Edit Mode ── */
+              <>
+                <div className="grid gap-x-6 gap-y-5" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                  {selected.type === "Business" ? (<>
+                    {editField("Company Name", "companyName")}
+                    {editField("DBA Name or Operating Name", "dbaName")}
+                    {editSelect("Agency Type", "agencyType", ["Business", "Individual"])}
+                    {editField("Contact Name", "contactName")}
+                    {editField("Inspection Name", "inspectionName")}
+                    <div />
+                    {editField("Email", "email")}
+                    {editField("Phone Number", "phone")}
+                    {editField("Website Url", "websiteUrl")}
+                    {editField("Primary Class Code", "primaryClassCode", "8810-Auto Repair Shops")}
+                    {editField("Federal ID # (optional)", "federalId")}
+                    {editField("Contractor License # (optional)", "contractorLicense")}
+                    {editField("Gross Sales", "grossSales", "$1000")}
+                    {editField("Payroll", "payroll", "$1000")}
+                    {editField("# Owners", "owners", "3")}
+                    {editField("# Employees", "employees", "$1000")}
+                  </>) : (<>
+                    {editField("First Name", "firstName")}
+                    {editField("Last Name", "lastName")}
+                    {editSelect("Agency Type", "agencyType", ["Business", "Individual"])}
+                    {editField("Email", "email")}
+                    {editField("Phone Number", "phone")}
+                  </>)}
+                </div>
+                <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                  <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
+                    style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>Cancel</button>
+                  <button onClick={() => setEditingInfo(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
+                    style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Address Information */}
+          <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Address Information</h3>
+              {!editingAddr ? (
+                <button onClick={startEditAddr} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  <Pencil className="w-3.5 h-3.5" />Edit
+                </button>
+              ) : (
+                <button onClick={() => setEditingAddr(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  <Pencil className="w-3.5 h-3.5" />Cancel Edit
+                </button>
+              )}
             </div>
+
+            {!editingAddr ? (
+              /* ── View Mode ── */
+              <div className="grid gap-x-8" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <div>
+                  <div className="text-[12px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Physical Address:</div>
+                  <div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{selected.address.street}, {selected.address.city}, {selected.address.state}, {selected.address.zipCode}</div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Mailing Address:</div>
+                  <div className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>Same as Agency Address</div>
+                </div>
+              </div>
+            ) : (
+              /* ── Edit Mode ── */
+              <>
+                <div className="mb-5">
+                  <div className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.muted }}>Physical Address:</div>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                    <div style={{ position: "relative" }}>
+                      <select value={editFields.country || "United States of America"} onChange={e => setEditFields(f => ({ ...f, country: e.target.value }))}
+                        style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer">
+                        <option>United States of America</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+                    </div>
+                    <input value={editFields.street || ""} onChange={e => setEditFields(f => ({ ...f, street: e.target.value }))} placeholder="Street Address" style={inpSty} className="outline-none" />
+                  </div>
+                  <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                    <input value={editFields.city || ""} onChange={e => setEditFields(f => ({ ...f, city: e.target.value }))} placeholder="City" style={inpSty} className="outline-none" />
+                    <div style={{ position: "relative" }}>
+                      <select value={editFields.state || ""} onChange={e => setEditFields(f => ({ ...f, state: e.target.value }))}
+                        style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer">
+                        <option value="">State</option>
+                        {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+                    </div>
+                    <input value={editFields.zipCode || ""} onChange={e => setEditFields(f => ({ ...f, zipCode: e.target.value }))} placeholder="Zip Code" style={inpSty} className="outline-none" />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="text-[12px] font-semibold mb-2" style={{ fontFamily: FONT, color: c.muted }}>Mailing Address:</div>
+                  <label className="flex items-center gap-2 mb-3 cursor-pointer select-none" style={{ fontFamily: FONT, fontSize: 12, color: c.text }}>
+                    <div onClick={() => setEditFields(f => ({ ...f, sameAddr: f.sameAddr === "true" ? "false" : "true" }))}
+                      className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
+                      style={{ background: editFields.sameAddr === "true" ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : c.inputBg, border: `1px solid ${editFields.sameAddr === "true" ? "#75C9B7" : c.border}` }}>
+                      {editFields.sameAddr === "true" && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    Same as Agency Address
+                  </label>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                    <div style={{ position: "relative" }}>
+                      <select value="United States of America" style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer" readOnly>
+                        <option>United States of America</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+                    </div>
+                    <input value={editFields.sameAddr === "true" ? editFields.street || "" : editFields.mailStreet || ""} readOnly={editFields.sameAddr === "true"}
+                      onChange={e => setEditFields(f => ({ ...f, mailStreet: e.target.value }))} placeholder="Street Address" style={{ ...inpSty, opacity: editFields.sameAddr === "true" ? 0.6 : 1 }} className="outline-none" />
+                  </div>
+                  <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                    <input value={editFields.sameAddr === "true" ? editFields.city || "" : editFields.mailCity || ""} readOnly={editFields.sameAddr === "true"}
+                      onChange={e => setEditFields(f => ({ ...f, mailCity: e.target.value }))} placeholder="City" style={{ ...inpSty, opacity: editFields.sameAddr === "true" ? 0.6 : 1 }} className="outline-none" />
+                    <div style={{ position: "relative" }}>
+                      <select value={editFields.sameAddr === "true" ? editFields.state || "" : editFields.mailState || ""}
+                        onChange={e => setEditFields(f => ({ ...f, mailState: e.target.value }))} disabled={editFields.sameAddr === "true"}
+                        style={{ ...inpSty, appearance: "none" as const, opacity: editFields.sameAddr === "true" ? 0.6 : 1 }} className="outline-none cursor-pointer">
+                        <option value="">State</option>
+                        {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+                    </div>
+                    <input value={editFields.sameAddr === "true" ? editFields.zipCode || "" : editFields.mailZip || ""} readOnly={editFields.sameAddr === "true"}
+                      onChange={e => setEditFields(f => ({ ...f, mailZip: e.target.value }))} placeholder="Zip Code" style={{ ...inpSty, opacity: editFields.sameAddr === "true" ? 0.6 : 1 }} className="outline-none" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                  <button onClick={() => setEditingAddr(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
+                    style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>Cancel</button>
+                  <button onClick={() => setEditingAddr(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
+                    style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── POLICIES ── */}
       {detailTab === "policies" && (
