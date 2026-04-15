@@ -6,7 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
-  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -183,157 +183,166 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
   };
   const s = styles[status] || { color: "#9CA3AF", background: "#F3F4F6" };
   return (
-    <span className="inline-flex px-2.5 py-[3px] rounded-full text-[11px] font-semibold"
-      style={{ fontFamily: FONT, ...s }}>{status}</span>
+    <span className="inline-flex items-center justify-center px-2.5 py-[3px] rounded-full text-[11px] font-semibold"
+      style={{ fontFamily: FONT, minWidth: 80, textAlign: "center", ...s }}>{status}</span>
   );
 }
 
 /* ─── Add Client Modal ───────────────────────────────────────────────────── */
 function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose: () => void; isDark: boolean }) {
-  const [clientType, setClientType] = useState<"Business" | "Individual">("Business");
   const [sameAddress, setSameAddress] = useState(true);
   if (!isOpen) return null;
-  const bg = isDark ? "#191D35" : "#fff";
-  const text = isDark ? "#F9FAFB" : "#1F2937";
-  const muted = isDark ? "#8B8FA8" : "#6B7280";
-  const border = isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB";
-  const inputBg = isDark ? "rgba(255,255,255,0.04)" : "#fff";
-  const sectionLabel: React.CSSProperties = { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#4B6B8A", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
-  const fieldLabel: React.CSSProperties = { fontFamily: FONT, fontSize: 11, fontWeight: 600, color: "#4B6B8A", background: bg, paddingLeft: 4, paddingRight: 4, position: "absolute" as const, top: -8, left: 10, zIndex: 1 };
-  const inputStyle: React.CSSProperties = { fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: text, width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 13, outline: "none" };
 
-  const Field = ({ label, placeholder, span2 = false, type = "text" }: { label: string; placeholder?: string; span2?: boolean; type?: string }) => (
-    <div className={span2 ? "col-span-2" : ""} style={{ position: "relative" }}>
-      <span style={fieldLabel}>{label}</span>
-      <input type={type} placeholder={placeholder} style={inputStyle} className="outline-none" />
+  const bg      = isDark ? "#191D35" : "#fff";
+  const text     = isDark ? "#F9FAFB" : "#1F2937";
+  const muted    = isDark ? "#8B8FA8" : "#6B7280";
+  const border   = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
+  const inputBg  = isDark ? "rgba(255,255,255,0.05)" : "#fff";
+
+  const labelSty: React.CSSProperties = {
+    fontFamily: FONT, fontSize: 12, fontWeight: 500,
+    color: muted, marginBottom: 6, display: "block",
+  };
+  const inputSty: React.CSSProperties = {
+    fontFamily: FONT, background: inputBg,
+    border: `1px solid ${border}`,
+    color: text, width: "100%",
+    padding: "9px 12px", borderRadius: 7,
+    fontSize: 13, outline: "none",
+  };
+  const sectionTitleSty: React.CSSProperties = {
+    fontFamily: FONT, fontSize: 15, fontWeight: 700,
+    color: text, marginBottom: 18,
+  };
+
+  const F = ({ label, placeholder, type = "text", cols = 1 }: { label: string; placeholder?: string; type?: string; cols?: number }) => (
+    <div style={cols > 1 ? { gridColumn: `span ${cols}` } : {}}>
+      <label style={labelSty}>{label}</label>
+      <input type={type} placeholder={placeholder} style={inputSty} className="outline-none w-full" />
     </div>
   );
-  const SelectField = ({ label, options }: { label: string; options: string[] }) => (
-    <div style={{ position: "relative" }}>
-      <span style={fieldLabel}>{label}</span>
-      <select style={{ ...inputStyle, appearance: "none" as const }} className="outline-none cursor-pointer">
+
+  const SF = ({ label, options, cols = 1 }: { label: string; options: string[]; cols?: number }) => (
+    <div style={{ position: "relative", ...(cols > 1 ? { gridColumn: `span ${cols}` } : {}) }}>
+      <label style={labelSty}>{label}</label>
+      <select style={{ ...inputSty, appearance: "none" as const }} className="outline-none cursor-pointer w-full">
         {options.map(o => <option key={o}>{o}</option>)}
       </select>
+      <ChevronDown className="absolute right-3 w-3.5 h-3.5 pointer-events-none" style={{ color: muted, bottom: 10 }} />
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
-      <div className="w-[760px] max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={onClose}>
+      <div className="w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+        style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }}
+        onClick={e => e.stopPropagation()}>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-7 py-4" style={{ borderBottom: `1px solid ${border}` }}>
-          <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: text }}>Add New Client</h2>
-          <button onClick={onClose} style={{ color: muted }}><X className="w-4 h-4" /></button>
+        <div className="flex items-start justify-between px-8 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${border}` }}>
+          <div>
+            <h2 style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: text, marginBottom: 3 }}>Add New Client</h2>
+            <p style={{ fontFamily: FONT, fontSize: 12, color: muted }}>Create a new client account</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg transition-colors mt-0.5"
+            style={{ color: muted }}
+            onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#E9EAEC")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        <div className="px-7 py-6 space-y-7">
-          {/* Client Type */}
-          <div className="flex gap-2">
-            {(["Business","Individual"] as const).map(t => (
-              <button key={t} onClick={() => setClientType(t)}
-                className="flex-1 py-2.5 rounded-lg text-[12px] font-normal transition-all"
-                style={clientType === t
-                  ? { background: "linear-gradient(to bottom,#ACD697,#75C9B7)", color: "#fff", fontFamily: FONT }
-                  : { background: inputBg, border: `1px solid ${border}`, color: muted, fontFamily: FONT }}>
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className="px-8 py-6 space-y-5">
 
-          {/* Account Information */}
+          {/* ── Account Information ── */}
           <div>
-            <p style={{ ...sectionLabel, marginBottom: 16 }}>Account Information</p>
+            <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Account Information</p>
             <div style={{ height: 1, background: border, marginBottom: 20 }} />
-            <div className="grid grid-cols-4 gap-x-4 gap-y-6">
-              {clientType === "Business" ? (<>
-                <Field label="Company Name" placeholder="Company Name" span2={false} />
-                <Field label="DBA or Operating Name" placeholder="DBA or Operating Name" />
-                <Field label="Contact First Name" placeholder="Contact First Name" />
-                <Field label="Contact Last Name" placeholder="Contact Last Name" />
-                <Field label="Inspection First Name" placeholder="Jane" />
-                <Field label="Inspection Last Name" placeholder="Doe" />
-                <Field label="Email" placeholder="Email@email.com" type="email" />
-                <Field label="Phone Number" placeholder="(555) 000-0000" />
-                <div className="col-span-2" style={{ position: "relative" }}>
-                  <span style={fieldLabel}>Primary Class Code</span>
-                  <input placeholder="8810 - Auto Repair Shops" style={inputStyle} className="outline-none" />
-                </div>
-                <div className="col-span-2" style={{ position: "relative", gridRow: "span 3" }}>
-                  <span style={fieldLabel}>Description of Operations</span>
-                  <textarea rows={6} placeholder="Describe business operations..." style={{ ...inputStyle, resize: "none" }} className="outline-none" />
-                </div>
-                <Field label="Federal ID # (optional)" placeholder="ABC123456" />
-                <Field label="Contractor License # (optional)" placeholder="987654321" />
-                <Field label="Gross Sales" placeholder="$10000000" />
-                <Field label="Payroll" placeholder="$2000000" />
-                <Field label="# Owners" placeholder="3" />
-                <Field label="# Employees" placeholder="5000" />
-              </>) : (<>
-                <Field label="First Name" placeholder="First Name" />
-                <Field label="Last Name" placeholder="Last Name" />
-                <Field label="Email" placeholder="Email@email.com" type="email" />
-                <Field label="Phone Number" placeholder="(555) 000-0000" />
-              </>)}
-              <div className="col-span-4 flex gap-3">
-                <div className="flex-1"><SelectField label="Assigned Agent" options={["Jane Smith","Mike Chen","Sarah Johnson"]} /></div>
-                <div className="flex-1"><SelectField label="Status" options={["Active","Inactive","Prospect"]} /></div>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-5">
+              <F label="Company Name"              placeholder="Company Name" />
+              <F label="DBA or Operating Name"     placeholder="DBA or Operating Name" />
+              <F label="Contact First Name"        placeholder="Contact First Name" />
+              <F label="Contact Last Name"         placeholder="Contact Last Name" />
+              <F label="Email"                     placeholder="Email@email.com" type="email" />
+              <F label="Phone Number"              placeholder="(555) 000-0000" />
+              <F label="Inspection First Name"     placeholder="Jane" />
+              <F label="Inspection Last Name"      placeholder="Doe" />
+              <SF label="Assigned Agent"           options={["Jane Smith","Mike Chen","Sarah Johnson"]} />
+              <F label="Primary Class Code"        placeholder="8810 - Auto Repair Shops" cols={3} />
+              <div style={{ gridColumn: "span 3" }}>
+                <label style={labelSty}>Description of Operations</label>
+                <textarea rows={3} placeholder="Describe business operations..."
+                  style={{ ...inputSty, resize: "none" }}
+                  className="outline-none w-full" />
               </div>
+              <F label="Federal ID # (optional)"         placeholder="ABC123456" />
+              <F label="Contractor License # (optional)" placeholder="987654321" />
+              <SF label="Status" options={["Active","Inactive","Prospect"]} />
+              <F label="Gross Sales"   placeholder="$10,000,000" />
+              <F label="Payroll"       placeholder="$2,000,000" />
+              <div />
+              <F label="# Owners"     placeholder="3" />
+              <F label="# Employees"  placeholder="5000" />
+              <div />
             </div>
           </div>
 
-          {/* Physical Address */}
+          {/* ── Physical Address ── */}
           <div>
-            <p style={{ ...sectionLabel, marginBottom: 16 }}>Physical Address</p>
+            <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Physical Address</p>
             <div style={{ height: 1, background: border, marginBottom: 20 }} />
-            <div className="grid grid-cols-4 gap-x-4 gap-y-6">
-              <div className="col-span-2" style={{ position: "relative" }}>
-                <span style={fieldLabel}>Address</span>
-                <input placeholder="123 Main Street" style={inputStyle} className="outline-none" />
-              </div>
-              <Field label="City" placeholder="City" />
-              <div className="grid grid-cols-2 gap-3 col-span-1" style={{ gridColumn: "4" }}>
-                <Field label="State" placeholder="State" />
-                <Field label="Zip Code" placeholder="95661" />
-              </div>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-5">
+              <F label="Address" placeholder="123 Main Street" cols={3} />
+              <F label="City"     placeholder="City" />
+              <F label="State"    placeholder="State" />
+              <F label="Zip Code" placeholder="95661" />
             </div>
           </div>
 
           {/* Same address checkbox */}
-          <label className="flex items-center gap-3 cursor-pointer" style={{ fontFamily: FONT, fontSize: 13, color: text }}>
+          <label className="flex items-center gap-3 cursor-pointer select-none px-1"
+            style={{ fontFamily: FONT, fontSize: 13, color: muted }}>
             <div onClick={() => setSameAddress(!sameAddress)}
-              className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
-              style={{ background: sameAddress ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : inputBg, border: `1px solid ${sameAddress ? "#75C9B7" : border}` }}>
-              {sameAddress && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              className="w-[18px] h-[18px] rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+              style={{
+                background: sameAddress ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : inputBg,
+                border: `1px solid ${sameAddress ? "#75C9B7" : border}`,
+              }}>
+              {sameAddress && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
             </div>
             Mailing address is the same as the Business address.
           </label>
 
-          {/* Mailing Address */}
+          {/* ── Mailing Address ── */}
           {!sameAddress && (
             <div>
-              <p style={{ ...sectionLabel, marginBottom: 16 }}>Mailing Address</p>
+              <p style={{ ...sectionTitleSty, marginBottom: 16 }}>Mailing Address</p>
               <div style={{ height: 1, background: border, marginBottom: 20 }} />
-              <div className="grid grid-cols-4 gap-x-4 gap-y-6">
-                <div className="col-span-2" style={{ position: "relative" }}>
-                  <span style={fieldLabel}>Address</span>
-                  <input placeholder="123 Main Street" style={inputStyle} className="outline-none" />
-                </div>
-                <Field label="City" placeholder="City" />
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="State" placeholder="State" />
-                  <Field label="Zip Code" placeholder="95661" />
-                </div>
+              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
+                <F label="Address" placeholder="123 Main Street" cols={3} />
+                <F label="City"     placeholder="City" />
+                <F label="State"    placeholder="State" />
+                <F label="Zip Code" placeholder="95661" />
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-7 py-4" style={{ borderTop: `1px solid ${border}` }}>
-          <button onClick={onClose} className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: muted }}>Cancel</button>
-          <button className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-            style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Add Client</button>
+        <div className="flex items-center justify-end gap-3 px-8 py-5" style={{ borderTop: `1px solid ${border}` }}>
+          <button onClick={onClose}
+            className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+            style={{ fontFamily: FONT, background: "transparent", border: `1px solid ${border}`, color: muted }}>
+            Cancel
+          </button>
+          <button className="px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white"
+            style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+            Add Client
+          </button>
         </div>
       </div>
     </div>
@@ -364,6 +373,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [newActivityType, setNewActivityType] = useState<"policy"|"quote"|"document"|"email"|"call"|"note">("call");
   const [newActivityAction, setNewActivityAction] = useState("");
   const [newActivityDesc, setNewActivityDesc] = useState("");
+  const [zoomModalOpen, setZoomModalOpen] = useState(false);
+  const [zoomTopic, setZoomTopic] = useState("");
+  const [zoomDate, setZoomDate] = useState("");
+  const [zoomTime, setZoomTime] = useState("14:00");
+  const [zoomDuration, setZoomDuration] = useState("30");
+  const [zoomNotes, setZoomNotes] = useState("");
 
   /* Colours */
   const c = {
@@ -730,13 +745,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               { icon: <Shield className="w-3.5 h-3.5" />, label: "New Policy" },
               { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Doc" },
               { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
-              { icon: <Calendar className="w-3.5 h-3.5" />, label: "Schedule" },
+              { icon: <Video className="w-3.5 h-3.5" />, label: "Zoom Meeting" },
             ].map(({ icon, label }, i) => (
               <button key={label}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
                 style={{ fontFamily: FONT, background: i === 0 ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
                 onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
-                onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}>
+                onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}
+                onClick={() => { if (label === "Zoom Meeting") { setZoomTopic(`Meeting with ${getClientName(selected)}`); setZoomDate(""); setZoomTime("14:00"); setZoomDuration("30"); setZoomNotes(""); setZoomModalOpen(true); } }}>
                 {icon}{label}
               </button>
             ))}
@@ -813,28 +829,28 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 999 }}>
+            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 10 }}>
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "999px 0 0 999px" }} />
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 999px 999px 0" }}>Submit</button>
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
-              <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.muted }}>
+              <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: "#5C5C5C", fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
             </div>
             <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <RefreshCw className="w-4 h-4" /></button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <LayoutGrid className="w-4 h-4" /></button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <Download className="w-4 h-4" /></button>
             </div>
@@ -876,30 +892,30 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 999 }}>
+            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 10 }}>
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "999px 0 0 999px" }} />
+                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 999px 999px 0" }}>Submit</button>
+                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
-              <select className="appearance-none pl-3 pr-8 py-2 rounded-xl text-[13px] outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.muted }}>
+              <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: "#5C5C5C", fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
             </div>
             <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <LayoutGrid className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.muted }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <Download className="w-4 h-4" />
               </button>
@@ -1246,6 +1262,113 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       )}
 
       <AddClientModal isOpen={modalOpen} onClose={() => setModalOpen(false)} isDark={isDark} />
+
+      {/* ── Zoom Meeting Modal ── */}
+      {zoomModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setZoomModalOpen(false)}>
+          <div className="w-[520px] rounded-2xl shadow-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-start justify-between px-7 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${c.border}` }}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg" style={{ background: "rgba(116,195,183,0.12)" }}>
+                  <Video className="w-5 h-5" style={{ color: c.teal }} />
+                </div>
+                <div>
+                  <h2 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Schedule Zoom Meeting</h2>
+                  <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Set up a video call with {selected ? getClientName(selected) : "client"}</p>
+                </div>
+              </div>
+              <button onClick={() => setZoomModalOpen(false)} className="p-1 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-7 py-6 space-y-5">
+              {/* Topic */}
+              <div>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Meeting Topic</label>
+                <input value={zoomTopic} onChange={e => setZoomTopic(e.target.value)} placeholder="e.g. Quarterly coverage review"
+                  className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
+              </div>
+
+              {/* Date + Time + Duration row */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Date</span>
+                  </label>
+                  <input type="date" value={zoomDate} onChange={e => setZoomDate(e.target.value)}
+                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
+                </div>
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Time</span>
+                  </label>
+                  <input type="time" value={zoomTime} onChange={e => setZoomTime(e.target.value)}
+                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
+                </div>
+                <div style={{ position: "relative" }}>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Duration</label>
+                  <select value={zoomDuration} onChange={e => setZoomDuration(e.target.value)}
+                    className="outline-none w-full cursor-pointer" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, appearance: "none" as const }}>
+                    <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">1.5 hours</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted, bottom: 11 }} />
+                </div>
+              </div>
+
+              {/* Attendees preview */}
+              <div>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Attendees</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selected && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: "rgba(116,195,183,0.10)", color: c.teal, border: `1px solid rgba(116,195,183,0.25)` }}>
+                      <UserCircle className="w-3 h-3" />{getClientName(selected)}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", color: c.muted }}>
+                    <UserCircle className="w-3 h-3" />{selected?.assignedAgent || "Agent"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Notes (optional)</label>
+                <textarea rows={3} value={zoomNotes} onChange={e => setZoomNotes(e.target.value)} placeholder="Add agenda or talking points..."
+                  className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, resize: "none" }} />
+              </div>
+
+              {/* Zoom link preview */}
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                <Link className="w-4 h-4 flex-shrink-0" style={{ color: c.teal }} />
+                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Zoom meeting link will be generated automatically</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-7 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setZoomModalOpen(false)}
+                className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                if (selected && zoomDate) {
+                  const ts = `${zoomDate} ${zoomTime.replace(/^(\d{2}):(\d{2})$/, (_, h, m) => { const hr = parseInt(h); return `${hr > 12 ? hr - 12 : hr}:${m} ${hr >= 12 ? "PM" : "AM"}`; })}`;
+                  setActivityLogs(prev => [{ id: String(Date.now()), action: "Zoom Meeting Scheduled", description: `${zoomTopic} — ${zoomDuration} min${zoomNotes ? ". " + zoomNotes : ""}`, timestamp: ts, user: selected.assignedAgent, clientId: selected.id, type: "call" as const }, ...prev]);
+                }
+                setZoomModalOpen(false);
+              }}
+                className="px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white"
+                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                Schedule Meeting
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
