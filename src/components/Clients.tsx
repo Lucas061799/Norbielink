@@ -991,7 +991,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   </label>
                   <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 2fr" }}>
                     <div style={{ position: "relative" }}>
-                      <select value="United States of America" style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer" readOnly>
+                      <select value="United States of America" style={{ ...inpSty, appearance: "none" as const }} className="outline-none cursor-pointer">
                         <option>United States of America</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
