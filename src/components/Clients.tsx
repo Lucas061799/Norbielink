@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import norbieface from "@/assets/norbieface.png";
 import {
   Search, Plus, MoreVertical, Pencil, Building2, ChevronLeft, ChevronDown,
@@ -29,7 +29,7 @@ interface Client {
   primaryClassCode?: string; federalId?: string; contractorLicense?: string;
   grossSales?: string; payroll?: string; owners?: string; employees?: string;
 }
-interface Quote { id: string; quoteId: string; policyType: string; status: "Pending"|"Approved"|"Declined"|"Expired"|"Sold/Issued"|"Incomplete"; createdDate: string; premium: number; clientId: string; applicant: string; dba?: string; effectiveDate?: string; lob: string; producer: string; }
+interface Quote { id: string; quoteId: string; policyType: string; status: "Pending"|"Approved"|"Declined"|"Expired"|"Sold/Issued"|"Incomplete"|"Pending/Action Req."|"Upcoming Renewals"; createdDate: string; premium: number; clientId: string; applicant: string; dba?: string; effectiveDate?: string; lob: string; producer: string; }
 interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"|"Upcoming Renewal"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; applicant: string; dba?: string; lob: string; producer: string; createdDate: string; }
 interface Document { id: string; name: string; type: string; uploadDate: string; size: string; clientId: string; category: string; }
 interface ActivityLog { id: string; action: string; description: string; timestamp: string; user: string; clientId: string; type: "policy"|"quote"|"document"|"email"|"call"|"note"; }
@@ -39,7 +39,7 @@ interface Note { id: string; content: string; author: string; timestamp: string;
 const mockClients: Client[] = [
   { id:"1", type:"Business", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85" },
   { id:"2", type:"Individual", firstName:"John", lastName:"Anderson", email:"john.anderson@email.com", phone:"(555) 234-5678", address:{street:"456 Oak Street",city:"Los Angeles",state:"CA",zipCode:"90001"}, status:"Active", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2024-02-20", lastActivity:"2024-04-08", isStarred:false, totalPremium:12000, activePolicies:2, pendingQuotes:0 },
-  { id:"3", type:"Business", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:0, activePolicies:0, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
+  { id:"3", type:"Business", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:17500, activePolicies:1, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
   { id:"4", type:"Business", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
   { id:"5", type:"Individual", firstName:"Maria", lastName:"Rodriguez", email:"maria.r@email.com", phone:"(555) 567-8901", address:{street:"654 Palm Avenue",city:"Miami",state:"FL",zipCode:"33101"}, status:"Inactive", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2023-08-15", lastActivity:"2024-01-20", isStarred:false, totalPremium:8500, activePolicies:1, pendingQuotes:0 },
 ];
@@ -50,8 +50,37 @@ const mockQuotes: Quote[] = [
   { id:"4", quoteId:"QMWC111222333", policyType:"Property Insurance", status:"Incomplete", createdDate:"2024-07-01", premium:9500, clientId:"1", applicant:"Elvis Prestley", dba:"TechSol", effectiveDate:"2024-07-01", lob:"Worker's Comp", producer:"Elvis Prestley" },
   { id:"5", quoteId:"QAA987654321-1", policyType:"Cyber Liability", status:"Incomplete", createdDate:"2024-07-01", premium:6200, clientId:"1", applicant:"Joe Smith", dba:"Tech Solutions Inc.", effectiveDate:"2024-07-01", lob:"General Liability", producer:"Joe Smith" },
   { id:"6", quoteId:"QAA987654321-1", policyType:"Umbrella", status:"Pending", createdDate:"2025-03-01", premium:4800, clientId:"1", applicant:"Elvis Prestley", dba:"TechSol", effectiveDate:"2025-03-01", lob:"Vacant Risks", producer:"Elvis Prestley" },
-  { id:"7", quoteId:"Q-2024-015", policyType:"General Liability", status:"Approved", createdDate:"2024-04-05", premium:8000, clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-05-01", lob:"General Liability", producer:"Sarah Johnson" },
-  { id:"8", quoteId:"Q-2024-016", policyType:"Workers Compensation", status:"Pending", createdDate:"2024-04-08", premium:12000, clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-06-01", lob:"Worker's Comp", producer:"Sarah Johnson" },
+  { id:"7",  quoteId:"Q-2024-015",    policyType:"General Liability",    status:"Approved",    createdDate:"2024-04-05", premium:8000,  clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-05-01", lob:"General Liability", producer:"Sarah Johnson" },
+  { id:"8",  quoteId:"Q-2024-016",    policyType:"Workers Compensation", status:"Pending",     createdDate:"2024-04-08", premium:12000, clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-06-01", lob:"Worker's Comp",    producer:"Sarah Johnson" },
+  { id:"9",  quoteId:"Q-2024-017",    policyType:"Commercial Auto",      status:"Incomplete",  createdDate:"2024-04-10", premium:9500,  clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", effectiveDate:"2024-06-15", lob:"Commercial Auto",  producer:"Sarah Johnson" },
+  { id:"10", quoteId:"Q-2024-018",    policyType:"Property Insurance",   status:"Declined",    createdDate:"2024-03-20", premium:7200,  clientId:"3", applicant:"Tom Harris",    dba:"GEL Transport", effectiveDate:"2024-05-01", lob:"Property",         producer:"Sarah Johnson" },
+  // Client 2 — John Anderson
+  { id:"11", quoteId:"Q-2023-JA-001", policyType:"Auto Insurance",       status:"Sold/Issued", createdDate:"2023-08-15", premium:7000,  clientId:"2", applicant:"John Anderson", effectiveDate:"2023-09-01", lob:"Auto Insurance", producer:"Mike Chen" },
+  { id:"12", quoteId:"Q-2023-JA-002", policyType:"Homeowners",           status:"Sold/Issued", createdDate:"2023-09-01", premium:5000,  clientId:"2", applicant:"John Anderson", effectiveDate:"2023-10-01", lob:"Homeowners",    producer:"Mike Chen" },
+  { id:"13", quoteId:"Q-2024-JA-003", policyType:"Umbrella",             status:"Pending",     createdDate:"2024-03-10", premium:2800,  clientId:"2", applicant:"John Anderson", effectiveDate:"2024-04-01", lob:"Umbrella",      producer:"Mike Chen" },
+  { id:"14", quoteId:"Q-2024-JA-004", policyType:"Life Insurance",       status:"Incomplete",  createdDate:"2024-02-05", premium:3200,  clientId:"2", applicant:"John Anderson", effectiveDate:"2024-05-01", lob:"Life",          producer:"Mike Chen" },
+  { id:"15", quoteId:"Q-2024-JA-005", policyType:"Cyber Liability",      status:"Declined",    createdDate:"2024-01-18", premium:1500,  clientId:"2", applicant:"John Anderson", effectiveDate:"2024-03-01", lob:"Cyber",         producer:"Mike Chen" },
+  // Client 4 — Metro Construction LLC
+  { id:"16", quoteId:"Q-2024-MC-001", policyType:"Commercial Auto",      status:"Sold/Issued", createdDate:"2024-03-01", premium:31000, clientId:"4", applicant:"James Wilson", dba:"MetroBuild", effectiveDate:"2024-04-01", lob:"Commercial Auto",  producer:"Jane Smith" },
+  { id:"17", quoteId:"Q-2024-MC-002", policyType:"General Liability",    status:"Sold/Issued", createdDate:"2024-02-01", premium:15000, clientId:"4", applicant:"James Wilson", dba:"MetroBuild", effectiveDate:"2024-02-15", lob:"General Liability", producer:"Jane Smith" },
+  { id:"18", quoteId:"Q-2024-MC-003", policyType:"Umbrella",             status:"Pending",     createdDate:"2024-04-05", premium:8500,  clientId:"4", applicant:"James Wilson", dba:"MetroBuild", effectiveDate:"2024-05-01", lob:"Umbrella",          producer:"Jane Smith" },
+  { id:"19", quoteId:"Q-2024-MC-004", policyType:"Equipment Floater",    status:"Incomplete",  createdDate:"2024-04-10", premium:6200,  clientId:"4", applicant:"Robert Kim",   dba:"MetroBuild", effectiveDate:"2024-06-01", lob:"Equipment Floater", producer:"Jane Smith" },
+  { id:"20", quoteId:"Q-2024-MC-005", policyType:"Builder's Risk",       status:"Approved",    createdDate:"2024-03-20", premium:18000, clientId:"4", applicant:"James Wilson", dba:"MetroBuild", effectiveDate:"2024-04-15", lob:"Builder's Risk",    producer:"Jane Smith" },
+  // Client 5 — Maria Rodriguez
+  { id:"21", quoteId:"Q-2023-MR-001", policyType:"Auto Insurance",       status:"Sold/Issued", createdDate:"2023-11-01", premium:8500,  clientId:"5", applicant:"Maria Rodriguez", effectiveDate:"2023-12-01", lob:"Auto Insurance", producer:"Mike Chen" },
+  { id:"22", quoteId:"Q-2024-MR-002", policyType:"Renters Insurance",    status:"Sold/Issued", createdDate:"2024-01-10", premium:1200,  clientId:"5", applicant:"Maria Rodriguez", effectiveDate:"2024-02-01", lob:"Renters",        producer:"Mike Chen" },
+  { id:"23", quoteId:"Q-2024-MR-003", policyType:"Life Insurance",       status:"Pending",     createdDate:"2024-01-15", premium:2400,  clientId:"5", applicant:"Maria Rodriguez", effectiveDate:"2024-03-01", lob:"Life",           producer:"Mike Chen" },
+  { id:"24", quoteId:"Q-2024-MR-004", policyType:"Health Insurance",     status:"Incomplete",          createdDate:"2024-02-20", premium:4800,  clientId:"5", applicant:"Maria Rodriguez",                    effectiveDate:"2024-04-01", lob:"Health",           producer:"Mike Chen"    },
+  // Upcoming Renewals & Pending/Action Req. quotes
+  { id:"25", quoteId:"Q-2024-GE-005", policyType:"Umbrella",             status:"Pending/Action Req.", createdDate:"2024-04-12", premium:3500,  clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport",   effectiveDate:"2024-06-01", lob:"Umbrella",         producer:"Sarah Johnson" },
+  { id:"26", quoteId:"Q-2024-GE-006", policyType:"General Liability",    status:"Upcoming Renewals",  createdDate:"2024-03-15", premium:8000,  clientId:"3", applicant:"Tom Harris",    dba:"GEL Transport",   effectiveDate:"2025-05-01", lob:"General Liability", producer:"Sarah Johnson" },
+  { id:"27", quoteId:"Q-2024-MC-006", policyType:"Umbrella",             status:"Upcoming Renewals",  createdDate:"2024-04-01", premium:12000, clientId:"4", applicant:"James Wilson",  dba:"MetroBuild",      effectiveDate:"2025-04-01", lob:"Umbrella",         producer:"Jane Smith"    },
+  { id:"28", quoteId:"Q-2024-MC-007", policyType:"General Liability",    status:"Pending/Action Req.", createdDate:"2024-04-08", premium:15000, clientId:"4", applicant:"Robert Kim",    dba:"MetroBuild",      effectiveDate:"2024-06-01", lob:"General Liability", producer:"Jane Smith"   },
+  { id:"29", quoteId:"Q-2024-JA-006", policyType:"Auto Insurance",       status:"Upcoming Renewals",  createdDate:"2024-04-01", premium:7000,  clientId:"2", applicant:"John Anderson",                        effectiveDate:"2025-09-01", lob:"Auto Insurance",   producer:"Mike Chen"    },
+  { id:"30", quoteId:"Q-2024-MR-005", policyType:"Auto Insurance",       status:"Upcoming Renewals",  createdDate:"2024-11-15", premium:8500,  clientId:"5", applicant:"Maria Rodriguez",                    effectiveDate:"2024-12-01", lob:"Auto Insurance",   producer:"Mike Chen"    },
+  { id:"31", quoteId:"Q-2024-MR-006", policyType:"Life Insurance",       status:"Pending/Action Req.", createdDate:"2024-03-01", premium:2400,  clientId:"5", applicant:"Maria Rodriguez",                   effectiveDate:"2024-05-01", lob:"Life",             producer:"Mike Chen"    },
+  { id:"32", quoteId:"QMWC999000111", policyType:"Cyber Liability",      status:"Upcoming Renewals",  createdDate:"2025-01-15", premium:6200,  clientId:"1", applicant:"Jane Smith",    dba:"TechSol",         effectiveDate:"2025-07-01", lob:"Cyber Liability",  producer:"Jane Smith"    },
+  { id:"33", quoteId:"QMWC888777666", policyType:"Workers Compensation",  status:"Pending/Action Req.", createdDate:"2025-02-10", premium:12000, clientId:"1", applicant:"Joe Smith",    dba:"Tech Solutions Inc.", effectiveDate:"2025-03-01", lob:"Worker's Comp", producer:"Joe Smith"    },
 ];
 const mockPolicies: Policy[] = [
   { id:"1", policyNumber:"POL-2024-1001", policyType:"General Liability", status:"Active", effectiveDate:"2024-01-01", expirationDate:"2025-01-01", premium:15000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", lob:"General Liability", producer:"Jane Smith", createdDate:"2024-01-01" },
@@ -59,7 +88,17 @@ const mockPolicies: Policy[] = [
   { id:"3", policyNumber:"POL-2024-1003", policyType:"Property Insurance", status:"Active", effectiveDate:"2024-01-15", expirationDate:"2025-01-15", premium:12000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", lob:"Property", producer:"Jane Smith", createdDate:"2024-01-15" },
   { id:"4", policyNumber:"POL-2023-0856", policyType:"Auto Insurance", status:"Upcoming Renewal", effectiveDate:"2023-09-01", expirationDate:"2024-09-01", premium:7000, clientId:"2", applicant:"John Anderson", lob:"Auto Insurance", producer:"Mike Chen", createdDate:"2023-09-01" },
   { id:"5", policyNumber:"POL-2023-0857", policyType:"Homeowners", status:"Expired", effectiveDate:"2023-10-01", expirationDate:"2024-10-01", premium:5000, clientId:"2", applicant:"John Anderson", lob:"Homeowners", producer:"Mike Chen", createdDate:"2023-10-01" },
-  { id:"6", policyNumber:"POL-2024-2201", policyType:"Workers Compensation", status:"Active", effectiveDate:"2024-03-01", expirationDate:"2025-03-01", premium:22000, clientId:"4", applicant:"Mike Chen", dba:"Metro LLC", lob:"Worker's Comp", producer:"Jane Smith", createdDate:"2024-03-01" },
+  { id:"6",  policyNumber:"POL-2024-2201", policyType:"Workers Compensation", status:"Active",            effectiveDate:"2024-03-01", expirationDate:"2025-03-01", premium:22000, clientId:"4", applicant:"Mike Chen",     dba:"Metro LLC",    lob:"Worker's Comp",    producer:"Jane Smith",    createdDate:"2024-03-01" },
+  // Client 3 — Green Earth Logistics
+  { id:"7",  policyNumber:"POL-2024-3101", policyType:"General Liability",    status:"Active",            effectiveDate:"2024-05-01", expirationDate:"2025-05-01", premium:8000,  clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", lob:"General Liability", producer:"Sarah Johnson", createdDate:"2024-05-01" },
+  { id:"8",  policyNumber:"POL-2024-3102", policyType:"Commercial Auto",      status:"Upcoming Renewal",  effectiveDate:"2023-06-01", expirationDate:"2024-06-01", premium:9500,  clientId:"3", applicant:"Sarah Johnson", dba:"GEL Transport", lob:"Commercial Auto",  producer:"Sarah Johnson", createdDate:"2023-06-01" },
+  // Client 4 — Metro Construction LLC (4 more to reach 5 total)
+  { id:"9",  policyNumber:"POL-2024-4201", policyType:"Commercial Auto",      status:"Active",            effectiveDate:"2024-04-01", expirationDate:"2025-04-01", premium:31000, clientId:"4", applicant:"James Wilson",  dba:"MetroBuild",   lob:"Commercial Auto",  producer:"Jane Smith",    createdDate:"2024-04-01" },
+  { id:"10", policyNumber:"POL-2024-4202", policyType:"General Liability",    status:"Active",            effectiveDate:"2024-02-15", expirationDate:"2025-02-15", premium:15000, clientId:"4", applicant:"James Wilson",  dba:"MetroBuild",   lob:"General Liability", producer:"Jane Smith",   createdDate:"2024-02-15" },
+  { id:"11", policyNumber:"POL-2024-4203", policyType:"Builder's Risk",       status:"Active",            effectiveDate:"2024-04-15", expirationDate:"2025-04-15", premium:18000, clientId:"4", applicant:"James Wilson",  dba:"MetroBuild",   lob:"Builder's Risk",   producer:"Jane Smith",    createdDate:"2024-04-15" },
+  { id:"12", policyNumber:"POL-2024-4204", policyType:"Equipment Floater",    status:"Upcoming Renewal",  effectiveDate:"2023-06-01", expirationDate:"2024-06-01", premium:6200,  clientId:"4", applicant:"Robert Kim",    dba:"MetroBuild",   lob:"Equipment Floater", producer:"Jane Smith",   createdDate:"2023-06-01" },
+  // Client 5 — Maria Rodriguez
+  { id:"13", policyNumber:"POL-2023-5101", policyType:"Auto Insurance",       status:"Active",            effectiveDate:"2023-12-01", expirationDate:"2024-12-01", premium:8500,  clientId:"5", applicant:"Maria Rodriguez",                   lob:"Auto Insurance",   producer:"Mike Chen",     createdDate:"2023-12-01" },
 ];
 const mockDocuments: Document[] = [
   { id:"1", name:"Certificate of Insurance", type:"PDF", uploadDate:"2024-04-05", size:"2.3 MB", clientId:"1", category:"Certificate" },
@@ -181,17 +220,20 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
     Inactive:  { color: isDark ? "#8B8FA8" : "#9CA3AF", background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" },
     Prospect:  { background: "rgba(147,51,234,0.05)" },
     Pending:   { color: "#F59E0B", background: "rgba(245,158,11,0.08)" },
+    "Pending/Action Req.": { color: "#F59E0B", background: "rgba(245,158,11,0.08)" },
     Approved:  { color: "#73C9B7", background: "rgba(115,201,183,0.10)" },
     Declined:  { color: "#EF4444", background: "rgba(239,68,68,0.08)" },
     Cancelled: { color: "#EF4444", background: "rgba(239,68,68,0.08)" },
     Expired:   { color: isDark ? "#8B8FA8" : "#9CA3AF", background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" },
+    "Upcoming Renewals": { color: "#74C3B7", background: "rgba(116,195,183,0.10)" },
+    "Upcoming Renewal":  { color: "#74C3B7", background: "rgba(116,195,183,0.10)" },
   };
   const s = styles[status] || { color: "#9CA3AF", background: "#F3F4F6" };
   if (status === "Prospect") {
     return (
       <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
-        style={{ fontFamily: FONT, background: "rgba(147,51,234,0.05)" }}>
-        <span style={{ backgroundImage: "linear-gradient(135deg, #5C2ED4 0%, #A614C3 65%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{status}</span>
+        style={{ fontFamily: FONT, background: isDark ? "rgba(147,51,234,0.18)" : "rgba(147,51,234,0.08)" }}>
+        <span style={{ color: "#fff" }}>{status}</span>
       </span>
     );
   }
@@ -214,7 +256,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
   const border  = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
   const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#fff";
   const teal    = isDark ? "#A78BFA" : "#74C3B7";
-  const tealBg  = isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)";
+  const tealBg  = isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)";
 
   const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: text, marginBottom: 5, display: "block" };
   const reqStar = <span style={{ color: "#EF4444", marginLeft: 1 }}>*</span>;
@@ -349,7 +391,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
             Cancel
           </button>
           <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"
-            style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+            style={{ fontFamily: FONT, background: tealBg }}>
             Create Client
           </button>
         </div>
@@ -363,7 +405,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [view, setView] = useState<ViewType>("list");
   const [selected, setSelected] = useState<Client | null>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
-  const [highlightFilter, setHighlightFilter] = useState<"pending-quotes" | "renewals" | null>(null);
+  const [highlightFilter, setHighlightFilter] = useState<"incomplete-quotes" | "active-policies" | "renewals" | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("All");
   const [search, setSearch] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -408,8 +450,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     inputBg:     isDark ? "rgba(255,255,255,0.05)" : "#fff",
     primary:     "#A614C3",
     primaryBg:   "rgba(166,20,195,0.10)",
-    teal:        isDark ? "#A78BFA" : "#74C3B7",
-    accentGrad:  isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)",
+    teal:        "#73C9B7",
+    accentGrad:  isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)",
     accentShadow: isDark ? "0 4px 14px rgba(92,46,212,0.4)" : "0 4px 10px rgba(116,195,183,0.35)",
   };
 
@@ -542,8 +584,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   );
 
   /* ── DETAIL CLIENT DATA ── */
-  const clientPolicies = selected ? mockPolicies.filter(p => p.clientId === selected.id && (!detailSearch || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyType.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
-  const clientQuotes   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
+  const clientPolicies = selected ? mockPolicies.filter(p => p.clientId === selected.id && (!detailSearch || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || p.status === "Upcoming Renewal") && (highlightFilter !== "active-policies" || p.status === "Active")) : [];
+  const clientQuotes   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || q.status === "Upcoming Renewals") && (highlightFilter !== "incomplete-quotes" || q.status === "Incomplete")) : [];
+  const incompleteQuotesCount = selected ? mockQuotes.filter(q => q.clientId === selected.id && q.status === "Incomplete").length : 0;
+  const upcomingRenewalsCount = selected ? mockPolicies.filter(p => p.clientId === selected.id && p.status === "Upcoming Renewal").length : 0;
   const clientDocs     = selected ? mockDocuments.filter(d => d.clientId === selected.id && (!detailSearch || d.name.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
   const clientActivity = selected ? activityLogs.filter(a => a.clientId === selected.id) : [];
   const clientNotes    = selected ? notes.filter(n => n.clientId === selected.id) : [];
@@ -561,13 +605,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
             <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-              style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>
+              style={{ background: c.accentGrad, fontFamily: FONT }}>
               <Search className="w-3.5 h-3.5" />Submit
             </button>
           </div>
           <button onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
-            style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+            style={{ fontFamily: FONT, background: c.accentGrad }}>
             <Plus className="w-4 h-4" />Add Client
           </button>
         </div>
@@ -575,9 +619,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         {/* Filter Pills — no divider line */}
         <div className="flex items-center gap-2 mb-5 flex-wrap">
           {filterPill("All")}
+          {filterPill("Starred")}
           {filterPill("Active")}
           {filterPill("Inactive")}
-          {filterPill("Starred")}
           {filterPill("Business")}
           {filterPill("Individual")}
         </div>
@@ -602,7 +646,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <Star className="w-4 h-4 flex-shrink-0" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
                 <div style={{ minWidth: 0 }}>
                   <div className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
-                  <div className="text-[11px]" style={{ fontFamily: FONT, color: c.teal }}>{cl.type}</div>
+                  <div className="text-[11px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#A614C3" : c.teal }}>{cl.type}</div>
                 </div>
               </button>
             ))}
@@ -654,9 +698,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 {cl.dbaName && <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>DBA: {cl.dbaName}</div>}
               </div>
               {/* Type */}
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.teal }}>
-                {cl.type}
-              </div>
+              <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#A614C3" : c.teal }}>{cl.type}</div>
               {/* Contact */}
               <div>
                 <div className="text-[11px] mb-0.5 truncate" style={{ fontFamily: FONT, color: c.muted }}>{cl.email}</div>
@@ -766,7 +808,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             ].map(({ icon, label }, i) => (
               <button key={label}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
-                style={{ fontFamily: FONT, background: i === 0 ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
+                style={{ fontFamily: FONT, background: i === 0 ? c.accentGrad : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
                 onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
                 onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}
                 onClick={() => {
@@ -783,9 +825,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* Info cards */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         {[
-          { label: "Pending Quotes",    value: String(selected.pendingQuotes),  icon: <ClipboardList className="w-5 h-5" style={{ color: c.teal }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("pending-quotes"); setDetailSearch(""); }, highlight: selected.pendingQuotes > 0  },
-          { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter(null);            setDetailSearch(""); }, highlight: false },
-          { label: "Upcoming Renewals", value: String(selected.pendingQuotes),  icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");       setDetailSearch(""); }, highlight: selected.pendingQuotes > 0  },
+          { label: "Incomplete Quotes",  value: String(incompleteQuotesCount),   icon: <ClipboardList className="w-5 h-5" style={{ color: c.teal }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("incomplete-quotes"); setDetailSearch(""); }, highlight: incompleteQuotesCount > 0   },
+          { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter("active-policies"); setDetailSearch(""); }, highlight: false },
+          { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
           { label: "Primary Contact",   value: selected.assignedAgent,          icon: <UserCircle className="w-5 h-5" style={{ color: c.teal }} />,     onClick: () => { setDetailTab("overview"); setHighlightFilter(null);            setDetailSearch(""); document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth" }); }, highlight: false },
         ].map((card, i) => (
           <button key={i} onClick={card.onClick}
@@ -940,7 +982,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
                     style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingInfo(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
-                    style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
+                    style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
               </>
             )}
@@ -1009,7 +1051,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <label className="flex items-center gap-2 mb-3 cursor-pointer select-none" style={{ fontFamily: FONT, fontSize: 12, color: c.text }}>
                     <div onClick={() => setEditFields(f => ({ ...f, sameAddr: f.sameAddr === "true" ? "false" : "true" }))}
                       className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
-                      style={{ background: editFields.sameAddr === "true" ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : c.inputBg, border: `1px solid ${editFields.sameAddr === "true" ? "#75C9B7" : c.border}` }}>
+                      style={{ background: editFields.sameAddr === "true" ? c.accentGrad : c.inputBg, border: `1px solid ${editFields.sameAddr === "true" ? "#75C9B7" : c.border}` }}>
                       {editFields.sameAddr === "true" && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
                     Same as Agency Address
@@ -1045,7 +1087,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <button onClick={() => setEditingAddr(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
                     style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingAddr(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
-                    style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
+                    style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
               </>
             )}
@@ -1063,11 +1105,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+                style={{ background: c.accentGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: "#5C5C5C", fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
@@ -1104,14 +1146,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <div key={p.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
                   style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(116,195,183,0.08)" : "transparent", borderLeft: isHighlighted ? "3px solid #74C3B7" : "3px solid transparent" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.08)":"transparent")}>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.createdDate).toLocaleDateString()}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>
                   <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{p.policyNumber}</div>
-                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.dba || "—"}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.lob}</div>
-                  <StatusBadge status={p.status} isDark={isDark} />
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.producer}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba || "—"}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.lob}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.status}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.producer}</div>
                 </div>
                 );
               })}
@@ -1130,11 +1172,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+                style={{ background: c.accentGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: "#5C5C5C", fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
+                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
@@ -1168,20 +1210,20 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             </div>
             <div className="overflow-y-auto flex-1">
               {clientQuotes.map((q,i,arr) => {
-                const isPending = q.status === "Pending";
-                const isHighlighted = highlightFilter === "pending-quotes" && isPending;
+                const isPending = q.status === "Pending" || q.status === "Pending/Action Req.";
+                const isHighlighted = highlightFilter === "incomplete-quotes" && q.status === "Incomplete";
                 return (
                 <div key={q.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
                   style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(245,158,11,0.06)" : "transparent", borderLeft: isHighlighted ? "3px solid #F59E0B" : "3px solid transparent" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.06)":"transparent")}>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(q.createdDate).toLocaleDateString()}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>
                   <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{q.quoteId}</div>
-                  <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.dba || "—"}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.effectiveDate ? new Date(q.effectiveDate).toLocaleDateString() : "—"}</div>
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.lob}</div>
-                  <StatusBadge status={q.status} isDark={isDark} />
-                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.producer}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba || "—"}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate ? new Date(q.effectiveDate).toLocaleDateString() : "—"}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.lob}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.status}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.producer}</div>
                 </div>
                 );
               })}
@@ -1199,12 +1241,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 className="flex-1 outline-none"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
               <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                style={{ fontFamily: FONT, background: c.accentGrad }}>
                 <Search className="w-3.5 h-3.5" />Submit
               </button>
             </div>
             <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-              style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+              style={{ fontFamily:FONT, background:c.accentGrad }}>
               <Upload className="w-4 h-4" />Upload Document
             </button>
           </div>
@@ -1308,7 +1350,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               </div>
               <button onClick={() => setAddActivityOpen(true)}
                 className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white flex-shrink-0"
-                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                style={{ fontFamily: FONT, background: c.accentGrad }}>
                 <Plus className="w-3.5 h-3.5" />Add Activity
               </button>
             </div>
@@ -1407,7 +1449,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       setNewActivityAction(""); setNewActivityDesc(""); setAddActivityOpen(false);
                     }}
                       className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-                      style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                      style={{ fontFamily:FONT, background:c.accentGrad }}>
                       Add Activity
                     </button>
                   </div>
@@ -1441,7 +1483,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   setNewNote("");
                 }}
                 className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-                style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                style={{ fontFamily:FONT, background:c.accentGrad }}>
                 <Plus className="w-4 h-4" />Add Note
               </button>
             </div>
@@ -1457,7 +1499,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                          style={{ background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                          style={{ background:c.accentGrad }}>
                           {n.author.charAt(0)}
                         </div>
                         <span className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{n.author}</span>
@@ -1539,7 +1581,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="px-7 py-6 space-y-5">
               {/* Topic */}
               <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Meeting Topic</label>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Meeting Topic</label>
                 <input value={zoomTopic} onChange={e => setZoomTopic(e.target.value)} placeholder="e.g. Quarterly coverage review"
                   className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
               </div>
@@ -1547,21 +1589,21 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               {/* Date + Time + Duration row */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>
                     <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Date</span>
                   </label>
                   <input type="date" value={zoomDate} onChange={e => setZoomDate(e.target.value)}
-                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
+                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, colorScheme: isDark ? "dark" : "light" }} />
                 </div>
                 <div>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Time</span>
                   </label>
                   <input type="time" value={zoomTime} onChange={e => setZoomTime(e.target.value)}
-                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
+                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, colorScheme: isDark ? "dark" : "light" }} />
                 </div>
                 <div style={{ position: "relative" }}>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Duration</label>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Duration</label>
                   <select value={zoomDuration} onChange={e => setZoomDuration(e.target.value)}
                     className="outline-none w-full cursor-pointer" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, appearance: "none" as const }}>
                     <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">1.5 hours</option>
@@ -1572,14 +1614,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
               {/* Attendees preview */}
               <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Attendees</label>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Attendees</label>
                 <div className="flex items-center gap-2 flex-wrap">
                   {selected && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: "rgba(116,195,183,0.10)", color: c.teal, border: `1px solid rgba(116,195,183,0.25)` }}>
                       <UserCircle className="w-3 h-3" />{getClientName(selected)}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", color: c.muted }}>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", color: c.text }}>
                     <UserCircle className="w-3 h-3" />{selected?.assignedAgent || "Agent"}
                   </span>
                 </div>
@@ -1587,7 +1629,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
               {/* Notes */}
               <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Notes (optional)</label>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Notes (optional)</label>
                 <textarea rows={3} value={zoomNotes} onChange={e => setZoomNotes(e.target.value)} placeholder="Add agenda or talking points..."
                   className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, resize: "none" }} />
               </div>
@@ -1595,7 +1637,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               {/* Zoom link preview */}
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
                 <Link className="w-4 h-4 flex-shrink-0" style={{ color: c.teal }} />
-                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Zoom meeting link will be generated automatically</span>
+                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Zoom meeting link will be generated automatically</span>
               </div>
             </div>
 
@@ -1603,7 +1645,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between px-7 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setZoomModalOpen(false)}
                 className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily: FONT, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}>
                 Cancel
               </button>
               <button onClick={() => {
@@ -1614,7 +1656,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 setZoomModalOpen(false);
               }}
                 className="px-5 py-[9px] rounded-lg text-[12px] font-normal text-white"
-                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                style={{ fontFamily: FONT, background: c.accentGrad }}>
                 Schedule Meeting
               </button>
             </div>
@@ -1659,44 +1701,41 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="w-[920px] max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ background: c.cardBg, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
 
               {/* Header */}
-              <div className="relative flex items-start justify-between px-8 pt-7 pb-6 overflow-hidden" style={{ borderBottom: `1px solid ${c.border}`, background: c.cardBg }}>
-<div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.10),rgba(166,20,195,0.10))", color: "#7C3AED" }}>⚡ Complete Your Coverage</span>
+              <div className="relative px-8 py-5 overflow-hidden" style={{ borderBottom: `1px solid ${c.border}`, background: c.cardBg }}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h2 className="text-[17px] font-bold leading-tight" style={{ color: c.text }}>We Already Have {getClientName(selected)}'s Info—Get Quotes Faster!</h2>
+                    <p className="text-[12px] mt-1" style={{ color: c.muted }}>Business info is already saved. Select a coverage type to start a quote in minutes.</p>
                   </div>
-                  <h2 className="text-[20px] font-bold mb-1.5" style={{ color: c.text }}>We Already Have {getClientName(selected)}'s Info—Get Quotes Faster!</h2>
-                  <p className="text-[12px]" style={{ color: c.muted }}>Business info is already saved. Select a coverage type to start a quote in minutes.</p>
+                  <button onClick={() => setCreateQuoteOpen(false)} className="p-1.5 rounded-lg transition-colors flex-shrink-0 mt-1" style={{ color: c.muted }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button onClick={() => setCreateQuoteOpen(false)} className="p-1.5 rounded-lg transition-colors mt-1" style={{ color: c.muted }}
-                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
               <div className="overflow-y-auto flex-1 px-8 py-6">
                 {/* Recommended */}
                 {recommended.length > 0 && (
                   <div className="mb-7">
-                    <div className="flex items-center gap-2.5 mb-4">
-                      <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
-                      <span className="text-[13px] font-bold" style={{ color: c.text }}>Recommended for {getClientName(selected)}</span>
-                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: "rgba(245,158,11,0.07)", color: "#D97706", borderColor: "rgba(245,158,11,0.20)" }}>Based on client profile</span>
-                      <span className="flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.07),rgba(166,20,195,0.07))", color: "#7C3AED", borderColor: "rgba(92,46,212,0.15)" }}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "linear-gradient(90deg,rgba(92,46,212,0.55) 0%,rgba(166,20,195,0.55) 65%)" }}>
                         <img src={norbieface.src} alt="Norbie" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        Norbie's Pick
+                        <span style={{ color: "#fff" }}>Norbie's Pick</span>
                       </span>
+                      <span className="text-[13px] font-bold" style={{ color: c.text }}>Recommended for {getClientName(selected)}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       {recommended.map(p => (
                         <div key={p.id} className="rounded-2xl p-5 relative flex flex-col transition-all cursor-pointer"
-                          style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fff", border: "1.1px solid #E5E7EB", boxShadow: "0 0 14.9px 0 rgba(110,33,196,0.15)" }}
-                          onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 20px 0 rgba(110,33,196,0.25)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 14.9px 0 rgba(110,33,196,0.15)"; }}>
+                          style={{ background: isDark ? "linear-gradient(#1A1E38,#1A1E38) padding-box, linear-gradient(90deg,#272B44,#272B44) border-box" : "linear-gradient(#fff,#fff) padding-box, linear-gradient(90deg,#E5E7EB,#E5E7EB) border-box", border: "1.1px solid transparent", boxShadow: "0 0 14.9px 0 rgba(110,33,196,0.15)" }}
+                          onMouseEnter={e => { e.currentTarget.style.background = isDark ? "linear-gradient(#1A1E38,#1A1E38) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box" : "linear-gradient(#fff,#fff) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box"; e.currentTarget.style.boxShadow = "0 0 22px 0 rgba(110,33,196,0.30)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = isDark ? "linear-gradient(#1A1E38,#1A1E38) padding-box, linear-gradient(90deg,#272B44,#272B44) border-box" : "linear-gradient(#fff,#fff) padding-box, linear-gradient(90deg,#E5E7EB,#E5E7EB) border-box"; e.currentTarget.style.boxShadow = "0 0 14.9px 0 rgba(110,33,196,0.15)"; }}>
                           {p.tag && (
                             <span className="absolute top-3 right-3 text-[9px] font-bold px-2.5 py-1 rounded-lg text-white"
-                              style={{ background: p.tag === "BEST VALUE" ? "#74C3B7" : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" }}>{p.tag}</span>
+                              style={{ background: p.tag === "BEST VALUE" ? "#74C3B7" : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }}>{p.tag}</span>
                           )}
-                          <div className="p-3 rounded-xl mb-3 w-fit" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", transform: "scale(0.9)", transformOrigin: "center" }}>{img(p.imgKey)}</div>
+                          <div className="p-3 rounded-xl mb-3 w-fit" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#fff", boxShadow: isDark ? "0 0 0 1.5px rgba(92,46,212,0.5)" : "0 1px 4px rgba(0,0,0,0.08)", transform: "scale(0.9)", transformOrigin: "center" }}>{img(p.imgKey)}</div>
                           <div className="text-[14px] font-bold mb-0.5" style={{ color: c.text }}>{p.name}</div>
                           <div className="text-[11px] mb-3" style={{ color: c.muted }}>{p.desc}</div>
                           <div className="text-[22px] font-bold mb-0.5" style={{ background: "linear-gradient(135deg,#9333EA,#EC4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{p.price}</div>
@@ -1716,7 +1755,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                             <Calendar className="w-3 h-3" /><span>Takes only 5 minutes</span>
                           </div>
                           <button className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white flex items-center justify-center gap-1.5 transition-all"
-                            style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" }}
+                            style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }}
                             onMouseEnter={e => (e.currentTarget.style.opacity = "0.9")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
                             Get Quote Now →
                           </button>
@@ -1728,20 +1767,32 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
                 {/* All Products */}
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <ClipboardList className="w-4 h-4" style={{ color: c.muted }} />
+                  <div className="flex items-baseline justify-between mb-4">
                     <span className="text-[13px] font-bold" style={{ color: c.text }}>All Available Coverages</span>
+                    <span className="text-[11px]" style={{ color: c.muted }}>
+                      Coverages not listed here aren't suited for this client.&nbsp;
+                      <span className="font-semibold cursor-pointer" style={{ color: c.teal }}>Visit Marketplace →</span>
+                    </span>
                   </div>
                   <div className="grid grid-cols-5 gap-3">
-                    {allProducts.filter(p => !recommended.includes(p)).map(p => {
-                      const hasIt = existingLobs.has(p.name);
+                    {allProducts.filter(p => !recommended.includes(p) && !existingLobs.has(p.name)).map(p => {
                       return (
-                        <button key={p.id} disabled={hasIt}
+                        <button key={p.id}
                           className="rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all"
-                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, opacity: hasIt ? 0.45 : 1, cursor: hasIt ? "default" : "pointer" }}
-                          onMouseEnter={e => { if (!hasIt) { e.currentTarget.style.boxShadow = "0 2px 12px rgba(92,46,212,0.18)"; e.currentTarget.style.background = "linear-gradient(white,white) padding-box, linear-gradient(90deg,#5C2ED4,#A614C3) border-box"; e.currentTarget.style.border = "1px solid transparent"; } }}
+                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, cursor: "pointer" }}
+                          onMouseEnter={e => {
+                            if (isDark) {
+                              e.currentTarget.style.background = "radial-gradient(ellipse 165% 165% at 50% 5%, #282550 0%, #22204A 20%, #191735 48%, rgba(15,10,40,0.40) 68%, rgba(0,0,0,0.12) 84%, rgba(0,0,0,0) 100%) padding-box, linear-gradient(90deg, rgba(92,46,212,0.92) 0%, rgba(130,20,195,0.80) 50%, rgba(166,20,195,0.70) 100%) padding-box, linear-gradient(90deg, #5C2ED4 0%, #A614C3 65%) border-box";
+                              e.currentTarget.style.border = "1px solid transparent";
+                              e.currentTarget.style.boxShadow = "0 0 14.9px 0 rgba(110,33,196,0.25)";
+                            } else {
+                              e.currentTarget.style.background = "linear-gradient(white,white) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box";
+                              e.currentTarget.style.border = "1px solid transparent";
+                              e.currentTarget.style.boxShadow = "0 2px 12px rgba(92,46,212,0.18)";
+                            }
+                          }}
                           onMouseLeave={e => { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
-                          <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.07)" : "#EFEFEF" }}>
+                          <div className="icon-ring w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.07)" : "#EFEFEF" }}>
                             <div style={{ transform: `scale(0.8)${p.id === "ca" ? " translateY(5px)" : p.id === "br" ? " translateY(-5px)" : ""}` }}>{img(p.imgKey)}</div>
                           </div>
                           <div className="text-[12px] font-bold leading-tight" style={{ color: c.text }}>{p.name}</div>
