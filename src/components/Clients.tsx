@@ -6,7 +6,7 @@ import {
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
-  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell,
+  StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell, Paperclip,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
@@ -16,6 +16,8 @@ interface Client {
   id: string; type: "Individual" | "Business";
   companyName?: string; dbaName?: string;
   firstName?: string; lastName?: string;
+  contactFirstName?: string; contactLastName?: string;
+  inspectionFirstName?: string; inspectionLastName?: string;
   email: string; phone: string;
   address: { street: string; city: string; state: string; zipCode: string };
   status: "Active" | "Inactive" | "Prospect";
@@ -23,6 +25,8 @@ interface Client {
   createdDate: string; lastActivity: string; isStarred?: boolean;
   totalPremium: number; activePolicies: number; pendingQuotes: number;
   notes?: string; tags?: string[]; industry?: string; website?: string;
+  primaryClassCode?: string; federalId?: string; contractorLicense?: string;
+  grossSales?: string; payroll?: string; owners?: string; employees?: string;
 }
 interface Quote { id: string; quoteId: string; policyType: string; status: "Pending"|"Approved"|"Declined"|"Expired"|"Sold/Issued"|"Incomplete"; createdDate: string; premium: number; clientId: string; applicant: string; dba?: string; effectiveDate?: string; lob: string; producer: string; }
 interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"|"Upcoming Renewal"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; applicant: string; dba?: string; lob: string; producer: string; createdDate: string; }
@@ -32,10 +36,10 @@ interface Note { id: string; content: string; author: string; timestamp: string;
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
-  { id:"1", type:"Business", companyName:"Tech Solutions Inc.", dbaName:"TechSol", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com" },
+  { id:"1", type:"Business", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85" },
   { id:"2", type:"Individual", firstName:"John", lastName:"Anderson", email:"john.anderson@email.com", phone:"(555) 234-5678", address:{street:"456 Oak Street",city:"Los Angeles",state:"CA",zipCode:"90001"}, status:"Active", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2024-02-20", lastActivity:"2024-04-08", isStarred:false, totalPremium:12000, activePolicies:2, pendingQuotes:0 },
-  { id:"3", type:"Business", companyName:"Green Earth Logistics", dbaName:"GEL Transport", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:0, activePolicies:0, pendingQuotes:2, industry:"Logistics" },
-  { id:"4", type:"Business", companyName:"Metro Construction LLC", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction" },
+  { id:"3", type:"Business", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:0, activePolicies:0, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
+  { id:"4", type:"Business", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
   { id:"5", type:"Individual", firstName:"Maria", lastName:"Rodriguez", email:"maria.r@email.com", phone:"(555) 567-8901", address:{street:"654 Palm Avenue",city:"Miami",state:"FL",zipCode:"33101"}, status:"Inactive", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2023-08-15", lastActivity:"2024-01-20", isStarred:false, totalPremium:8500, activePolicies:1, pendingQuotes:0 },
 ];
 const mockQuotes: Quote[] = [
@@ -172,16 +176,24 @@ function ActionMenu({ isDark, items, menuId, openMenuId, setOpenMenuId }: {
 /* ─── Status Badge ───────────────────────────────────────────────────────── */
 function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
   const styles: Record<string, React.CSSProperties> = {
-    Active:    { color: "#0EA882", background: "rgba(14,168,130,0.08)" },
+    Active:    { color: "#73C9B7", background: "rgba(115,201,183,0.10)" },
     Inactive:  { color: isDark ? "#8B8FA8" : "#9CA3AF", background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" },
-    Prospect:  { color: "#3B82F6", background: "rgba(59,130,246,0.08)" },
+    Prospect:  { background: "rgba(147,51,234,0.05)" },
     Pending:   { color: "#F59E0B", background: "rgba(245,158,11,0.08)" },
-    Approved:  { color: "#0EA882", background: "rgba(14,168,130,0.08)" },
+    Approved:  { color: "#73C9B7", background: "rgba(115,201,183,0.10)" },
     Declined:  { color: "#EF4444", background: "rgba(239,68,68,0.08)" },
     Cancelled: { color: "#EF4444", background: "rgba(239,68,68,0.08)" },
     Expired:   { color: isDark ? "#8B8FA8" : "#9CA3AF", background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" },
   };
   const s = styles[status] || { color: "#9CA3AF", background: "#F3F4F6" };
+  if (status === "Prospect") {
+    return (
+      <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
+        style={{ fontFamily: FONT, background: "rgba(147,51,234,0.05)" }}>
+        <span style={{ backgroundImage: "linear-gradient(135deg, #5C2ED4 0%, #A614C3 65%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{status}</span>
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
       style={{ fontFamily: FONT, ...s }}>{status}</span>
@@ -245,7 +257,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
                 <button key={t} onClick={() => setClientType(t)}
                   className="flex items-center justify-center gap-2 py-[10px] rounded-lg text-[13px] font-semibold transition-all"
                   style={clientType === t
-                    ? { background: cardBg, border: `2px solid ${teal}`, color: teal, fontFamily: FONT }
+                    ? { background: "#F0FAF9", border: `2px solid ${teal}`, color: teal, fontFamily: FONT }
                     : { background: cardBg, border: `1px solid ${border}`, color: text, fontFamily: FONT }}>
                   {t === "Business" ? <Building2 className="w-4 h-4" /> : <UserCircle className="w-4 h-4" />}
                   {t}
@@ -267,14 +279,12 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
               <F label="Email"           placeholder="email@example.com" type="email" req />
               <F label="Phone"           placeholder="(555) 123-4567" req />
               <F label="Website"         placeholder="www.example.com" />
-              <div />
               <F label="Primary Class Code" placeholder="(555) 123-4567" req />
-              <div style={{ gridColumn: "span 1", gridRow: "span 2" }}>
+              <div style={{ gridColumn: "span 2" }}>
                 <label style={lblSty}>Description of Operations</label>
                 <textarea rows={4} placeholder="Installation, maintenance, and repair of water, sewage, and drainage systems in residential and commercial properties..."
                   style={{ ...inpSty, resize: "none", height: "calc(100% - 22px)" }} className="outline-none w-full" />
               </div>
-              <div />
               <F label="Federal ID # (optional)" placeholder="ABC123456" req />
               <F label="Contractor License # (optional)" placeholder="987654321" />
               <F label="Gross Sales" placeholder="email@example.com" req />
@@ -299,17 +309,15 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
 
           {/* ── Mailing Address ── */}
           <div style={secCard}>
-            <div className="flex items-center justify-between mb-4">
-              <p style={{ ...secTitle, marginBottom: 0 }}>Mailing Address</p>
-              <label className="flex items-center gap-2 cursor-pointer select-none" style={{ fontFamily: FONT, fontSize: 12, color: teal }}>
-                <div onClick={() => setSameAddress(!sameAddress)}
-                  className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
-                  style={{ background: sameAddress ? teal : "transparent", border: `1.5px solid ${sameAddress ? teal : border}` }}>
-                  {sameAddress && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                Same as Physical Address
-              </label>
-            </div>
+            <p style={{ ...secTitle, marginBottom: 12 }}>Mailing Address</p>
+            <label className="flex items-center gap-2 cursor-pointer select-none mb-4" style={{ fontFamily: FONT, fontSize: 12, color: "#6B7280" }}>
+              <div onClick={() => setSameAddress(!sameAddress)}
+                className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
+                style={{ background: sameAddress ? teal : "transparent", border: `1.5px solid ${sameAddress ? teal : border}` }}>
+                {sameAddress && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </div>
+              Same as Physical Address
+            </label>
             <div className="grid gap-y-4">
               <F label="Street Address" placeholder="123 Main Street" />
               <div className="grid grid-cols-3 gap-x-4">
@@ -335,7 +343,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
         <div className="flex items-center justify-between px-7 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${border}`, background: cardBg, borderRadius: "0 0 16px 16px" }}>
           <button onClick={onClose}
             className="px-5 py-[8px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, border: `1px solid ${border}`, color: text, background: cardBg }}>
+            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
             Cancel
           </button>
           <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"
@@ -353,6 +361,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [view, setView] = useState<ViewType>("list");
   const [selected, setSelected] = useState<Client | null>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
+  const [highlightFilter, setHighlightFilter] = useState<"pending-quotes" | "renewals" | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("All");
   const [search, setSearch] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -360,6 +369,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [stars, setStars] = useState<Set<string>>(new Set(mockClients.filter(c => c.isStarred).map(c => c.id)));
   const [detailSearch, setDetailSearch] = useState("");
+  const [docDragOver, setDocDragOver] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -469,7 +479,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           background: active ? (isDark ? "rgba(255,255,255,0.10)" : "#F3F3F3") : "transparent",
           color: active ? c.text : c.muted,
           border: `1px solid ${active ? c.borderStrong : c.border}`,
-        }}>
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
         {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
         {label}
       </button>
@@ -515,7 +527,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   /* ── DETAIL TAB BUTTON ── */
   const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string }>) => (
-    <button onClick={() => { setDetailTab(tab); setDetailSearch(""); }}
+    <button onClick={() => { setDetailTab(tab); setDetailSearch(""); setHighlightFilter(null); }}
       className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
       style={{ fontFamily: FONT, color: detailTab === tab ? c.teal : c.muted, letterSpacing: "0.01em" }}>
       <Icon className="w-[15px] h-[15px]" />
@@ -540,10 +552,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
         {/* Search + Add */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-1 max-w-[340px]">
+          <div className="flex flex-1 max-w-[340px]" style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", background: c.inputBg }}>
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pr-10" style={{ ...inputSty, paddingRight: 40 }} />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: c.muted }} />
+              className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
+            <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
+              style={{ background: "linear-gradient(to bottom,#ACD697,#75C9B7)", fontFamily: FONT }}>
+              <Search className="w-3.5 h-3.5" />Submit
+            </button>
           </div>
           <button onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
@@ -577,8 +592,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <button key={cl.id} onClick={() => openDetail(cl)}
                 className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-left transition-all"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: 190, flexShrink: 0 }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(166,20,195,0.35)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
+                onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.20)" : "#D1D5DB"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}>
                 <Star className="w-4 h-4 flex-shrink-0" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
                 <div style={{ minWidth: 0 }}>
                   <div className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
@@ -729,21 +744,18 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         </button>
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-[24px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{getClientName(selected)}</h1>
-              <StatusBadge status={selected.status} isDark={isDark} />
-              <button onClick={() => toggleStar(selected.id)}>
+            <div className="flex items-start gap-3 mb-1">
+              <button onClick={() => toggleStar(selected.id)} className="mt-1 flex-shrink-0">
                 <Star className="w-5 h-5 transition-colors" style={{ fill: isStarred ? "#F59E0B" : "none", color: isStarred ? "#F59E0B" : c.sub }} />
               </button>
+              <h1 className="text-[24px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{getClientName(selected)}</h1>
+              <StatusBadge status={selected.status} isDark={isDark} />
             </div>
-            {selected.type === "Business" && selected.industry && (
-              <p className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{selected.industry} · Client ID: {selected.id}</p>
-            )}
+            <p className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{selected.type} · Client ID: {selected.id}</p>
           </div>
           <div className="flex items-center gap-2">
             {[
               { icon: <FileText className="w-3.5 h-3.5" />, label: "Create Quote" },
-              { icon: <Upload className="w-3.5 h-3.5" />, label: "Upload Document" },
               { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
               { icon: <Video className="w-3.5 h-3.5" />, label: "Zoom Meeting" },
             ].map(({ icon, label }, i) => (
@@ -763,19 +775,23 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* Info cards */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         {[
-          { label: "Total Premium", value: `$${selected.totalPremium.toLocaleString()}`, icon: <DollarSign className="w-5 h-5" style={{ color: c.teal }} />, extra: <TrendingUp className="w-4 h-4" style={{ color: "#0EA882" }} /> },
-          { label: "Active Policies", value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
-          { label: "Upcoming Renewals", value: String(selected.pendingQuotes), icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
-          { label: "Assigned Agent", value: selected.assignedAgent, icon: <UserCircle className="w-5 h-5" style={{ color: c.teal }} />, extra: null },
+          { label: "Pending Quotes",    value: String(selected.pendingQuotes),  icon: <ClipboardList className="w-5 h-5" style={{ color: c.teal }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("pending-quotes"); setDetailSearch(""); }, highlight: selected.pendingQuotes > 0  },
+          { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter(null);            setDetailSearch(""); }, highlight: false },
+          { label: "Upcoming Renewals", value: String(selected.pendingQuotes),  icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");       setDetailSearch(""); }, highlight: selected.pendingQuotes > 0  },
+          { label: "Primary Contact",   value: selected.assignedAgent,          icon: <UserCircle className="w-5 h-5" style={{ color: c.teal }} />,     onClick: () => { setDetailTab("overview"); setHighlightFilter(null);            setDetailSearch(""); document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth" }); }, highlight: false },
         ].map((card, i) => (
-          <div key={i} className="rounded-xl p-4" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          <button key={i} onClick={card.onClick}
+            className="rounded-xl p-4 text-left transition-all"
+            style={{ background: c.cardBg, border: `1px solid ${card.highlight ? c.teal : c.border}`, cursor: "pointer", width: "100%" }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(116,195,183,0.18)"; e.currentTarget.style.borderColor = c.teal; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = card.highlight ? c.teal : c.border; }}>
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-lg" style={{ background: "rgba(116,195,183,0.10)" }}>{card.icon}</div>
-              {card.extra}
+              {card.highlight && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Action needed</span>}
             </div>
             <div className="text-[18px] font-bold mb-0.5" style={{ fontFamily: FONT, color: c.text }}>{card.value}</div>
             <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{card.label}</div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -837,7 +853,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         return (
         <div className="space-y-4 overflow-y-auto flex-1">
           {/* Client Information */}
-          <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          <div id="contact-info-section" className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Client Information</h3>
               {!editingInfo ? (
@@ -860,25 +876,28 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   {viewField("Company Name", selected.companyName)}
                   {viewField("DBA Name or Operating Name", selected.dbaName)}
                   {viewField("Agency Type", selected.type, true)}
-                  {viewField("Contact Name", "")}
-                  {viewField("Inspection Name", "")}
+                  {viewField("Contact Name", selected.contactFirstName && selected.contactLastName ? `${selected.contactFirstName} ${selected.contactLastName}` : undefined)}
+                  {viewField("Inspection Name", selected.inspectionFirstName && selected.inspectionLastName ? `${selected.inspectionFirstName} ${selected.inspectionLastName}` : undefined)}
                   <div />
                   {viewField("Email", selected.email)}
                   {viewField("Phone Number", selected.phone)}
-                  {viewField("Website Url", selected.website, true)}
-                  {viewField("Primary Class Code", "")}
-                  {viewField("Federal ID # (optional)", "")}
-                  {viewField("Contractor License # (optional)", "")}
-                  {viewField("Gross Sales", "")}
-                  {viewField("Payroll", "")}
-                  {viewField("# Owners", "")}
-                  {viewField("# Employees", "")}
+                  {viewField("Website Url", selected.website)}
+                  {viewField("Primary Class Code", selected.primaryClassCode)}
+                  {viewField("Federal ID # (optional)", selected.federalId)}
+                  {viewField("Contractor License # (optional)", selected.contractorLicense)}
+                  {viewField("Gross Sales", selected.grossSales)}
+                  {viewField("Payroll", selected.payroll)}
+                  {viewField("# Owners", selected.owners)}
+                  {viewField("# Employees", selected.employees)}
                 </>) : (<>
                   {viewField("First Name", selected.firstName)}
                   {viewField("Last Name", selected.lastName)}
                   {viewField("Agency Type", selected.type, true)}
                   {viewField("Email", selected.email)}
                   {viewField("Phone Number", selected.phone)}
+                  <div />
+                  {viewField("Physical Address", `${selected.address.street}, ${selected.address.city}, ${selected.address.state} ${selected.address.zipCode}`)}
+                  {viewField("Mailing Address", "Same as Agency Address")}
                 </>)}
               </div>
             ) : (
@@ -912,7 +931,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </div>
                 <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingInfo(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
                 </div>
@@ -920,8 +939,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             )}
           </div>
 
-          {/* Address Information */}
-          <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          {/* Address Information — always for Business, only when editing for Individual */}
+          {(selected.type === "Business" || editingAddr) && <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Address Information</h3>
               {!editingAddr ? (
@@ -1017,13 +1036,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
                 <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingAddr(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingAddr(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>Save Changes</button>
                 </div>
               </>
             )}
-          </div>
+          </div>}
         </div>
         );
       })()}
@@ -1071,10 +1090,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               ))}
             </div>
             <div className="overflow-y-auto flex-1">
-              {clientPolicies.map((p,i,arr) => (
+              {clientPolicies.map((p,i,arr) => {
+                const isRenewal = p.status === "Upcoming Renewal";
+                const isHighlighted = highlightFilter === "renewals" && isRenewal;
+                return (
                 <div key={p.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
-                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
-                  onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(116,195,183,0.08)" : "transparent", borderLeft: isHighlighted ? "3px solid #74C3B7" : "3px solid transparent" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.08)":"transparent")}>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(p.createdDate).toLocaleDateString()}</div>
                   <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{p.policyNumber}</div>
                   <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
@@ -1084,7 +1106,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <StatusBadge status={p.status} isDark={isDark} />
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{p.producer}</div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1137,10 +1160,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               ))}
             </div>
             <div className="overflow-y-auto flex-1">
-              {clientQuotes.map((q,i,arr) => (
+              {clientQuotes.map((q,i,arr) => {
+                const isPending = q.status === "Pending";
+                const isHighlighted = highlightFilter === "pending-quotes" && isPending;
+                return (
                 <div key={q.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
-                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
-                  onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                  style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(245,158,11,0.06)" : "transparent", borderLeft: isHighlighted ? "3px solid #F59E0B" : "3px solid transparent" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.06)":"transparent")}>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(q.createdDate).toLocaleDateString()}</div>
                   <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{q.quoteId}</div>
                   <div className="text-[13px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
@@ -1150,7 +1176,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <StatusBadge status={q.status} isDark={isDark} />
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{q.producer}</div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1160,11 +1187,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "documents" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-3 mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
+            <div className="flex" style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", background: c.inputBg, width: 320 }}>
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
-                className="outline-none"
-                style={{ ...inputSty, paddingLeft: 34, width: 240 }} />
+                className="flex-1 outline-none"
+                style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
+              <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
+                style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
+                <Search className="w-3.5 h-3.5" />Submit
+              </button>
             </div>
             <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
               style={{ fontFamily:FONT, background:"linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
@@ -1177,7 +1207,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>
               ))}
             </div>
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1"
+              onDragOver={e => { e.preventDefault(); setDocDragOver(true); }}
+              onDragLeave={() => setDocDragOver(false)}
+              onDrop={e => { e.preventDefault(); setDocDragOver(false); }}>
+              {clientDocs.length === 0 && (
+                <label className="flex flex-col items-center justify-center h-full min-h-[220px] cursor-pointer transition-colors"
+                  style={{ background: docDragOver ? "rgba(116,195,183,0.06)" : "transparent" }}>
+                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple />
+                  <Paperclip className="w-7 h-7 mb-3" style={{ color: "#74C3B7" }} />
+                  <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>Drag &amp; Drop or Click to Browse</span>
+                  <span className="text-[11px] mt-1" style={{ fontFamily: FONT, color: c.muted }}>PDF, JPG, PNG · Max 10MB</span>
+                </label>
+              )}
               {clientDocs.map((d,i,arr) => (
                 <div key={d.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors"
                   style={{ gridTemplateColumns:"2.5fr 1fr 1fr 1.5fr 1fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
@@ -1191,7 +1233,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     </div>
                     <span className="text-[13px] font-medium" style={{ fontFamily:FONT, color:c.text }}>{d.name}</span>
                   </div>
-                  <div className="text-[12px] px-2 py-0.5 rounded-lg inline-block" style={{ fontFamily:FONT, color:c.teal, background:"rgba(116,195,183,0.10)" }}>{d.category}</div>
+                  <div className="text-[12px] px-2 py-0.5 rounded-lg" style={{ fontFamily:FONT, color:c.teal, background:"rgba(116,195,183,0.10)", display:"inline-block", width:"fit-content" }}>{d.category}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.type}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(d.uploadDate).toLocaleDateString()}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.size}</div>
@@ -1340,7 +1382,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setAddActivityOpen(false)}
                       className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                      style={{ fontFamily:FONT, background:c.mutedBg, border:`1px solid ${c.border}`, color:c.muted }}>Cancel</button>
+                      style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:c.muted, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                     <button onClick={() => {
                       if (!newActivityAction.trim() || !selected) return;
                       const now = new Date();
@@ -1451,7 +1493,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteNoteId(null)}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily:FONT, background:c.mutedBg, border:`1px solid ${c.border}`, color:c.text }}>
+                style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:c.muted, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
@@ -1551,10 +1593,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-7 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+            <div className="flex items-center justify-between px-7 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setZoomModalOpen(false)}
                 className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => {
@@ -1564,7 +1606,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 }
                 setZoomModalOpen(false);
               }}
-                className="px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white"
+                className="px-5 py-[9px] rounded-lg text-[12px] font-normal text-white"
                 style={{ fontFamily: FONT, background: "linear-gradient(to bottom,#ACD697,#75C9B7)" }}>
                 Schedule Meeting
               </button>
