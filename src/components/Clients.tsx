@@ -634,14 +634,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 {cl.dbaName && <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>DBA: {cl.dbaName}</div>}
               </div>
               {/* Type */}
-              <div className="flex items-center gap-1.5 text-[12px]" style={{ fontFamily: FONT, color: c.teal }}>
-                {cl.type === "Business" ? <Building2 className="w-3.5 h-3.5" /> : <UserCircle className="w-3.5 h-3.5" />}
+              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.teal }}>
                 {cl.type}
               </div>
               {/* Contact */}
               <div>
-                <div className="flex items-center gap-1.5 text-[11px] mb-0.5" style={{ fontFamily: FONT, color: c.muted }}><Mail className="w-3 h-3 flex-shrink-0" /><span className="truncate">{cl.email}</span></div>
-                <div className="flex items-center gap-1.5 text-[11px]" style={{ fontFamily: FONT, color: c.muted }}><Phone className="w-3 h-3 flex-shrink-0" />{cl.phone}</div>
+                <div className="text-[11px] mb-0.5 truncate" style={{ fontFamily: FONT, color: c.muted }}>{cl.email}</div>
+                <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.phone}</div>
               </div>
               {/* Agent */}
               <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.assignedAgent}</div>
