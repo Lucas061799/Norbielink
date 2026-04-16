@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import norbieface from "@/assets/norbieface.png";
 import {
   Search, Plus, MoreVertical, Pencil, Building2, ChevronLeft, ChevronDown,
   Activity, FileText, ClipboardList, Shield, Star, Phone, Mail,
@@ -212,7 +213,8 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
   const muted   = isDark ? "#8B8FA8" : "#6B7280";
   const border  = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
   const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#fff";
-  const teal    = "#74C3B7";
+  const teal    = isDark ? "#A78BFA" : "#74C3B7";
+  const tealBg  = isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)";
 
   const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: text, marginBottom: 5, display: "block" };
   const reqStar = <span style={{ color: "#EF4444", marginLeft: 1 }}>*</span>;
@@ -383,6 +385,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [newActivityAction, setNewActivityAction] = useState("");
   const [newActivityDesc, setNewActivityDesc] = useState("");
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
+  const [createQuoteOpen, setCreateQuoteOpen] = useState(false);
   const [zoomTopic, setZoomTopic] = useState("");
   const [zoomDate, setZoomDate] = useState("");
   const [zoomTime, setZoomTime] = useState("14:00");
@@ -405,7 +408,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     inputBg:     isDark ? "rgba(255,255,255,0.05)" : "#fff",
     primary:     "#A614C3",
     primaryBg:   "rgba(166,20,195,0.10)",
-    teal:        "#74C3B7",
+    teal:        isDark ? "#A78BFA" : "#74C3B7",
+    accentGrad:  isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)",
+    accentShadow: isDark ? "0 4px 14px rgba(92,46,212,0.4)" : "0 4px 10px rgba(116,195,183,0.35)",
   };
 
   const font = { fontFamily: FONT };
@@ -764,7 +769,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 style={{ fontFamily: FONT, background: i === 0 ? "linear-gradient(to bottom,#ACD697,#75C9B7)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
                 onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
                 onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}
-                onClick={() => { if (label === "Zoom Meeting") { setZoomTopic(`Meeting with ${getClientName(selected)}`); setZoomDate(""); setZoomTime("14:00"); setZoomDuration("30"); setZoomNotes(""); setZoomModalOpen(true); } }}>
+                onClick={() => {
+                  if (label === "Zoom Meeting") { setZoomTopic(`Meeting with ${getClientName(selected)}`); setZoomDate(""); setZoomTime("14:00"); setZoomDuration("30"); setZoomNotes(""); setZoomModalOpen(true); }
+                  if (label === "Create Quote") { setCreateQuoteOpen(true); }
+                }}>
                 {icon}{label}
               </button>
             ))}
@@ -879,26 +887,24 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   {viewField("Contact Name", selected.contactFirstName && selected.contactLastName ? `${selected.contactFirstName} ${selected.contactLastName}` : undefined)}
                   {viewField("Inspection Name", selected.inspectionFirstName && selected.inspectionLastName ? `${selected.inspectionFirstName} ${selected.inspectionLastName}` : undefined)}
                   <div />
-                  {viewField("Email", selected.email)}
-                  {viewField("Phone Number", selected.phone)}
-                  {viewField("Website Url", selected.website)}
-                  {viewField("Primary Class Code", selected.primaryClassCode)}
-                  {viewField("Federal ID # (optional)", selected.federalId)}
-                  {viewField("Contractor License # (optional)", selected.contractorLicense)}
-                  {viewField("Gross Sales", selected.grossSales)}
-                  {viewField("Payroll", selected.payroll)}
-                  {viewField("# Owners", selected.owners)}
-                  {viewField("# Employees", selected.employees)}
                 </>) : (<>
                   {viewField("First Name", selected.firstName)}
                   {viewField("Last Name", selected.lastName)}
                   {viewField("Agency Type", selected.type, true)}
-                  {viewField("Email", selected.email)}
-                  {viewField("Phone Number", selected.phone)}
+                  {viewField("Contact Name", selected.contactFirstName && selected.contactLastName ? `${selected.contactFirstName} ${selected.contactLastName}` : undefined)}
+                  {viewField("Inspection Name", selected.inspectionFirstName && selected.inspectionLastName ? `${selected.inspectionFirstName} ${selected.inspectionLastName}` : undefined)}
                   <div />
-                  {viewField("Physical Address", `${selected.address.street}, ${selected.address.city}, ${selected.address.state} ${selected.address.zipCode}`)}
-                  {viewField("Mailing Address", "Same as Agency Address")}
                 </>)}
+                {viewField("Email", selected.email)}
+                {viewField("Phone Number", selected.phone)}
+                {viewField("Website Url", selected.website)}
+                {viewField("Primary Class Code", selected.primaryClassCode)}
+                {viewField("Federal ID # (optional)", selected.federalId)}
+                {viewField("Contractor License # (optional)", selected.contractorLicense)}
+                {viewField("Gross Sales", selected.grossSales)}
+                {viewField("Payroll", selected.payroll)}
+                {viewField("# Owners", selected.owners)}
+                {viewField("# Employees", selected.employees)}
               </div>
             ) : (
               /* ── Edit Mode ── */
@@ -911,23 +917,24 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     {editField("Contact Name", "contactName")}
                     {editField("Inspection Name", "inspectionName")}
                     <div />
-                    {editField("Email", "email")}
-                    {editField("Phone Number", "phone")}
-                    {editField("Website Url", "websiteUrl")}
-                    {editField("Primary Class Code", "primaryClassCode", "8810-Auto Repair Shops")}
-                    {editField("Federal ID # (optional)", "federalId")}
-                    {editField("Contractor License # (optional)", "contractorLicense")}
-                    {editField("Gross Sales", "grossSales", "$1000")}
-                    {editField("Payroll", "payroll", "$1000")}
-                    {editField("# Owners", "owners", "3")}
-                    {editField("# Employees", "employees", "$1000")}
                   </>) : (<>
                     {editField("First Name", "firstName")}
                     {editField("Last Name", "lastName")}
                     {editSelect("Agency Type", "agencyType", ["Business", "Individual"])}
-                    {editField("Email", "email")}
-                    {editField("Phone Number", "phone")}
+                    {editField("Contact Name", "contactName")}
+                    {editField("Inspection Name", "inspectionName")}
+                    <div />
                   </>)}
+                  {editField("Email", "email")}
+                  {editField("Phone Number", "phone")}
+                  {editField("Website Url", "websiteUrl")}
+                  {editField("Primary Class Code", "primaryClassCode", "8810-Auto Repair Shops")}
+                  {editField("Federal ID # (optional)", "federalId")}
+                  {editField("Contractor License # (optional)", "contractorLicense")}
+                  {editField("Gross Sales", "grossSales", "$1000")}
+                  {editField("Payroll", "payroll", "$1000")}
+                  {editField("# Owners", "owners", "3")}
+                  {editField("# Employees", "employees", "$1000")}
                 </div>
                 <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
@@ -939,8 +946,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             )}
           </div>
 
-          {/* Address Information — always for Business, only when editing for Individual */}
-          {(selected.type === "Business" || editingAddr) && <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          {/* Address Information */}
+          <div className="rounded-xl p-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Address Information</h3>
               {!editingAddr ? (
@@ -1042,7 +1049,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </div>
               </>
             )}
-          </div>}
+          </div>
         </div>
         );
       })()}
@@ -1614,6 +1621,148 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </div>
         </div>
       )}
+
+      {/* ── Create Quote / Cross-Sell Modal ── */}
+      {createQuoteOpen && selected && (() => {
+        const existingLobs = new Set(mockQuotes.filter(q => q.clientId === selected.id).map(q => q.lob).concat(mockPolicies.filter(p => p.clientId === selected.id).map(p => p.lob)));
+        const img = (name: string) => {
+          const dark = isDark ? ` Dark` : ``;
+          const darkPath = `/insurance-icons/${name}${dark}.png`;
+          const lightPath = `/insurance-icons/${name}.png`;
+          return <img src={isDark ? darkPath : lightPath} onError={(e) => { (e.target as HTMLImageElement).src = lightPath; }} alt={name} className="w-10 h-10 object-contain" />;
+        };
+        const allProducts = [
+          { id:"gl",  name:"General Liability",       desc:"Third-party bodily injury & property damage claims",          price:"$450",  tag:"BEST VALUE",  tagColor:"#74C3B7", imgKey:"General Liability",      features:["Legal defense costs included","Premises & operations coverage","Products & completed ops"] },
+          { id:"wc",  name:"Worker's Comp",            desc:"Required coverage for work-related employee injuries",         price:"$1,450",tag:"TOP PICK",    tagColor:"#9333EA", imgKey:"Workers Comp",            features:["Medical expense coverage","Lost wage replacement","Employer liability protection"] },
+          { id:"bo",  name:"Business Owners",          desc:"GL, property & business interruption in one package",          price:"$2,230",tag:"RECOMMENDED", tagColor:"#74C3B7", imgKey:"Business Owners",         features:["General liability included","Commercial property","Business interruption"] },
+          { id:"pro", name:"Professional Liability",   desc:"E&O coverage for professional services & advice",              price:"$890",  tag:"",            tagColor:"",        imgKey:"Professional Liability",  features:["Errors & omissions","Defense costs covered","Claims-made policy"] },
+          { id:"ex",  name:"Excess",                   desc:"Additional liability limits on top of existing policies",      price:"$380",  tag:"",            tagColor:"",        imgKey:"Excess",                  features:["Extends underlying limits","Broad coverage scope","Cost-effective protection"] },
+          { id:"bd",  name:"Bonds",                    desc:"Surety bonds for contractors and businesses",                  price:"$300",  tag:"",            tagColor:"",        imgKey:"Bonds",                   features:["Contract & commercial bonds","License & permit bonds","Court & judicial bonds"] },
+          { id:"ca",  name:"Commercial Auto",          desc:"Coverage for vehicles used for business purposes",             price:"$1,200",tag:"",            tagColor:"",        imgKey:"Commercial Auto",         features:["Collision & comprehensive","Uninsured motorist","Medical payments coverage"] },
+          { id:"br",  name:"Builders Risk",            desc:"Protects buildings under construction from damage",            price:"$600",  tag:"",            tagColor:"",        imgKey:"Builders Risk",           features:["Structure & materials","Equipment breakdown","Soft costs coverage"] },
+          { id:"can", name:"Cannabis",                 desc:"Specialized coverage for cannabis businesses",                 price:"$2,500",tag:"",            tagColor:"",        imgKey:"Cannabis",                features:["Product liability","Crop & inventory","Premises coverage"] },
+          { id:"cy",  name:"Cyber",                    desc:"Protection against data breaches and cyber attacks",           price:"$650",  tag:"",            tagColor:"",        imgKey:"Cyber",                   features:["Data breach response","Ransomware coverage","Business interruption"] },
+          { id:"hbb", name:"Home Based Business",      desc:"Coverage for businesses operated from home",                   price:"$350",  tag:"",            tagColor:"",        imgKey:"Home Based Business",     features:["Business property","Liability coverage","Business income"] },
+          { id:"im",  name:"Inland Marine",            desc:"Coverage for goods & equipment in transit",                    price:"$450",  tag:"",            tagColor:"",        imgKey:"Inland Marine",           features:["Equipment floater","Installation floater","Fine arts coverage"] },
+          { id:"lr",  name:"Lessor's Risk",            desc:"Property & liability for commercial landlords",                price:"$800",  tag:"",            tagColor:"",        imgKey:"Lessor's Risk",           features:["Building coverage","Liability protection","Loss of rents"] },
+          { id:"np",  name:"Non-Profit",               desc:"Tailored coverage for non-profit organizations",               price:"$500",  tag:"",            tagColor:"",        imgKey:"Non-Profit",              features:["D&O liability","General liability","Professional liability"] },
+          { id:"pl",  name:"Pollution Liability",      desc:"Coverage for pollution-related claims & cleanup",              price:"$1,100",tag:"",            tagColor:"",        imgKey:"Pollution",               features:["Cleanup costs","Third-party claims","Legal defense"] },
+          { id:"se",  name:"Special Events",           desc:"One-time coverage for events & gatherings",                    price:"$250",  tag:"",            tagColor:"",        imgKey:"Special Events",          features:["Event cancellation","Liability coverage","Liquor liability"] },
+          { id:"tg",  name:"Truckers GL",              desc:"General liability for trucking operations",                    price:"$1,800",tag:"",            tagColor:"",        imgKey:"Truckers GL",             features:["Primary liability","Physical damage","Cargo coverage"] },
+          { id:"vr",  name:"Vacant Risks",             desc:"Coverage for unoccupied or vacant properties",                 price:"$700",  tag:"",            tagColor:"",        imgKey:"Vacant Risks",            features:["Vandalism protection","Fire & lightning","Liability coverage"] },
+          { id:"mc",  name:"Boats/Marine Contractors GL", desc:"GL for marine contractors & watercraft operations",         price:"$950",  tag:"",            tagColor:"",        imgKey:"Marine Contractors",      features:["Marine liability","Watercraft coverage","Pollution liability"] },
+        ];
+        const recommended = allProducts.filter(p => !existingLobs.has(p.name)).slice(0, 3);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setCreateQuoteOpen(false)}>
+            <div className="w-[920px] max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ background: c.cardBg, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="relative flex items-start justify-between px-8 pt-7 pb-6 overflow-hidden" style={{ borderBottom: `1px solid ${c.border}`, background: c.cardBg }}>
+<div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.10),rgba(166,20,195,0.10))", color: "#7C3AED" }}>⚡ Complete Your Coverage</span>
+                  </div>
+                  <h2 className="text-[20px] font-bold mb-1.5" style={{ color: c.text }}>We Already Have {getClientName(selected)}'s Info—Get Quotes Faster!</h2>
+                  <p className="text-[12px]" style={{ color: c.muted }}>Business info is already saved. Select a coverage type to start a quote in minutes.</p>
+                </div>
+                <button onClick={() => setCreateQuoteOpen(false)} className="p-1.5 rounded-lg transition-colors mt-1" style={{ color: c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 px-8 py-6">
+                {/* Recommended */}
+                {recommended.length > 0 && (
+                  <div className="mb-7">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
+                      <span className="text-[13px] font-bold" style={{ color: c.text }}>Recommended for {getClientName(selected)}</span>
+                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: "rgba(245,158,11,0.07)", color: "#D97706", borderColor: "rgba(245,158,11,0.20)" }}>Based on client profile</span>
+                      <span className="flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.07),rgba(166,20,195,0.07))", color: "#7C3AED", borderColor: "rgba(92,46,212,0.15)" }}>
+                        <img src={norbieface.src} alt="Norbie" className="w-3.5 h-3.5 rounded-full object-cover" />
+                        Norbie's Pick
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      {recommended.map(p => (
+                        <div key={p.id} className="rounded-2xl p-5 relative flex flex-col transition-all cursor-pointer"
+                          style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fff", border: "1.1px solid #E5E7EB", boxShadow: "0 0 14.9px 0 rgba(110,33,196,0.15)" }}
+                          onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 20px 0 rgba(110,33,196,0.25)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 14.9px 0 rgba(110,33,196,0.15)"; }}>
+                          {p.tag && (
+                            <span className="absolute top-3 right-3 text-[9px] font-bold px-2.5 py-1 rounded-lg text-white"
+                              style={{ background: p.tag === "BEST VALUE" ? "#74C3B7" : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" }}>{p.tag}</span>
+                          )}
+                          <div className="p-3 rounded-xl mb-3 w-fit" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", transform: "scale(0.9)", transformOrigin: "center" }}>{img(p.imgKey)}</div>
+                          <div className="text-[14px] font-bold mb-0.5" style={{ color: c.text }}>{p.name}</div>
+                          <div className="text-[11px] mb-3" style={{ color: c.muted }}>{p.desc}</div>
+                          <div className="text-[22px] font-bold mb-0.5" style={{ background: "linear-gradient(135deg,#9333EA,#EC4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{p.price}</div>
+                          <div className="text-[10px] mb-3" style={{ color: c.muted }}>per year (estimated)</div>
+                          <div style={{ borderTop: `1px solid ${c.border}`, marginBottom: 10 }} />
+                          <div className="flex flex-col gap-1.5 mb-4 flex-1">
+                            {p.features.map((f, fi) => (
+                              <div key={fi} className="flex items-center gap-1.5">
+                                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(116,195,183,0.15)" }}>
+                                  <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#74C3B7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                </div>
+                                <span className="text-[11px]" style={{ color: c.muted }}>{f}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] mb-3" style={{ color: c.muted }}>
+                            <Calendar className="w-3 h-3" /><span>Takes only 5 minutes</span>
+                          </div>
+                          <button className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white flex items-center justify-center gap-1.5 transition-all"
+                            style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)" }}
+                            onMouseEnter={e => (e.currentTarget.style.opacity = "0.9")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+                            Get Quote Now →
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* All Products */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <ClipboardList className="w-4 h-4" style={{ color: c.muted }} />
+                    <span className="text-[13px] font-bold" style={{ color: c.text }}>All Available Coverages</span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-3">
+                    {allProducts.filter(p => !recommended.includes(p)).map(p => {
+                      const hasIt = existingLobs.has(p.name);
+                      return (
+                        <button key={p.id} disabled={hasIt}
+                          className="rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all"
+                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, opacity: hasIt ? 0.45 : 1, cursor: hasIt ? "default" : "pointer" }}
+                          onMouseEnter={e => { if (!hasIt) { e.currentTarget.style.boxShadow = "0 2px 12px rgba(92,46,212,0.18)"; e.currentTarget.style.background = "linear-gradient(white,white) padding-box, linear-gradient(90deg,#5C2ED4,#A614C3) border-box"; e.currentTarget.style.border = "1px solid transparent"; } }}
+                          onMouseLeave={e => { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
+                          <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.07)" : "#EFEFEF" }}>
+                            <div style={{ transform: `scale(0.8)${p.id === "ca" ? " translateY(5px)" : p.id === "br" ? " translateY(-5px)" : ""}` }}>{img(p.imgKey)}</div>
+                          </div>
+                          <div className="text-[12px] font-bold leading-tight" style={{ color: c.text }}>{p.name}</div>
+                          <div className="text-[11px] font-semibold" style={{ background: "linear-gradient(135deg,#9333EA,#EC4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{p.price}<span className="text-[10px] font-normal" style={{ color: c.muted, WebkitTextFillColor: c.muted }}>/yr</span></div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-8 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                <span className="text-[11px]" style={{ color: c.muted }}>Prices are estimated. Final premium subject to underwriting.</span>
+                <button onClick={() => setCreateQuoteOpen(false)} className="px-5 py-[9px] rounded-lg text-[12px] font-normal"
+                  style={{ border: `1px solid ${c.border}`, color: c.muted, fontFamily: FONT }}>Close</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

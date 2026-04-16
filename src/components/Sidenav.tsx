@@ -28,15 +28,15 @@ function NavItem({ icon, label, active, badge, hasChevron, isDark, onClick }: Na
   const getStyle = () => {
     if (active) {
       return isDark
-        ? { background: "linear-gradient(to bottom, #191D35 0%, #582A75 48%, #9D37BC 100%)", boxShadow: "inset 0 0 0 1px rgba(166,20,195,0.8), 0 0 8px rgba(166,20,195,0.5)" }
+        ? { background: "linear-gradient(to bottom, #191D35 0%, #582A75 48%, #9D37BC 100%)", border: "1px solid rgba(166,20,195,0.8)", boxShadow: "0 0 8px rgba(166,20,195,0.5)" }
         : { background: "linear-gradient(white,white) padding-box, linear-gradient(to right,#5C2ED4,#A614C3) border-box", border: "1px solid transparent", boxShadow: "0 0 8px rgba(166,20,195,0.4)" };
     }
     if (hovered) {
       return isDark
-        ? { background: "linear-gradient(to bottom, #191D35 0%, #582A75 48%, #9D37BC 100%)" }
+        ? { background: "linear-gradient(to bottom, #191D35 0%, #582A75 48%, #9D37BC 100%)", border: "1px solid transparent" }
         : { background: "linear-gradient(white,white) padding-box, linear-gradient(to right,#5C2ED4,#A614C3) border-box", border: "1px solid transparent" };
     }
-    return isDark ? {} : { border: "1px solid transparent" };
+    return { border: "1px solid transparent" };
   };
 
   const isHoveredDark = hovered && isDark && !active;
