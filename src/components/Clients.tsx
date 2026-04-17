@@ -232,8 +232,8 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
   if (status === "Prospect") {
     return (
       <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
-        style={{ fontFamily: FONT, background: isDark ? "rgba(147,51,234,0.18)" : "rgba(147,51,234,0.08)" }}>
-        <span style={{ color: "#fff" }}>{status}</span>
+        style={{ fontFamily: FONT, background: isDark ? "rgba(147,51,234,0.18)" : "linear-gradient(90deg,rgba(92,46,212,0.07) 0%,rgba(166,20,195,0.07) 65%)" }}>
+        <span style={{ backgroundImage: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" }}>{status}</span>
       </span>
     );
   }
@@ -576,10 +576,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string }>) => (
     <button onClick={() => { setDetailTab(tab); setDetailSearch(""); setHighlightFilter(null); }}
       className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
-      style={{ fontFamily: FONT, color: detailTab === tab ? c.teal : c.muted, letterSpacing: "0.01em" }}>
-      <Icon className="w-[15px] h-[15px]" />
+      style={{ fontFamily: FONT, color: detailTab === tab ? "#fff" : c.muted, letterSpacing: "0.01em" }}>
+      <Icon className="w-[15px] h-[15px]" style={{ color: detailTab === tab ? "#A614C3" : undefined }} />
       {label}
-      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: c.teal }} />}
+      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
     </button>
   );
 
@@ -601,17 +601,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
         {/* Search + Add */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex flex-1 max-w-[340px]" style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", background: c.inputBg }}>
+          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden" }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
             <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-              style={{ background: c.accentGrad, fontFamily: FONT }}>
+              style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT }}>
               <Search className="w-3.5 h-3.5" />Submit
             </button>
           </div>
           <button onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
-            style={{ fontFamily: FONT, background: c.accentGrad }}>
+            style={{ fontFamily: FONT, background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }}
+            onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")}
+            onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
             <Plus className="w-4 h-4" />Add Client
           </button>
         </div>
@@ -808,7 +810,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             ].map(({ icon, label }, i) => (
               <button key={label}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
-                style={{ fontFamily: FONT, background: i === 0 ? c.accentGrad : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
+                style={{ fontFamily: FONT, background: i === 0 ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
+                onMouseEnter={e => { if (i === 0) e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)"; else e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
+                onMouseLeave={e => { if (i === 0) e.currentTarget.style.boxShadow = "none"; else e.currentTarget.style.borderColor = c.border; }}
                 onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
                 onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}
                 onClick={() => {
@@ -825,18 +829,18 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {/* Info cards */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         {[
-          { label: "Incomplete Quotes",  value: String(incompleteQuotesCount),   icon: <ClipboardList className="w-5 h-5" style={{ color: c.teal }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("incomplete-quotes"); setDetailSearch(""); }, highlight: incompleteQuotesCount > 0   },
-          { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: c.teal }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter("active-policies"); setDetailSearch(""); }, highlight: false },
-          { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: c.teal }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
-          { label: "Primary Contact",   value: selected.assignedAgent,          icon: <UserCircle className="w-5 h-5" style={{ color: c.teal }} />,     onClick: () => { setDetailTab("overview"); setHighlightFilter(null);            setDetailSearch(""); document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth" }); }, highlight: false },
+          { label: "Incomplete Quotes",  value: String(incompleteQuotesCount),   icon: <ClipboardList className="w-5 h-5" style={{ color: "#A855F7" }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("incomplete-quotes"); setDetailSearch(""); }, highlight: incompleteQuotesCount > 0   },
+          { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: "#A855F7" }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter("active-policies"); setDetailSearch(""); }, highlight: false },
+          { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: "#A855F7" }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
+          { label: "Primary Contact",   value: selected.assignedAgent,          icon: <UserCircle className="w-5 h-5" style={{ color: "#A855F7" }} />,     onClick: () => { setDetailTab("overview"); setHighlightFilter(null);            setDetailSearch(""); document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth" }); }, highlight: false },
         ].map((card, i) => (
           <button key={i} onClick={card.onClick}
             className="rounded-xl p-4 text-left transition-all"
-            style={{ background: c.cardBg, border: `1px solid ${card.highlight ? c.teal : c.border}`, cursor: "pointer", width: "100%" }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(116,195,183,0.18)"; e.currentTarget.style.borderColor = c.teal; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = card.highlight ? c.teal : c.border; }}>
+            style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", width: "100%" }}
+            onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg; e.currentTarget.style.border = `1px solid ${card.highlight ? "transparent" : c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-lg" style={{ background: "rgba(116,195,183,0.10)" }}>{card.icon}</div>
+              <div className="p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>{card.icon}</div>
               {card.highlight && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Action needed</span>}
             </div>
             <div className="text-[18px] font-bold mb-0.5" style={{ fontFamily: FONT, color: c.text }}>{card.value}</div>
@@ -1100,16 +1104,16 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 10 }}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
+                style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: c.accentGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+                style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
+                style={{ fontFamily: FONT, background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
@@ -1167,16 +1171,16 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden" style={{ border: `1px solid ${c.border}`, borderRadius: 10 }}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
-                style={{ fontFamily: FONT, background: c.inputBg, color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
+                style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
               <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: c.accentGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+                style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
-                style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.teal}`, color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
+                style={{ fontFamily: FONT, background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", color: c.text, fontSize: 11, fontWeight: 500, borderRadius: 7 }}>
                 <option>Past 20 Days</option><option>Past 60 Days</option><option>Past 90 Days</option><option>All Time</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
@@ -1236,17 +1240,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "documents" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex" style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", background: c.inputBg, width: 320 }}>
+            <div className="flex" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden", width: 320 }}>
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="flex-1 outline-none"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
               <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ fontFamily: FONT, background: c.accentGrad }}>
+                style={{ fontFamily: FONT, background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" }}>
                 <Search className="w-3.5 h-3.5" />Submit
               </button>
             </div>
-            <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-              style={{ fontFamily:FONT, background:c.accentGrad }}>
+            <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
+              style={{ fontFamily:FONT, background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
               <Upload className="w-4 h-4" />Upload Document
             </button>
           </div>
