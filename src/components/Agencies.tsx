@@ -25,7 +25,7 @@ interface Agency {
   isStarred: boolean;
 }
 
-type FilterStatus = "All" | "Starred" | "Active" | "Inactive";
+type FilterStatus = "All" | "Starred" | "Appointed" | "Unappointed";
 type SortKey = "name" | "code" | "location" | "totalUsers" | "status" | null;
 type SortDir = "asc" | "desc";
 type TabKey = "agencies" | "users";
@@ -2807,9 +2807,9 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   /* filtered + sorted list */
   const allAgencies = mockAgencies.map(a => ({ ...a, isStarred: stars.has(a.id) }));
   const filtered = allAgencies.filter(a => {
-    if (filterStatus === "Starred") return a.isStarred;
-    if (filterStatus === "Active")  return a.status === "Appointed";
-    if (filterStatus === "Inactive") return a.status === "Unappointed";
+    if (filterStatus === "Starred")     return a.isStarred;
+    if (filterStatus === "Appointed")   return a.status === "Appointed";
+    if (filterStatus === "Unappointed") return a.status === "Unappointed";
     return true;
   }).filter(a => {
     if (!search) return true;
@@ -2944,8 +2944,8 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       <div className="flex items-center gap-2 mb-5 flex-wrap">
         {filterPill("All")}
         {filterPill("Starred")}
-        {filterPill("Active")}
-        {filterPill("Inactive")}
+        {filterPill("Appointed")}
+        {filterPill("Unappointed")}
       </div>
 
       {/* Starred agencies strip */}
