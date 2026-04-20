@@ -4,6 +4,7 @@ import { useState } from "react";
 import Sidenav from "@/components/Sidenav";
 import TopBar from "@/components/TopBar";
 import Clients from "@/components/Clients";
+import Agencies from "@/components/Agencies";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -18,6 +19,8 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
     switch (activePage) {
       case "Clients":
         return <Clients isDark={darkMode} />;
+      case "Agencies":
+        return <Agencies isDark={darkMode} />;
       default:
         return (
           <>
@@ -52,8 +55,8 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar isDark={darkMode} />
         <main
-          className="flex-1 overflow-hidden transition-colors duration-300 py-6 px-12"
-          style={{ background: darkMode ? "#0F1120" : "#ffffff", display: activePage === "Clients" ? "flex" : "block", flexDirection: "column" as const, overflowY: activePage === "Clients" ? "hidden" : "auto", height: activePage === "Clients" ? "100%" : "auto" }}
+          className="flex-1 overflow-hidden transition-colors duration-300 px-12"
+          style={{ background: darkMode ? "#0F1120" : "#ffffff", paddingTop: (activePage === "Clients" || activePage === "Agencies") ? 0 : 24, paddingBottom: 24, display: (activePage === "Clients" || activePage === "Agencies") ? "flex" : "block", flexDirection: "column" as const, overflowY: (activePage === "Clients" || activePage === "Agencies") ? "hidden" : "auto", height: (activePage === "Clients" || activePage === "Agencies") ? "100%" : "auto" }}
         >
           {renderPage()}
         </main>

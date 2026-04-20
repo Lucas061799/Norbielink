@@ -8,9 +8,11 @@ import {
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
   StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell, Paperclip,
+  Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare,
 } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
+const AGENCY_PHONE = "+1 (888) 555-0188"; // Fixed agency outbound number
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 interface Client {
@@ -33,7 +35,7 @@ interface Quote { id: string; quoteId: string; policyType: string; status: "Pend
 interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"|"Upcoming Renewal"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; applicant: string; dba?: string; lob: string; producer: string; createdDate: string; }
 interface Document { id: string; name: string; type: string; uploadDate: string; size: string; clientId: string; category: string; }
 interface ActivityLog { id: string; action: string; description: string; timestamp: string; user: string; clientId: string; type: "policy"|"quote"|"document"|"email"|"call"|"note"; }
-interface Note { id: string; content: string; author: string; timestamp: string; clientId: string; }
+interface Note { id: string; title: string; content: string; author: string; timestamp: string; clientId: string; type: "General" | "Policy" | "Follow-up" | "Meeting" | "Task"; }
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
@@ -156,15 +158,36 @@ const mockActivity: ActivityLog[] = [
   { id:"41", action:"Policy Renewed",       description:"Auto Insurance policy renewed at $8,500 for one more year pending status review", timestamp:"2023-12-01 09:00 AM", user:"Mike Chen", clientId:"5", type:"policy" },
 ];
 const mockNotes: Note[] = [
-  { id:"1", content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1" },
-  { id:"2", content:"Renewal documents sent via email. Waiting for signature on updated contract. Expected completion by end of week.", author:"Mike Chen", timestamp:"2026-04-03T10:15:00", clientId:"1" },
-  { id:"3", content:"Outstanding performance this quarter — 25% increase in new policies. Discussed bonus structure for Q2.", author:"Sarah Johnson", timestamp:"2026-04-01T16:45:00", clientId:"1" },
-  { id:"4", content:"Prospect meeting scheduled for next Tuesday at 2PM. Client is interested in Workers Comp and General Liability bundle.", author:"Jane Smith", timestamp:"2026-03-28T09:00:00", clientId:"3" },
+  /* Client 1 — Tech Solutions Inc */
+  { id:"n1",  title:"Q2 Policy Discussion",      content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1", type:"Follow-up" },
+  { id:"n2",  title:"Renewal Documents Sent",    content:"Renewal documents sent via email. Waiting for signature on updated contract. Expected completion by end of week.", author:"Mike Chen", timestamp:"2026-04-03T10:15:00", clientId:"1", type:"Policy" },
+  { id:"n3",  title:"Q1 Performance Review",     content:"Outstanding performance this quarter — 25% increase in new policies. Discussed expanding coverage scope for Q2.", author:"Sarah Johnson", timestamp:"2026-04-01T16:45:00", clientId:"1", type:"Meeting" },
+  { id:"n4",  title:"Coverage Gap Identified",   content:"Identified two coverage gaps in current policy setup. Need to follow up with underwriter on cyber liability options before renewal.", author:"Sarah Johnson", timestamp:"2026-03-20T11:00:00", clientId:"1", type:"Policy" },
+  { id:"n5",  title:"Task: Send Updated SOV",    content:"Send updated schedule of values to underwriter before end of month. Client expanding to new warehouse — need to update property limits.", author:"Mike Chen", timestamp:"2026-03-15T09:30:00", clientId:"1", type:"Task" },
+  /* Client 2 — John Anderson */
+  { id:"n6",  title:"Umbrella Coverage Interest",content:"Client expressed interest in adding umbrella coverage on top of existing auto and homeowners. Prefers phone contact. Follow up in May for homeowners renewal.", author:"Mike Chen", timestamp:"2026-04-08T09:30:00", clientId:"2", type:"Follow-up" },
+  { id:"n7",  title:"Homeowners Renewal Review", content:"Discussed upcoming homeowners renewal expiring Oct 1. Client wants to review deductible options and possibly increase dwelling coverage.", author:"Mike Chen", timestamp:"2026-03-22T14:00:00", clientId:"2", type:"Policy" },
+  { id:"n8",  title:"Annual Check-In Meeting",   content:"Annual review meeting completed. Client satisfied with current auto and homeowners policies. No immediate changes requested.", author:"Mike Chen", timestamp:"2026-02-15T10:00:00", clientId:"2", type:"Meeting" },
+  { id:"n9",  title:"Task: Prepare Umbrella Quote", content:"Prepare umbrella liability quote for $1M coverage. Compare 3 carriers. Send by end of April.", author:"Mike Chen", timestamp:"2026-04-10T08:00:00", clientId:"2", type:"Task" },
+  /* Client 3 — Green Earth Logistics */
+  { id:"n10", title:"Initial Prospect Call",     content:"Prospect meeting completed. Client is interested in Workers Comp and General Liability bundle. Decision expected by April 20.", author:"Jane Smith", timestamp:"2026-04-05T15:00:00", clientId:"3", type:"Meeting" },
+  { id:"n11", title:"CFO Decision Timeline",     content:"Decision maker is the CFO. They want to compare against current carrier before committing. Strong potential — priority prospect.", author:"Sarah Johnson", timestamp:"2026-04-05T15:45:00", clientId:"3", type:"General" },
+  { id:"n12", title:"WC Quote Follow-Up",        content:"Follow up on Workers Comp quote Q-2024-016. Client hasn't responded in 3 days. Try calling CFO directly.", author:"Jane Smith", timestamp:"2026-04-10T09:00:00", clientId:"3", type:"Follow-up" },
+  { id:"n13", title:"Task: Prepare GL Proposal", content:"Prepare a General Liability proposal with two coverage tier options — $1M and $2M limits — for comparison.", author:"Jane Smith", timestamp:"2026-04-08T11:00:00", clientId:"3", type:"Task" },
+  /* Client 4 — Metro Contractors */
+  { id:"n14", title:"Site Expansion Coverage",   content:"Owner wants to discuss adding Commercial Umbrella and Equipment Floater for 2 new job sites in NJ. Schedule meeting for Q3.", author:"Jane Smith", timestamp:"2026-04-09T15:00:00", clientId:"4", type:"Follow-up" },
+  { id:"n15", title:"Annual Coverage Review",    content:"Comprehensive annual review completed. All 5 policies in good standing. Client growing — expanding to 2 new NJ job sites requires updated liability limits.", author:"Jane Smith", timestamp:"2026-04-09T14:00:00", clientId:"4", type:"Meeting" },
+  { id:"n16", title:"WC Audit Completed",        content:"2024 payroll summary uploaded for WC audit — $4.2M total payroll reported. Audit should result in small return premium.", author:"Jane Smith", timestamp:"2026-04-02T09:30:00", clientId:"4", type:"Policy" },
+  { id:"n17", title:"Task: NJ Site Endorsement", content:"Add NJ job sites to existing GL and WC policies via endorsement. Contact underwriter this week.", author:"Jane Smith", timestamp:"2026-04-11T08:00:00", clientId:"4", type:"Task" },
+  /* Client 5 — Maria Rodriguez */
+  { id:"n18", title:"Re-engagement Attempt",     content:"Client went inactive after job change. Sent re-engagement email with updated plan options. Awaiting response.", author:"Mike Chen", timestamp:"2026-01-18T10:30:00", clientId:"5", type:"Follow-up" },
+  { id:"n19", title:"Coverage Decision Pending", content:"Follow-up call completed — client confirmed she's reviewing options and will decide within 30 days. New employer benefits still being evaluated.", author:"Mike Chen", timestamp:"2026-01-15T15:30:00", clientId:"5", type:"General" },
+  { id:"n20", title:"Task: Send Plan Comparison", content:"Prepare side-by-side comparison of individual health and auto options vs employer plan. Send by Jan 25.", author:"Mike Chen", timestamp:"2026-01-20T09:00:00", clientId:"5", type:"Task" },
 ];
 
 type ViewType = "list" | "detail";
 type DetailTab = "overview" | "policies" | "quotes" | "documents" | "activity" | "notes";
-type FilterStatus = "All" | "Active" | "Inactive" | "Prospect" | "Starred" | "Business" | "Individual";
+type FilterStatus = "All" | "Active" | "Inactive" | "Prospect" | "Starred";
 type SortKey = "name" | "status" | "lastActivity" | "activePolicies" | "assignedAgent" | "type" | null;
 type SortDir = "asc" | "desc";
 
@@ -231,9 +254,29 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
   const s = styles[status] || { color: "#9CA3AF", background: "#F3F4F6" };
   if (status === "Prospect") {
     return (
-      <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
-        style={{ fontFamily: FONT, background: isDark ? "rgba(147,51,234,0.18)" : "linear-gradient(90deg,rgba(92,46,212,0.07) 0%,rgba(166,20,195,0.07) 65%)" }}>
-        <span style={{ backgroundImage: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" }}>{status}</span>
+      <span
+        className="inline-flex items-center justify-center w-fit"
+        style={{
+          fontFamily: FONT,
+          background: "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)",
+          borderRadius: 9999,
+          padding: "3px 10px",
+        }}
+      >
+        <span
+          style={{
+            backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            fontSize: 11,
+            fontWeight: 600,
+            lineHeight: "16px",
+          }}
+        >
+          {status}
+        </span>
       </span>
     );
   }
@@ -419,7 +462,37 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [newNote, setNewNote] = useState("");
+  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newNoteType, setNewNoteType] = useState<Note["type"]>("General");
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [noteView, setNoteView] = useState<"list" | "board" | "table">("list");
+  const [noteSearch, setNoteSearch] = useState("");
+  const [noteSearchOpen, setNoteSearchOpen] = useState(false);
+  const [noteSortDir, setNoteSortDir] = useState<"asc" | "desc">("desc");
+  const [noteFilterType, setNoteFilterType] = useState<"All" | Note["type"]>("All");
+  const [noteFilterOpen, setNoteFilterOpen] = useState(false);
+  const [noteSortOpen, setNoteSortOpen] = useState(false);
+  const [noteNewOpen, setNoteNewOpen] = useState(false);
+  const [noteAddOpen, setNoteAddOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [editingNoteTitle, setEditingNoteTitle] = useState("");
+  const [editingNoteContent, setEditingNoteContent] = useState("");
+  const [editingNoteType, setEditingNoteType] = useState<Note["type"]>("General");
+  const [noteExpanded, setNoteExpanded] = useState(false);
+  const [noteLocked, setNoteLocked] = useState(false);
+  const [lockedBy, setLockedBy] = useState("Sarah Johnson");
+  const [archivedNoteIds, setArchivedNoteIds] = useState<Set<string>>(new Set());
+  const [trashedNoteIds, setTrashedNoteIds] = useState<Set<string>>(new Set());
+  const [pinnedNoteIds, setPinnedNoteIds] = useState<Set<string>>(new Set());
+  const [showArchived, setShowArchived] = useState(false);
+  const [showTrashed, setShowTrashed] = useState(false);
+  const [noteMoreOpen, setNoteMoreOpen] = useState(false);
+  const [copyToast, setCopyToast] = useState("");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
+  const [noteShareOpen, setNoteShareOpen] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const CURRENT_USER = "Sarah Johnson";
   const [activityFilter, setActivityFilter] = useState<"all"|"policy"|"quote"|"document"|"email"|"call"|"note">("all");
   const [activityLogs, setActivityLogs] = useState(mockActivity);
   const [addActivityOpen, setAddActivityOpen] = useState(false);
@@ -427,6 +500,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [newActivityAction, setNewActivityAction] = useState("");
   const [newActivityDesc, setNewActivityDesc] = useState("");
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
   const [createQuoteOpen, setCreateQuoteOpen] = useState(false);
   const [zoomTopic, setZoomTopic] = useState("");
   const [zoomDate, setZoomDate] = useState("");
@@ -451,7 +525,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     primary:     "#A614C3",
     primaryBg:   "rgba(166,20,195,0.10)",
     teal:        "#73C9B7",
-    accentGrad:  isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)",
+    accentGrad:  isDark
+      ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)"
+      : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)",
     accentShadow: isDark ? "0 4px 14px rgba(92,46,212,0.4)" : "0 4px 10px rgba(116,195,183,0.35)",
   };
 
@@ -461,8 +537,6 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const allClients = mockClients.map(cl => ({ ...cl, isStarred: stars.has(cl.id) }));
   const filtered = allClients.filter(cl => {
     if (filterStatus === "Starred") return cl.isStarred;
-    if (filterStatus === "Business") return cl.type === "Business";
-    if (filterStatus === "Individual") return cl.type === "Individual";
     if (filterStatus !== "All" && cl.status !== filterStatus) return false;
     if (search) {
       const name = getClientName(cl).toLowerCase();
@@ -512,8 +586,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   };
 
   /* Section title */
-  const sectionTitle = <h1 className="text-[22px] font-semibold pb-4 mb-5"
-    style={{ ...font, color: c.text, borderBottom: `1px solid ${c.border}` }}>Clients</h1>;
+  const sectionTitle = (
+    <div className="pb-4 mb-5" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
+      <h1 className="text-[22px] font-semibold" style={{ ...font, color: c.text }}>Clients</h1>
+    </div>
+  );
 
   /* Filter pill btn — image 2 style: rounded rect with border, no count */
   const filterPill = (label: FilterStatus) => {
@@ -566,6 +643,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     </button>
   );
 
+  /* Button gradient — dark: radial dark overlay + linear; light: plain linear */
+  const btnGrad = isDark
+    ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)"
+    : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
+
   /* Input style */
   const inputSty: React.CSSProperties = {
     fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`,
@@ -573,13 +655,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   };
 
   /* ── DETAIL TAB BUTTON ── */
-  const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string }>) => (
+  const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>) => (
     <button onClick={() => { setDetailTab(tab); setDetailSearch(""); setHighlightFilter(null); }}
       className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
-      style={{ fontFamily: FONT, color: detailTab === tab ? "#fff" : c.muted, letterSpacing: "0.01em" }}>
-      <Icon className="w-[15px] h-[15px]" style={{ color: detailTab === tab ? "#A614C3" : undefined }} />
+      style={{ fontFamily: FONT, color: detailTab === tab ? (isDark ? "#fff" : "#74C3B7") : c.muted, letterSpacing: "0.01em" }}>
+      <Icon className="w-[15px] h-[15px]" style={{ color: detailTab === tab ? (isDark ? "#A614C3" : "#74C3B7") : undefined }} />
       {label}
-      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
+      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "#74C3B7" }} />}
     </button>
   );
 
@@ -601,19 +683,21 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
         {/* Search + Add */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden" }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden" }}>
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
-            <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-              style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT }}>
+            <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
+              style={{ background: btnGrad, fontFamily: FONT }}
+              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
+              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <Search className="w-3.5 h-3.5" />Submit
             </button>
           </div>
           <button onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
-            style={{ fontFamily: FONT, background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }}
-            onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+            className="flex items-center gap-2 text-[12px] font-semibold text-white transition-all"
+            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius:"5.58px" }}
+            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
+            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
             <Plus className="w-4 h-4" />Add Client
           </button>
         </div>
@@ -624,8 +708,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           {filterPill("Starred")}
           {filterPill("Active")}
           {filterPill("Inactive")}
-          {filterPill("Business")}
-          {filterPill("Individual")}
+          {filterPill("Prospect")}
         </div>
       </div>
 
@@ -713,13 +796,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               {/* Policies */}
               <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>
                 {cl.activePolicies}
-                {cl.pendingQuotes > 0 && <span className="text-[11px] font-normal ml-1" style={{ color: c.muted }}>(+{cl.pendingQuotes})</span>}
               </div>
               {/* Last activity */}
               <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
               {/* Menu */}
               <div onClick={e => e.stopPropagation()}>
-                <ActionMenu isDark={isDark} items={["Edit Client","New Quote","New Policy","Send Email"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                <ActionMenu isDark={isDark} items={["Edit Client","New Quote","Send Email"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
               </div>
             </div>
           ))}
@@ -793,8 +875,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         </button>
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-start gap-3 mb-1">
-              <button onClick={() => toggleStar(selected.id)} className="mt-1 flex-shrink-0">
+            <div className="flex items-center gap-3 mb-1">
+              <button onClick={() => toggleStar(selected.id)} className="flex-shrink-0">
                 <Star className="w-5 h-5 transition-colors" style={{ fill: isStarred ? "#F59E0B" : "none", color: isStarred ? "#F59E0B" : c.sub }} />
               </button>
               <h1 className="text-[24px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{getClientName(selected)}</h1>
@@ -805,18 +887,17 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           <div className="flex items-center gap-2">
             {[
               { icon: <FileText className="w-3.5 h-3.5" />, label: "Create Quote" },
-              { icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Send Email" },
-              { icon: <Video className="w-3.5 h-3.5" />, label: "Zoom Meeting" },
+              { icon: <Mail className="w-3.5 h-3.5" />, label: "Send Email" },
+              { icon: <Phone className="w-3.5 h-3.5" />, label: "Phone Call" },
             ].map(({ icon, label }, i) => (
               <button key={label}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
-                style={{ fontFamily: FONT, background: i === 0 ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
-                onMouseEnter={e => { if (i === 0) e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)"; else e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
-                onMouseLeave={e => { if (i === 0) e.currentTarget.style.boxShadow = "none"; else e.currentTarget.style.borderColor = c.border; }}
-                onMouseEnter={e => { if (i !== 0) e.currentTarget.style.borderColor = "rgba(116,195,183,0.5)"; }}
-                onMouseLeave={e => { if (i !== 0) e.currentTarget.style.borderColor = c.border; }}
+                style={{ fontFamily: FONT, background: i === 0 ? btnGrad : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
+                onMouseEnter={e => { if (i === 0) e.currentTarget.style.filter = "brightness(1.12)"; else { e.currentTarget.style.borderColor = "#A614C3"; e.currentTarget.style.color = "#7C3AED"; } }}
+                onMouseLeave={e => { if (i === 0) e.currentTarget.style.filter = "none"; else { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.muted; } }}
                 onClick={() => {
-                  if (label === "Zoom Meeting") { setZoomTopic(`Meeting with ${getClientName(selected)}`); setZoomDate(""); setZoomTime("14:00"); setZoomDuration("30"); setZoomNotes(""); setZoomModalOpen(true); }
+                  if (label === "Phone Call") { setCallModalOpen(true); }
+                  if (label === "Send Email") { if (selected?.email) window.location.href = `mailto:${selected.email}`; }
                   if (label === "Create Quote") { setCreateQuoteOpen(true); }
                 }}>
                 {icon}{label}
@@ -911,12 +992,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Client Information</h3>
               {!editingInfo ? (
-                <button onClick={startEditInfo} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                <button onClick={startEditInfo} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Edit
                 </button>
               ) : (
-                <button onClick={() => setEditingInfo(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                <button onClick={() => setEditingInfo(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
@@ -997,12 +1078,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Address Information</h3>
               {!editingAddr ? (
-                <button onClick={startEditAddr} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                <button onClick={startEditAddr} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Edit
                 </button>
               ) : (
-                <button onClick={() => setEditingAddr(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                <button onClick={() => setEditingAddr(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
@@ -1104,12 +1185,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
-              <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+              <button className="px-5 text-[12px] font-semibold text-white flex-shrink-0"
+                style={{ background: btnGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
@@ -1171,12 +1252,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")} onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
-              <button className="px-5 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)", fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
+              <button className="px-5 text-[12px] font-semibold text-white flex-shrink-0"
+                style={{ background: btnGrad, fontFamily: FONT, borderRadius: "0 7px 7px 0" }}>Submit</button>
             </div>
             <div className="relative">
               <select className="appearance-none pl-3 pr-8 py-2 outline-none cursor-pointer"
@@ -1244,15 +1325,15 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="flex-1 outline-none"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
-              <button className="flex items-center gap-1.5 px-4 text-[12px] font-normal text-white flex-shrink-0"
-                style={{ fontFamily: FONT, background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" }}>
+              <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
+                style={{ fontFamily: FONT, background: btnGrad }}>
                 <Search className="w-3.5 h-3.5" />Submit
               </button>
             </div>
-            <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white transition-all"
-              style={{ fontFamily:FONT, background: "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)" }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 16px rgba(110,33,196,0.45)")}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+            <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
+              style={{ fontFamily:FONT, background: btnGrad }}
+              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
+              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <Upload className="w-4 h-4" />Upload Document
             </button>
           </div>
@@ -1355,7 +1436,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 })}
               </div>
               <button onClick={() => setAddActivityOpen(true)}
-                className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white flex-shrink-0"
+                className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white flex-shrink-0"
                 style={{ fontFamily: FONT, background: c.accentGrad }}>
                 <Plus className="w-3.5 h-3.5" />Add Activity
               </button>
@@ -1454,7 +1535,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       setActivityLogs(prev => [entry, ...prev]);
                       setNewActivityAction(""); setNewActivityDesc(""); setAddActivityOpen(false);
                     }}
-                      className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
+                      className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white"
                       style={{ fontFamily:FONT, background:c.accentGrad }}>
                       Add Activity
                     </button>
@@ -1467,69 +1548,864 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       })()}
 
       {/* ── NOTES ── */}
-      {detailTab === "notes" && (
-        <div className="flex flex-col flex-1 min-h-0 gap-4 overflow-y-auto">
-          {/* Add Note */}
-          <div className="rounded-xl p-5" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-            <h3 className="text-[15px] font-bold mb-3" style={{ fontFamily:FONT, color:c.text }}>Add New Note</h3>
-            <textarea
-              value={newNote}
-              onChange={e => setNewNote(e.target.value)}
-              placeholder="Write your note here..."
-              rows={4}
-              className="w-full outline-none resize-none rounded-xl p-3 text-[13px]"
-              style={{ fontFamily:FONT, background:c.inputBg, border:`1px solid ${c.border}`, color:c.text }}
-            />
-            <div className="flex justify-end mt-3">
-              <button
-                onClick={() => {
-                  if (!newNote.trim() || !selected) return;
-                  const n: Note = { id: Date.now().toString(), content: newNote.trim(), author: "Sarah Johnson", timestamp: new Date().toISOString(), clientId: selected.id };
-                  setNotes(prev => [n, ...prev]);
-                  setNewNote("");
-                }}
-                className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
-                style={{ fontFamily:FONT, background:c.accentGrad }}>
-                <Plus className="w-4 h-4" />Add Note
-              </button>
-            </div>
-          </div>
+      {detailTab === "notes" && (() => {
+        const NOTE_TYPES: Note["type"][] = ["General","Policy","Follow-up","Meeting","Task"];
+        const typeColor: Record<string, { bg: string; text: string }> = {
+          "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",             text: isDark ? "#9CA3AF" : "#6B7280" },
+          "Policy":    { bg: isDark ? "rgba(59,130,246,0.15)"  : "rgba(59,130,246,0.10)", text: "#3B82F6" },
+          "Follow-up": { bg: isDark ? "rgba(245,158,11,0.15)"  : "rgba(245,158,11,0.10)", text: "#F59E0B" },
+          "Meeting":   { bg: isDark ? "rgba(16,185,129,0.15)"  : "rgba(16,185,129,0.10)", text: "#10B981" },
+          "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",  text: "#EF4444" },
+        };
+        const TypeBadge = ({ type }: { type: string }) => (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap"
+            style={{ fontFamily: FONT, background: typeColor[type]?.bg, color: typeColor[type]?.text }}>
+            {type}
+          </span>
+        );
+        const fmtDate = (ts: string) => {
+          const d = new Date(ts);
+          return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " " +
+            d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        };
+        const visibleNotes = clientNotes
+          .filter(n => showTrashed ? trashedNoteIds.has(n.id) : showArchived ? archivedNoteIds.has(n.id) : (!trashedNoteIds.has(n.id) && !archivedNoteIds.has(n.id)))
+          .filter(n => noteFilterType === "All" || n.type === noteFilterType)
+          .filter(n => !noteSearch || n.title.toLowerCase().includes(noteSearch.toLowerCase()) || n.content.toLowerCase().includes(noteSearch.toLowerCase()))
+          .sort((a, b) => {
+            const pa = pinnedNoteIds.has(a.id) ? 1 : 0, pb = pinnedNoteIds.has(b.id) ? 1 : 0;
+            if (pa !== pb) return pb - pa;
+            return noteSortDir === "desc"
+              ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          });
 
-          {/* Notes History */}
-          {clientNotes.length > 0 && (
-            <div>
-              <h3 className="text-[14px] font-bold mb-3" style={{ fontFamily:FONT, color:c.text }}>Notes History</h3>
-              <div className="flex flex-col gap-3">
-                {clientNotes.map(n => (
-                  <div key={n.id} className="rounded-xl p-4" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                          style={{ background:c.accentGrad }}>
-                          {n.author.charAt(0)}
-                        </div>
-                        <span className="text-[13px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{n.author}</span>
-                        <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>·</span>
-                        <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>
-                          {new Date(n.timestamp).toLocaleDateString("en-US",{month:"numeric",day:"numeric",year:"numeric"})} at {new Date(n.timestamp).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}
-                        </span>
-                      </div>
-                      <button onClick={() => setDeleteNoteId(n.id)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color:"#EF4444" }}
-                        onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.08)")}
-                        onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                        <X className="w-3.5 h-3.5" />
+        const openNote = (n: Note) => { setSelectedNote(n); setEditingNoteTitle(n.title); setEditingNoteContent(n.content); setEditingNoteType(n.type); };
+        const saveNote = () => { if (!selectedNote) return; setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType } : n)); setSelectedNote(s => s ? { ...s, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType } : s); };
+
+        return (
+          <div className="flex flex-1 min-h-0 gap-4" onClick={() => { setNoteFilterOpen(false); setNoteSortOpen(false); setNoteNewOpen(false); setNoteMoreOpen(false); }}>
+
+          {/* ── LEFT PANEL (list / board / table) ── */}
+          <div className="flex flex-col min-h-0 transition-all"
+            style={{ flex: selectedNote && !noteExpanded ? "0 0 42%" : "1 1 100%", minWidth: 0 }}>
+
+            {/* ── Notion-style toolbar ── */}
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              {/* Left: view switcher */}
+              <div className="flex items-center gap-0.5">
+                {([["list","All Notes",List],["board","By Type",LayoutGrid],["table","Table",Table2]] as [typeof noteView, string, ({className}:{className?:string})=>React.ReactElement][]).map(([v, label, Icon]) => {
+                  const isActive = noteView === v && !showArchived && !showTrashed;
+                  return (
+                    <button key={v} onClick={e => { e.stopPropagation(); setNoteView(v); setShowArchived(false); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); setIsSelectMode(false); setSelectedNoteIds(new Set()); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap"
+                      style={{ fontFamily: FONT, background: isActive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "transparent", color: isActive ? c.text : c.muted }}>
+                      <Icon className="w-3 h-3" />{label}
+                    </button>
+                  );
+                })}
+                {/* Divider */}
+                <div className="mx-1.5" style={{ width: 1, height: 16, background: c.border }} />
+                {/* Archived tab */}
+                {(() => { const n = clientNotes.filter(x => archivedNoteIds.has(x.id)).length; return (
+                  <button onClick={e => { e.stopPropagation(); setShowArchived(true); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                    style={{ fontFamily: FONT, background: showArchived ? "rgba(245,158,11,0.10)" : "transparent", color: showArchived ? "#F59E0B" : c.muted }}>
+                    <Archive className="w-3 h-3" />Archive
+                    {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showArchived ? "#F59E0B" : c.muted }}>{n}</span>}
+                  </button>
+                ); })()}
+                {/* Trash tab */}
+                {(() => { const n = clientNotes.filter(x => trashedNoteIds.has(x.id)).length; return (
+                  <button onClick={e => { e.stopPropagation(); setShowTrashed(true); setShowArchived(false); setSelectedNote(null); setNoteExpanded(false); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                    style={{ fontFamily: FONT, background: showTrashed ? "rgba(239,68,68,0.10)" : "transparent", color: showTrashed ? "#EF4444" : c.muted }}>
+                    <Trash2 className="w-3 h-3" />Trash
+                    {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showTrashed ? "#EF4444" : c.muted }}>{n}</span>}
+                  </button>
+                ); })()}
+              </div>
+
+              {/* Right: action icons + New */}
+              <div className="flex items-center gap-1">
+                {/* Filter */}
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => { setNoteFilterOpen(p => !p); setNoteSortOpen(false); setNoteNewOpen(false); }}
+                    className="p-1.5 rounded-md transition-all"
+                    style={{ color: noteFilterType !== "All" ? "#A855F7" : c.muted, background: noteFilterType !== "All" ? "rgba(168,85,247,0.10)" : "transparent" }}
+                    title="Filter">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5L9.5 10v5l-3-1.5V10L1 4.5V3z"/></svg>
+                  </button>
+                  {noteFilterOpen && (
+                    <div className="absolute right-0 top-8 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Type</p>
+                      {(["All", ...NOTE_TYPES] as const).map(t => (
+                        <button key={t} onClick={() => { setNoteFilterType(t as typeof noteFilterType); setNoteFilterOpen(false); }}
+                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                          style={{ fontFamily: FONT, color: noteFilterType === t ? "#A855F7" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          {t === "All" ? "All Types" : t}
+                          {noteFilterType === t && <span style={{ color: "#A855F7" }}>✓</span>}
+                        </button>
+                      ))}
+                      <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
+                      <button onClick={() => { setShowArchived(true); setShowTrashed(false); setNoteFilterOpen(false); setSelectedNote(null); setNoteExpanded(false); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between"
+                        style={{ fontFamily: FONT, color: showArchived ? "#F59E0B" : c.text, background: showArchived ? "rgba(245,158,11,0.08)" : "transparent" }}>
+                        <span className="flex items-center gap-1.5"><Archive className="w-3 h-3" />Archived</span>
+                        {showArchived && <span style={{ color: "#F59E0B" }}>✓</span>}
+                      </button>
+                      <button onClick={() => { setShowTrashed(true); setShowArchived(false); setNoteFilterOpen(false); setSelectedNote(null); setNoteExpanded(false); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between"
+                        style={{ fontFamily: FONT, color: showTrashed ? "#EF4444" : c.text, background: showTrashed ? "rgba(239,68,68,0.08)" : "transparent" }}>
+                        <span className="flex items-center gap-1.5"><Trash2 className="w-3 h-3" />Trash</span>
+                        {showTrashed && <span style={{ color: "#EF4444" }}>✓</span>}
                       </button>
                     </div>
-                    <p className="text-[13px] leading-relaxed" style={{ fontFamily:FONT, color:c.muted }}>{n.content}</p>
+                  )}
+                </div>
+
+                {/* Sort */}
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => { setNoteSortOpen(p => !p); setNoteFilterOpen(false); setNoteNewOpen(false); }}
+                    className="p-1.5 rounded-md transition-all"
+                    style={{ color: c.muted }}
+                    title="Sort">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2V4zm2 3.5h8V9H4V7.5zm2 3.5h4v1.5H6V11z"/></svg>
+                  </button>
+                  {noteSortOpen && (
+                    <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
+                      {([["desc","Newest first"],["asc","Oldest first"]] as const).map(([d, label]) => (
+                        <button key={d} onClick={() => { setNoteSortDir(d); setNoteSortOpen(false); }}
+                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between"
+                          style={{ fontFamily: FONT, color: noteSortDir === d ? "#A855F7" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          {label}{noteSortDir === d && <span style={{ color: "#A855F7" }}>✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Search */}
+                <div className="flex items-center transition-all overflow-hidden" style={{ width: noteSearchOpen ? 160 : 28 }}>
+                  <button onClick={e => { e.stopPropagation(); setNoteSearchOpen(p => !p); if (noteSearchOpen) setNoteSearch(""); }}
+                    className="p-1.5 rounded-md flex-shrink-0" style={{ color: noteSearch ? "#A855F7" : c.muted }}>
+                    <Search className="w-3.5 h-3.5" />
+                  </button>
+                  {noteSearchOpen && (
+                    <input autoFocus value={noteSearch} onChange={e => setNoteSearch(e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                      placeholder="Search notes…"
+                      className="outline-none text-[12px] flex-1 min-w-0"
+                      style={{ fontFamily: FONT, color: c.text, background: "transparent", borderBottom: `1px solid ${c.border}` }} />
+                  )}
+                </div>
+
+                {/* Select toggle */}
+                <button onClick={e => { e.stopPropagation(); setIsSelectMode(p => { if (p) setSelectedNoteIds(new Set()); return !p; }); }}
+                  className="p-1.5 rounded-md transition-all"
+                  title="Select notes"
+                  style={{ color: isSelectMode ? "#A855F7" : c.muted, background: isSelectMode ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                  <CheckSquare className="w-3.5 h-3.5" />
+                </button>
+
+                {/* New button with dropdown */}
+                <div className="relative ml-1" onClick={e => e.stopPropagation()}>
+                  {selectedNote ? (
+                    /* Compact icon-only when detail panel is open */
+                    <button onClick={() => setNoteAddOpen(true)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-white transition-all"
+                      style={{ background: btnGrad }} title="New note">
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                  <div className="flex items-center rounded-lg overflow-hidden" style={{ background: btnGrad }}>
+                    <button onClick={() => setNoteAddOpen(true)}
+                      className="px-3 py-1.5 text-[12px] font-semibold text-white"
+                      style={{ fontFamily: FONT }}>New</button>
+                    <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)" }} />
+                    <button onClick={() => setNoteNewOpen(p => !p)}
+                      className="px-2 py-1.5 text-white flex items-center">
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
                   </div>
-                ))}
+                  )}
+                  {noteNewOpen && (
+                    <div className="absolute right-0 top-9 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Create new</p>
+                      {NOTE_TYPES.map(t => (
+                        <button key={t} onClick={() => { setNewNoteType(t); setNoteNewOpen(false); setNoteAddOpen(true); }}
+                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center gap-2 transition-colors"
+                          style={{ fontFamily: FONT, color: c.text }}
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: typeColor[t]?.text }} />
+                          {t} Note
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Thin divider */}
+            <div className="flex-shrink-0 mb-3" style={{ height: 1, background: c.border }} />
+
+            {/* ── Batch action bar ── */}
+            {isSelectMode && selectedNoteIds.size > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 mb-2.5 rounded-xl flex-shrink-0"
+                style={{ background: isDark ? "rgba(255,255,255,0.05)" : "#ffffff", border: `1px solid ${c.border}` }}>
+                {/* Select-all checkbox */}
+                {(() => {
+                  const allSelected = visibleNotes.length > 0 && visibleNotes.every(n => selectedNoteIds.has(n.id));
+                  const someSelected = !allSelected && selectedNoteIds.size > 0;
+                  return (
+                    <button onClick={() => {
+                      if (allSelected) { setSelectedNoteIds(new Set()); }
+                      else { setSelectedNoteIds(new Set(visibleNotes.map(n => n.id))); }
+                    }} className="flex items-center gap-2 transition-all">
+                      <div className="w-4 h-4 rounded-md flex items-center justify-center transition-all flex-shrink-0"
+                        style={{ border: `1.5px solid ${allSelected ? "#A855F7" : (isDark ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.13)")}`, background: allSelected ? "#A855F7" : (isDark ? "rgba(255,255,255,0.08)" : "#ffffff") }}>
+                        {allSelected && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        {someSelected && <div className="w-2 h-0.5 rounded-full" style={{ background: "#A855F7" }} />}
+                      </div>
+                      <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{selectedNoteIds.size} selected</span>
+                    </button>
+                  );
+                })()}
+                <div className="flex-1" />
+                {/* Pin */}
+                <button onClick={() => {
+                  setPinnedNoteIds(prev => {
+                    const s = new Set(prev);
+                    const allPinned = [...selectedNoteIds].every(id => s.has(id));
+                    selectedNoteIds.forEach(id => allPinned ? s.delete(id) : s.add(id));
+                    return s;
+                  });
+                }} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, color: c.text, background: isDark ? "rgba(255,255,255,0.07)" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)"}` }}
+                  onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.12)" : "#F3F4F6")}
+                  onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.07)" : "#F3F4F6")}>
+                  <Pin className="w-3 h-3" style={{ color: "#F59E0B" }} />Pin
+                </button>
+                {/* Archive */}
+                <button onClick={() => {
+                  setArchivedNoteIds(prev => { const s = new Set(prev); selectedNoteIds.forEach(id => s.add(id)); return s; });
+                  setSelectedNoteIds(new Set()); setIsSelectMode(false);
+                }} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, color: c.text, background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.40)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.18)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.10)")}>
+                  <Archive className="w-3 h-3" style={{ color: "#F59E0B" }} />Archive
+                </button>
+                {/* Trash */}
+                <button onClick={() => {
+                  setTrashedNoteIds(prev => { const s = new Set(prev); selectedNoteIds.forEach(id => s.add(id)); return s; });
+                  setSelectedNoteIds(new Set()); setIsSelectMode(false);
+                }} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, color: c.text, background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.18)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(239,68,68,0.10)")}>
+                  <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />Trash
+                </button>
+                {/* Clear selection */}
+                <button onClick={() => setSelectedNoteIds(new Set())}
+                  className="p-1 rounded-md ml-1 transition-all" style={{ color: c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.color = c.text)}
+                  onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* ── LIST VIEW ── */}
+            {noteView === "list" && (
+              <div className="flex flex-col gap-2.5 overflow-y-auto flex-1 pr-1">
+                {visibleNotes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-2">
+                    <StickyNote className="w-8 h-8" style={{ color: c.muted, opacity: 0.4 }} />
+                    <p className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>No notes found</p>
+                  </div>
+                ) : visibleNotes.map(n => {
+                  const isChecked = selectedNoteIds.has(n.id);
+                  const isPinned = pinnedNoteIds.has(n.id);
+                  return (
+                  <div key={n.id} className="rounded-xl p-4 transition-all cursor-pointer"
+                    style={{ background: isChecked ? (isDark ? "rgba(168,85,247,0.12)" : "rgba(92,46,212,0.07)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.07)" : "rgba(92,46,212,0.04)") : c.cardBg, border: `1px solid ${isChecked ? (isDark ? "rgba(168,85,247,0.45)" : "rgba(92,46,212,0.35)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.35)" : "rgba(92,46,212,0.30)") : c.border}` }}
+                    onClick={e => { e.stopPropagation(); if (isSelectMode) { setSelectedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); } else { openNote(n); } }}
+                    onMouseEnter={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = isDark ? "rgba(168,85,247,0.25)" : "rgba(92,46,212,0.20)"; }}
+                    onMouseLeave={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = c.border; }}>
+                    <div className="flex items-start justify-between gap-3 mb-1.5">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        {isSelectMode && (
+                          <div className="w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+                            style={{ border: `1.5px solid ${isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.13)")}`, background: isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)") }}>
+                            {isChecked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                        )}
+                        {/* Pin button before title */}
+                        <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
+                          className="p-0.5 rounded flex-shrink-0 transition-all"
+                          style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                          <Pin className="w-3.5 h-3.5" />
+                        </button>
+                        {noteLocked && selectedNote?.id === n.id && <Lock className="w-3 h-3 flex-shrink-0" style={{ color: "#A855F7" }} />}
+                        <span className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
+                        <TypeBadge type={n.type} />
+                      </div>
+                      {!isSelectMode && (
+                        <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded-md flex-shrink-0"
+                          style={{ color: "#EF4444", opacity: 0.6 }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[12px] leading-relaxed mb-2" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+                        style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
+                      <span className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{n.author} · {fmtDate(n.timestamp)}</span>
+                    </div>
+                  </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── BOARD VIEW ── */}
+            {noteView === "board" && (
+              <div className="flex gap-3 flex-1 pb-2 overflow-y-auto">
+                {NOTE_TYPES.map(type => {
+                  const col = visibleNotes.filter(n => n.type === type);
+                  return (
+                    <div key={type} className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <span className="w-2 h-2 rounded-full" style={{ background: typeColor[type]?.text }} />
+                        <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: typeColor[type]?.text }}>{type}</span>
+                        <span className="text-[11px] ml-auto" style={{ fontFamily: FONT, color: c.muted }}>{col.length}</span>
+                      </div>
+                      <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+                        {col.map(n => {
+                          const isChecked = selectedNoteIds.has(n.id);
+                          const isPinned = pinnedNoteIds.has(n.id);
+                          return (
+                          <div key={n.id} className="rounded-xl p-3.5 transition-all cursor-pointer"
+                            style={{ background: isChecked ? (isDark ? "rgba(168,85,247,0.12)" : "rgba(92,46,212,0.07)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.07)" : "rgba(92,46,212,0.04)") : c.cardBg, border: `1px solid ${isChecked ? "rgba(168,85,247,0.45)" : selectedNote?.id === n.id ? typeColor[type]?.text + "66" : c.border}` }}
+                            onClick={e => { e.stopPropagation(); if (isSelectMode) { setSelectedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); } else { openNote(n); } }}
+                            onMouseEnter={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = typeColor[type]?.text + "55"; }}
+                            onMouseLeave={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = c.border; }}>
+                            <div className="flex items-start justify-between gap-1 mb-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {isSelectMode && (
+                                  <div className="w-3.5 h-3.5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+                                    style={{ border: `1.5px solid ${isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.13)")}`, background: isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)") }}>
+                                    {isChecked && <svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M0.5 2.5L2.5 4.5L6.5 0.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </div>
+                                )}
+                                {/* Pin button before title */}
+                                <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
+                                  className="p-0.5 rounded flex-shrink-0 transition-all"
+                                  style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                                  <Pin className="w-2.5 h-2.5" />
+                                </button>
+                                <span className="text-[12px] font-semibold leading-snug" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
+                              </div>
+                              {!isSelectMode && (
+                                <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity: 0.5 }}
+                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#EF4444"; }}
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; (e.currentTarget as HTMLElement).style.color = c.muted; }}>
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
+                                style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
+                              <span className="text-[10px]" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp).split(" ").slice(0,3).join(" ")}</span>
+                            </div>
+                          </div>
+                          );
+                        })}
+                        {col.length === 0 && (
+                          <div className="rounded-xl p-4 text-center" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA", border: `1px dashed ${c.border}` }}>
+                            <p className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>No {type} notes</p>
+                          </div>
+                        )}
+                        <button onClick={() => { setNewNoteType(type); setNoteAddOpen(true); }}
+                          className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] transition-all w-full"
+                          style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}` }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = typeColor[type]?.text + "66")}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
+                          <Plus className="w-3 h-3" />New {type}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── TABLE VIEW ── */}
+            {noteView === "table" && (
+              <div className="flex-1 overflow-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${c.border}` }}>
+                      {isSelectMode && <th className="pb-2 w-8" />}
+                      {["Title","Created","Created By","Type"].map(h => (
+                        <th key={h} className="text-[11px] font-semibold pb-2 pr-6" style={{ fontFamily: FONT, color: c.muted }}>{h}</th>
+                      ))}
+                      <th className="text-[11px] font-semibold pb-2 w-12" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleNotes.map((n, i) => {
+                      const isChecked = selectedNoteIds.has(n.id);
+                      const isPinned = pinnedNoteIds.has(n.id);
+                      return (
+                      <tr key={n.id} className="cursor-pointer"
+                        style={{ borderBottom: `1px solid ${c.border}`, background: isChecked ? (isDark ? "rgba(168,85,247,0.10)" : "rgba(92,46,212,0.06)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.07)" : "rgba(92,46,212,0.04)") : (i % 2 === 0 ? "transparent" : (isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.01)")) }}
+                        onClick={e => { e.stopPropagation(); if (isSelectMode) { setSelectedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); } else { openNote(n); } }}
+                        onMouseEnter={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB"; }}
+                        onMouseLeave={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.background = i % 2 === 0 ? "transparent" : (isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.01)"); }}>
+                        {isSelectMode && (
+                          <td className="py-2.5 pr-2 w-8">
+                            <div className="w-4 h-4 rounded-md flex items-center justify-center transition-all"
+                              style={{ border: `1.5px solid ${isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.13)")}`, background: isChecked ? "#A855F7" : (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)") }}>
+                              {isChecked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </div>
+                          </td>
+                        )}
+                        <td className="py-2.5 pr-6">
+                          <div className="flex items-center gap-1.5">
+                            {/* Pin button before title */}
+                            <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
+                              className="p-0.5 rounded flex-shrink-0 transition-all"
+                              style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                              <Pin className="w-3 h-3" />
+                            </button>
+                            <div>
+                              <span className="text-[12px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
+                              <p className="text-[11px] truncate max-w-[200px]" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-6 text-[12px] whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp)}</td>
+                        <td className="py-2.5 pr-6 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+                              style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
+                            <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{n.author}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>
+                        <td className="py-2.5">
+                          {!isSelectMode && (
+                            <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded" style={{ color: c.muted, opacity: 0.5 }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#EF4444"; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; (e.currentTarget as HTMLElement).style.color = c.muted; }}>
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      );
+                    })}
+                    {visibleNotes.length === 0 && (
+                      <tr><td colSpan={isSelectMode ? 6 : 5} className="py-12 text-center text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>No notes found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+
+            {/* ── Add Note Modal ── */}
+            {noteAddOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+                onClick={() => setNoteAddOpen(false)}>
+                <div className="w-[480px] rounded-2xl shadow-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}
+                  onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: `1px solid ${c.border}` }}>
+                    <h2 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>New Note</h2>
+                    <button onClick={() => setNoteAddOpen(false)} style={{ color: c.muted }}><X className="w-4 h-4" /></button>
+                  </div>
+                  <div className="px-6 py-5 space-y-4">
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wide block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Title</label>
+                      <input value={newNoteTitle} onChange={e => setNewNoteTitle(e.target.value)} placeholder="Note title…"
+                        className="outline-none w-full text-[13px]"
+                        style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 8 }} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wide block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Type</label>
+                      <div className="flex flex-wrap gap-2">
+                        {NOTE_TYPES.map(t => (
+                          <button key={t} onClick={() => setNewNoteType(t)}
+                            className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                            style={{ fontFamily: FONT, background: newNoteType === t ? typeColor[t]?.bg : "transparent", color: newNoteType === t ? typeColor[t]?.text : c.muted, border: `1px solid ${newNoteType === t ? typeColor[t]?.text + "44" : c.border}` }}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wide block mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Content</label>
+                      <textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Write your note here…" rows={4}
+                        className="w-full outline-none resize-none text-[13px]"
+                        style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 8 }} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                    <button onClick={() => setNoteAddOpen(false)} className="px-4 py-[7px] rounded-lg text-[12px]"
+                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: "transparent" }}>Cancel</button>
+                    <button onClick={() => {
+                      if (!selected) return;
+                      const titleFinal = newNoteTitle.trim() || (newNote.trim() ? newNote.trim().slice(0, 40) + (newNote.trim().length > 40 ? "…" : "") : "Untitled Note");
+                      if (!titleFinal) return;
+                      setNotes(prev => [{ id: Date.now().toString(), title: titleFinal, content: newNote.trim(), author: "Sarah Johnson", timestamp: new Date().toISOString(), clientId: selected.id, type: newNoteType }, ...prev]);
+                      setNewNoteTitle(""); setNewNote(""); setNoteAddOpen(false);
+                    }} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
+                      style={{ fontFamily: FONT, background: btnGrad }}>
+                      Create Note
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT PANEL: Note Detail (inline or fixed overlay) ── */}
+          {selectedNote && !noteExpanded && (
+            <div className="flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden transition-all"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+              onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); setNoteShareOpen(false); }}>
+
+              {/* ── Shared top-bar + body (reused in both inline & expanded) ── */}
+              {(() => {
+                const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
+                const NoteTopBar = ({ expanded }: { expanded: boolean }) => (
+                  <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+                    style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <StickyNote className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                      <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Notes</span>
+                      <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                      <span className="text-[11px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>{selectedNote.title}</span>
+                      {noteLocked && <Lock className="w-3 h-3 flex-shrink-0 ml-0.5" style={{ color: "#A855F7" }} />}
+                      {pinnedNoteIds.has(selectedNote.id) && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "#F59E0B" }} />}
+                      {showArchived && <span className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B", fontFamily: FONT }}>Archived</span>}
+                      {showTrashed && <span className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444", fontFamily: FONT }}>Trash</span>}
+                    </div>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {/* Share */}
+                      {!showTrashed && <button onClick={e => { e.stopPropagation(); setNoteShareOpen(p => !p); setNoteMoreOpen(false); }}
+                        className="p-1.5 rounded-md transition-colors" title="Share"
+                        style={{ color: noteShareOpen ? "#A855F7" : c.muted, background: noteShareOpen ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                        <Users className="w-3.5 h-3.5" />
+                      </button>}
+                      {/* Pin */}
+                      {!showTrashed && <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(selectedNote.id) ? s.delete(selectedNote.id) : s.add(selectedNote.id); return s; }); }}
+                        className="p-1.5 rounded-md transition-colors" title={pinnedNoteIds.has(selectedNote.id) ? "Unpin" : "Pin note"}
+                        style={{ color: pinnedNoteIds.has(selectedNote.id) ? "#F59E0B" : c.muted, background: pinnedNoteIds.has(selectedNote.id) ? "rgba(245,158,11,0.10)" : "transparent" }}>
+                        <Pin className="w-3.5 h-3.5" />
+                      </button>}
+                      {/* Lock */}
+                      {!showTrashed && <button onClick={e => {
+                        e.stopPropagation();
+                        if (noteLocked && isLockedByOther) return;
+                        setNoteLocked(p => !p);
+                        if (!noteLocked) setLockedBy(CURRENT_USER);
+                      }} className="p-1.5 rounded-md transition-colors" title={noteLocked ? "Unlock" : "Lock note"}
+                        style={{ color: noteLocked ? "#A855F7" : c.muted, background: noteLocked ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                        {noteLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                      </button>}
+                      {/* Expand toggle */}
+                      <button onClick={e => { e.stopPropagation(); setNoteExpanded(p => !p); }}
+                        className="p-1.5 rounded-md transition-colors" title={expanded ? "Collapse" : "Open full panel"}>
+                        {expanded ? <Minimize2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} /> : <Maximize2 className="w-3.5 h-3.5" style={{ color: c.muted }} />}
+                      </button>
+                      {/* ··· More */}
+                      <div className="relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => { setNoteMoreOpen(p => !p); setNoteShareOpen(false); }}
+                          className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}>
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+                        {noteMoreOpen && (
+                          <div className="absolute right-0 top-9 z-50 w-52 rounded-xl shadow-2xl py-1.5"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}` }} onClick={e => e.stopPropagation()}>
+                            {!showTrashed && <>
+                              <button onClick={() => { navigator.clipboard.writeText(`${editingNoteTitle}\n\n${editingNoteContent}`); setCopyToast("Copied!"); setTimeout(() => setCopyToast(""), 2000); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: c.text }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <Copy className="w-3.5 h-3.5" style={{ color: c.muted }} />Copy content
+                              </button>
+                              <button onClick={() => { const txt = `# ${editingNoteTitle}\nType: ${editingNoteType} | Client: ${selected ? getClientName(selected) : "—"}\n\n${editingNoteContent}`; navigator.clipboard.writeText(txt); setCopyToast("Exported!"); setTimeout(() => setCopyToast(""), 2000); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: c.text }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <FileText className="w-3.5 h-3.5" style={{ color: c.muted }} />Export as text
+                              </button>
+                              <button onClick={() => { if (!selected) return; setNotes(prev => [{ ...selectedNote, id: Date.now().toString(), title: `Copy of ${editingNoteTitle}`, content: editingNoteContent, timestamp: new Date().toISOString() }, ...prev]); setCopyToast("Duplicated!"); setTimeout(() => setCopyToast(""), 2000); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: c.text }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <CopyPlus className="w-3.5 h-3.5" style={{ color: c.muted }} />Duplicate
+                              </button>
+                              <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
+                              <button onClick={() => { const id = selectedNote.id; setArchivedNoteIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: "#F59E0B" }} onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.08)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <Archive className="w-3.5 h-3.5" />{archivedNoteIds.has(selectedNote.id) ? "Unarchive" : "Archive"}
+                              </button>
+                              <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
+                              <button onClick={() => { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(selectedNote.id); return s; }); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: "#EF4444" }} onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <Trash2 className="w-3.5 h-3.5" />Move to Trash
+                              </button>
+                            </>}
+                            {showTrashed && <>
+                              <button onClick={() => { setTrashedNoteIds(prev => { const s = new Set(prev); s.delete(selectedNote.id); return s; }); setSelectedNote(null); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: "#10B981" }} onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.08)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <RefreshCw className="w-3.5 h-3.5" />Restore note
+                              </button>
+                              <button onClick={() => { setDeleteNoteId(selectedNote.id); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5"
+                                style={{ fontFamily: FONT, color: "#EF4444" }} onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <Trash2 className="w-3.5 h-3.5" />Delete permanently
+                              </button>
+                            </>}
+                            <div className="px-3 pt-1.5 pb-1" style={{ borderTop: `1px solid ${c.border}`, marginTop: 4 }}>
+                              <p className="text-[10px]" style={{ fontFamily: FONT, color: c.muted }}>Last edited {fmtDate(selectedNote.timestamp)}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Save */}
+                      {!noteLocked && !showTrashed && (
+                        <button onClick={saveNote} className="ml-1 px-3 py-1 rounded-lg text-[11px] font-semibold text-white transition-all"
+                          style={{ fontFamily: FONT, background: btnGrad }}
+                          onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
+                          onMouseLeave={e => (e.currentTarget.style.filter = "none")}>Save</button>
+                      )}
+                      <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); setNoteShareOpen(false); }}
+                        className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+                const NoteBody = ({ expanded }: { expanded: boolean }) => (
+                  <div className="flex-1 overflow-y-auto py-6 relative" style={{ paddingLeft: expanded ? 72 : 28, paddingRight: expanded ? 72 : 28 }}>
+                    {/* Toast */}
+                    {copyToast && <div className="absolute top-3 right-4 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
+
+                    {/* Share panel */}
+                    {noteShareOpen && (
+                      <div className="mb-5 rounded-xl p-4" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.03)", border: `1px solid ${isDark ? "rgba(168,85,247,0.20)" : "rgba(92,46,212,0.12)"}` }}
+                        onClick={e => e.stopPropagation()}>
+                        <p className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.text }}>Share with teammate</p>
+                        <div className="flex flex-col gap-1.5">
+                          {["Mike Chen", "Jane Smith", "Sarah Johnson"].filter(a => a !== CURRENT_USER).map(agent => (
+                            <div key={agent} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fff", border: `1px solid ${c.border}` }}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: btnGrad }}>{agent.charAt(0)}</div>
+                                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{agent}</span>
+                              </div>
+                              <button onClick={() => { setCopyToast(`Shared with ${agent.split(" ")[0]}!`); setTimeout(() => setCopyToast(""), 2500); setNoteShareOpen(false); }}
+                                className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+                                style={{ fontFamily: FONT, background: btnGrad, color: "#fff" }}>Share</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lock banner (other user locked) */}
+                    {noteLocked && isLockedByOther && (
+                      <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "rgba(168,85,247,0.07)", border: "1px solid rgba(168,85,247,0.20)" }}>
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" style={{ color: "#A855F7" }} />
+                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Locked by <strong>{lockedBy}</strong></span>
+                        </div>
+                        <button onClick={() => { setCopyToast(`Access requested from ${lockedBy.split(" ")[0]}`); setTimeout(() => setCopyToast(""), 3000); }}
+                          className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                          style={{ fontFamily: FONT, background: "rgba(168,85,247,0.12)", color: "#A855F7", border: "1px solid rgba(168,85,247,0.25)" }}>
+                          Request Access
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Title */}
+                    <input value={editingNoteTitle} onChange={e => setEditingNoteTitle(e.target.value)}
+                      readOnly={noteLocked || showTrashed}
+                      className="w-full outline-none font-bold bg-transparent mb-5"
+                      style={{ fontFamily: FONT, color: c.text, fontSize: expanded ? 26 : 22, border: "none", cursor: (noteLocked || showTrashed) ? "default" : "text" }} />
+
+                    {/* Properties */}
+                    <div className="mb-6 rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+                      {[
+                        { icon: <Calendar className="w-3.5 h-3.5" />, label: "Created", value: <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{fmtDate(selectedNote.timestamp)}</span> },
+                        { icon: <UserCircle className="w-3.5 h-3.5" />, label: "Created By", value: (<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{selectedNote.author}</span></div>) },
+                        { icon: <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label: "Type", value: (<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t => (<button key={t} onClick={() => (!noteLocked && !showTrashed) && setEditingNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all" style={{ fontFamily: FONT, background: editingNoteType === t ? typeColor[t]?.bg : "transparent", color: editingNoteType === t ? typeColor[t]?.text : c.muted, border: `1px solid ${editingNoteType === t ? typeColor[t]?.text + "44" : c.border}`, cursor: (noteLocked || showTrashed) ? "default" : "pointer" }}>{t}</button>))}</div>) },
+                        { icon: <Users className="w-3.5 h-3.5" />, label: "Client", value: <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{selected ? getClientName(selected) : "—"}</span> },
+                      ].map(({ icon, label, value }, idx, arr) => (
+                        <div key={label} className="flex items-center px-4 py-2.5" style={{ borderBottom: idx < arr.length - 1 ? `1px solid ${c.border}` : undefined }}>
+                          <div className="flex items-center gap-2 flex-shrink-0" style={{ width: 130, color: c.muted }}>{icon}<span className="text-[12px]" style={{ fontFamily: FONT }}>{label}</span></div>
+                          {value}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mb-4" style={{ height: 1, background: c.border }} />
+                    <textarea value={editingNoteContent} onChange={e => setEditingNoteContent(e.target.value)}
+                      readOnly={noteLocked || showTrashed}
+                      placeholder={(noteLocked || showTrashed) ? "" : "Start writing your note here…"}
+                      className="w-full outline-none resize-none leading-relaxed bg-transparent"
+                      rows={expanded ? 22 : 12}
+                      style={{ fontFamily: FONT, fontSize: 13, color: c.text, border: "none", cursor: (noteLocked || showTrashed) ? "default" : "text" }} />
+                  </div>
+                );
+                const NoteFooter = () => (
+                  <div className="flex items-center justify-between px-5 py-2.5 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}` }}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{editingNoteContent.trim().split(/\s+/).filter(Boolean).length} words</span>
+                      {noteLocked && <span className="text-[11px] flex items-center gap-1.5" style={{ fontFamily: FONT, color: "#A855F7" }}><Lock className="w-3 h-3" />{lockedBy === CURRENT_USER ? "Locked by you · Read-only for others" : `Locked by ${lockedBy} · Read-only`}</span>}
+                      {pinnedNoteIds.has(selectedNote.id) && <span className="text-[11px] flex items-center gap-1" style={{ fontFamily: FONT, color: "#F59E0B" }}><Pin className="w-3 h-3" />Pinned</span>}
+                    </div>
+                    <span className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(selectedNote.timestamp)}</span>
+                  </div>
+                );
+                return (<><NoteTopBar expanded={false} /><NoteBody expanded={false} /><NoteFooter /></>);
+              })()}
+            </div>
+          )}
+
+          {/* ── EXPANDED: fixed full-height side panel ── */}
+          {selectedNote && noteExpanded && (
+            <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width: "58vw" }}
+              onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); setNoteShareOpen(false); }}>
+              {/* Backdrop strip */}
+              <div className="flex-1 cursor-pointer" onClick={() => setNoteExpanded(false)}
+                style={{ background: "rgba(0,0,0,0.25)" }} />
+              {/* Panel */}
+              <div className="flex flex-col h-full shadow-2xl" style={{ width: "100%", background: c.cardBg, borderLeft: `1px solid ${c.border}` }}>
+                {(() => {
+                  const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
+                  const NOTE_TYPES: Note["type"][] = ["General","Policy","Follow-up","Meeting","Task"];
+                  const typeColor: Record<string, { bg: string; text: string }> = {
+                    "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",             text: isDark ? "#9CA3AF" : "#6B7280" },
+                    "Policy":    { bg: isDark ? "rgba(59,130,246,0.15)"  : "rgba(59,130,246,0.10)", text: "#3B82F6" },
+                    "Follow-up": { bg: isDark ? "rgba(245,158,11,0.15)"  : "rgba(245,158,11,0.10)", text: "#F59E0B" },
+                    "Meeting":   { bg: isDark ? "rgba(16,185,129,0.15)"  : "rgba(16,185,129,0.10)", text: "#10B981" },
+                    "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",  text: "#EF4444" },
+                  };
+                  const fmtDate2 = (ts: string) => { const d = new Date(ts); return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})+" "+d.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}); };
+                  return (<>
+                    {/* Top bar */}
+                    <div className="flex items-center justify-between px-6 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.8)" }}>
+                      <div className="flex items-center gap-2">
+                        <StickyNote className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                        <span className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>Notes</span>
+                        <ChevronRight className="w-3 h-3" style={{ color: c.muted }} />
+                        <span className="text-[12px] font-semibold truncate max-w-[280px]" style={{ fontFamily: FONT, color: c.text }}>{selectedNote.title}</span>
+                        {noteLocked && <Lock className="w-3 h-3" style={{ color: "#A855F7" }} />}
+                        {pinnedNoteIds.has(selectedNote.id) && <Pin className="w-3 h-3" style={{ color: "#F59E0B" }} />}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={e => { e.stopPropagation(); setNoteShareOpen(p => !p); }} className="p-1.5 rounded-md" style={{ color: noteShareOpen ? "#A855F7" : c.muted }}><Users className="w-3.5 h-3.5" /></button>
+                        <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(selectedNote.id) ? s.delete(selectedNote.id) : s.add(selectedNote.id); return s; }); }} className="p-1.5 rounded-md" style={{ color: pinnedNoteIds.has(selectedNote.id) ? "#F59E0B" : c.muted }}><Pin className="w-3.5 h-3.5" /></button>
+                        <button onClick={e => { e.stopPropagation(); if (!(noteLocked && isLockedByOther)) { setNoteLocked(p => !p); if (!noteLocked) setLockedBy(CURRENT_USER); } }} className="p-1.5 rounded-md" style={{ color: noteLocked ? "#A855F7" : c.muted }}>{noteLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}</button>
+                        <button onClick={() => setNoteExpanded(false)} className="p-1.5 rounded-md" style={{ color: "#A855F7" }} title="Collapse"><Minimize2 className="w-3.5 h-3.5" /></button>
+                        <div className="relative" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => setNoteMoreOpen(p => !p)} className="p-1.5 rounded-md" style={{ color: c.muted }}><MoreVertical className="w-3.5 h-3.5" /></button>
+                          {noteMoreOpen && (
+                            <div className="absolute right-0 top-9 z-50 w-52 rounded-xl shadow-2xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }} onClick={e => e.stopPropagation()}>
+                              <button onClick={() => { navigator.clipboard.writeText(`${editingNoteTitle}\n\n${editingNoteContent}`); setCopyToast("Copied!"); setTimeout(() => setCopyToast(""),2000); setNoteMoreOpen(false); }} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: c.text }} onMouseEnter={e => (e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background="transparent")}><Copy className="w-3.5 h-3.5" style={{ color: c.muted }}/>Copy content</button>
+                              <button onClick={() => { if(!selected)return; setNotes(prev=>[{...selectedNote,id:Date.now().toString(),title:`Copy of ${editingNoteTitle}`,content:editingNoteContent,timestamp:new Date().toISOString()},...prev]); setCopyToast("Duplicated!"); setTimeout(()=>setCopyToast(""),2000); setNoteMoreOpen(false); }} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: c.text }} onMouseEnter={e => (e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background="transparent")}><CopyPlus className="w-3.5 h-3.5" style={{ color: c.muted }}/>Duplicate</button>
+                              <div style={{ height:1, background:c.border, margin:"4px 0" }} />
+                              <button onClick={() => { setArchivedNoteIds(prev=>{const s=new Set(prev);s.has(selectedNote.id)?s.delete(selectedNote.id):s.add(selectedNote.id);return s;}); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#F59E0B" }} onMouseEnter={e=>(e.currentTarget.style.background="rgba(245,158,11,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Archive className="w-3.5 h-3.5"/>Archive</button>
+                              <button onClick={() => { setTrashedNoteIds(prev=>{const s=new Set(prev);s.add(selectedNote.id);return s;}); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }} className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#EF4444" }} onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Trash2 className="w-3.5 h-3.5"/>Move to Trash</button>
+                            </div>
+                          )}
+                        </div>
+                        {!noteLocked && <button onClick={saveNote} className="ml-1 px-3 py-1 rounded-lg text-[11px] font-semibold text-white" style={{ fontFamily: FONT, background: btnGrad }}>Save</button>}
+                        <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); }} className="p-1.5 rounded-md" style={{ color: c.muted }}><X className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto px-16 py-8 relative">
+                      {copyToast && <div className="absolute top-4 right-6 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
+                      {noteShareOpen && (
+                        <div className="mb-6 rounded-xl p-4" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.03)", border: `1px solid ${isDark ? "rgba(168,85,247,0.20)" : "rgba(92,46,212,0.12)"}` }} onClick={e => e.stopPropagation()}>
+                          <p className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.text }}>Share with teammate</p>
+                          <div className="flex flex-col gap-1.5">
+                            {["Mike Chen","Jane Smith","Sarah Johnson"].filter(a=>a!==CURRENT_USER).map(agent=>(
+                              <div key={agent} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isDark?"rgba(255,255,255,0.04)":"#fff", border:`1px solid ${c.border}` }}>
+                                <div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background:btnGrad }}>{agent.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agent}</span></div>
+                                <button onClick={() => { setCopyToast(`Shared with ${agent.split(" ")[0]}!`); setTimeout(()=>setCopyToast(""),2500); setNoteShareOpen(false); }} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white" style={{ fontFamily:FONT, background:btnGrad }}>Share</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {noteLocked && isLockedByOther && (
+                        <div className="mb-5 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
+                          <div className="flex items-center gap-2"><Lock className="w-4 h-4" style={{ color:"#A855F7" }}/><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>Locked by <strong>{lockedBy}</strong></span></div>
+                          <button onClick={() => { setCopyToast(`Access requested from ${lockedBy.split(" ")[0]}`); setTimeout(()=>setCopyToast(""),3000); }} className="px-3 py-1 rounded-lg text-[11px] font-semibold" style={{ fontFamily:FONT, background:"rgba(168,85,247,0.12)", color:"#A855F7", border:"1px solid rgba(168,85,247,0.25)" }}>Request Access</button>
+                        </div>
+                      )}
+                      <input value={editingNoteTitle} onChange={e => setEditingNoteTitle(e.target.value)} readOnly={noteLocked}
+                        className="w-full outline-none font-bold bg-transparent mb-6"
+                        style={{ fontFamily:FONT, color:c.text, fontSize:28, border:"none", cursor:noteLocked?"default":"text" }} />
+                      <div className="mb-6 rounded-xl overflow-hidden" style={{ border:`1px solid ${c.border}` }}>
+                        {[
+                          {icon:<Calendar className="w-3.5 h-3.5"/>, label:"Created", value:<span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{fmtDate2(selectedNote.timestamp)}</span>},
+                          {icon:<UserCircle className="w-3.5 h-3.5"/>, label:"Created By", value:(<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{background:btnGrad}}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{selectedNote.author}</span></div>)},
+                          {icon:<svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label:"Type", value:(<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t=>(<button key={t} onClick={()=>!noteLocked&&setEditingNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium" style={{fontFamily:FONT,background:editingNoteType===t?typeColor[t]?.bg:"transparent",color:editingNoteType===t?typeColor[t]?.text:c.muted,border:`1px solid ${editingNoteType===t?typeColor[t]?.text+"44":c.border}`}}>{t}</button>))}</div>)},
+                          {icon:<Users className="w-3.5 h-3.5"/>, label:"Client", value:<span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{selected?getClientName(selected):"—"}</span>},
+                        ].map(({icon,label,value},idx,arr)=>(
+                          <div key={label} className="flex items-center px-4 py-2.5" style={{borderBottom:idx<arr.length-1?`1px solid ${c.border}`:undefined}}>
+                            <div className="flex items-center gap-2 flex-shrink-0" style={{width:140,color:c.muted}}>{icon}<span className="text-[12px]" style={{fontFamily:FONT}}>{label}</span></div>
+                            {value}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mb-5" style={{ height:1, background:c.border }} />
+                      <textarea value={editingNoteContent} onChange={e=>setEditingNoteContent(e.target.value)} readOnly={noteLocked}
+                        placeholder={noteLocked?"":"Write something…"}
+                        className="w-full outline-none resize-none leading-relaxed bg-transparent"
+                        rows={22} style={{ fontFamily:FONT, fontSize:14, color:c.text, border:"none", cursor:noteLocked?"default":"text", lineHeight:1.8 }} />
+                    </div>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between px-6 py-3 flex-shrink-0" style={{ borderTop:`1px solid ${c.border}` }}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{editingNoteContent.trim().split(/\s+/).filter(Boolean).length} words</span>
+                        {noteLocked && <span className="text-[11px] flex items-center gap-1.5" style={{ fontFamily:FONT, color:"#A855F7" }}><Lock className="w-3 h-3"/>{lockedBy === CURRENT_USER ? "Locked by you · Read-only for others" : `Locked by ${lockedBy} · Read-only`}</span>}
+                        {pinnedNoteIds.has(selectedNote.id) && <span className="text-[11px] flex items-center gap-1" style={{ fontFamily:FONT, color:"#F59E0B" }}><Pin className="w-3 h-3" />Pinned</span>}
+                      </div>
+                      <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{fmtDate2(selectedNote.timestamp)}</span>
+                    </div>
+                  </>);
+                })()}
               </div>
             </div>
           )}
-        </div>
-      )}
+
+          </div>
+        );
+      })()}
 
       {/* ── DELETE NOTE CONFIRM ── */}
       {deleteNoteId && (
@@ -1552,7 +2428,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 Cancel
               </button>
               <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
-                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal text-white"
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white"
                 style={{ fontFamily:FONT, background:"#EF4444" }}>
                 Delete Note
               </button>
@@ -1563,109 +2439,94 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       <AddClientModal isOpen={modalOpen} onClose={() => setModalOpen(false)} isDark={isDark} />
 
-      {/* ── Zoom Meeting Modal ── */}
-      {zoomModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setZoomModalOpen(false)}>
-          <div className="w-[520px] rounded-2xl shadow-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+      {/* ── Phone Call Modal ── */}
+      {callModalOpen && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setCallModalOpen(false)}>
+          <div className="w-[420px] rounded-2xl shadow-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+
             {/* Header */}
-            <div className="flex items-start justify-between px-7 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${c.border}` }}>
+            <div className="flex items-start justify-between px-6 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${c.border}` }}>
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ background: "rgba(116,195,183,0.12)" }}>
-                  <Video className="w-5 h-5" style={{ color: c.teal }} />
+                <div className="p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.15) 0%,rgba(166,20,195,0.15) 100%)" }}>
+                  <Phone className="w-5 h-5" style={{ color: "#A855F7" }} />
                 </div>
                 <div>
-                  <h2 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Schedule Zoom Meeting</h2>
-                  <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Set up a video call with {selected ? getClientName(selected) : "client"}</p>
+                  <h2 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Call {getClientName(selected)}</h2>
+                  <p className="text-[11px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>Outbound call from your agency line</p>
                 </div>
               </div>
-              <button onClick={() => setZoomModalOpen(false)} className="p-1 rounded-lg transition-colors" style={{ color: c.muted }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <button onClick={() => setCallModalOpen(false)} className="p-1 rounded-lg" style={{ color: c.muted }}>
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="px-7 py-6 space-y-5">
-              {/* Topic */}
-              <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Meeting Topic</label>
-                <input value={zoomTopic} onChange={e => setZoomTopic(e.target.value)} placeholder="e.g. Quarterly coverage review"
-                  className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13 }} />
-              </div>
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
 
-              {/* Date + Time + Duration row */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Date</span>
-                  </label>
-                  <input type="date" value={zoomDate} onChange={e => setZoomDate(e.target.value)}
-                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, colorScheme: isDark ? "dark" : "light" }} />
+              {/* From → To call route */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                {/* Agency number (from) */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.15) 0%,rgba(166,20,195,0.15) 100%)" }}>
+                    <Phone className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ fontFamily: FONT, color: c.muted }}>From (Your Agency Line)</p>
+                    <p className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{AGENCY_PHONE}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Time</span>
-                  </label>
-                  <input type="time" value={zoomTime} onChange={e => setZoomTime(e.target.value)}
-                    className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, colorScheme: isDark ? "dark" : "light" }} />
-                </div>
-                <div style={{ position: "relative" }}>
-                  <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Duration</label>
-                  <select value={zoomDuration} onChange={e => setZoomDuration(e.target.value)}
-                    className="outline-none w-full cursor-pointer" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, appearance: "none" as const }}>
-                    <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">1.5 hours</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted, bottom: 11 }} />
-                </div>
-              </div>
 
-              {/* Attendees preview */}
-              <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Attendees</label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {selected && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: "rgba(116,195,183,0.10)", color: c.teal, border: `1px solid rgba(116,195,183,0.25)` }}>
-                      <UserCircle className="w-3 h-3" />{getClientName(selected)}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", color: c.text }}>
-                    <UserCircle className="w-3 h-3" />{selected?.assignedAgent || "Agent"}
-                  </span>
+                {/* Divider arrow */}
+                <div className="flex items-center gap-2 pl-4">
+                  <div className="w-px h-4 ml-3.5" style={{ background: c.border }} />
+                </div>
+
+                {/* Client number (to) */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[12px] font-bold text-white"
+                    style={{ background: c.accentGrad }}>
+                    {getClientName(selected).charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ fontFamily: FONT, color: c.muted }}>To (Client)</p>
+                    <p className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{selected.phone || "No number on file"}</p>
+                    <p className="text-[11px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{getClientName(selected)}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Notes */}
-              <div>
-                <label className="text-[12px] font-medium block mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Notes (optional)</label>
-                <textarea rows={3} value={zoomNotes} onChange={e => setZoomNotes(e.target.value)} placeholder="Add agenda or talking points..."
-                  className="outline-none w-full" style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text, padding: "9px 12px", borderRadius: 7, fontSize: 13, resize: "none" }} />
-              </div>
-
-              {/* Zoom link preview */}
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
-                <Link className="w-4 h-4 flex-shrink-0" style={{ color: c.teal }} />
-                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Zoom meeting link will be generated automatically</span>
+              {/* Desktop note */}
+              <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.04)", border: `1px solid ${isDark ? "rgba(168,85,247,0.15)" : "rgba(92,46,212,0.10)"}` }}>
+                <Bell className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#A855F7" }} />
+                <p className="text-[11px] leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}>
+                  Clicking <span style={{ color: c.text, fontWeight: 600 }}>Call Now</span> will open your default phone dialer. On desktop this may launch software like FaceTime, Skype, or your VoIP app.
+                </p>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-7 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
-              <button onClick={() => setZoomModalOpen(false)}
-                className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setCallModalOpen(false)}
+                className="px-5 py-[9px] rounded-lg text-[12px] font-normal"
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: "transparent" }}>
                 Cancel
               </button>
-              <button onClick={() => {
-                if (selected && zoomDate) {
-                  const ts = `${zoomDate} ${zoomTime.replace(/^(\d{2}):(\d{2})$/, (_, h, m) => { const hr = parseInt(h); return `${hr > 12 ? hr - 12 : hr}:${m} ${hr >= 12 ? "PM" : "AM"}`; })}`;
-                  setActivityLogs(prev => [{ id: String(Date.now()), action: "Zoom Meeting Scheduled", description: `${zoomTopic} — ${zoomDuration} min${zoomNotes ? ". " + zoomNotes : ""}`, timestamp: ts, user: selected.assignedAgent, clientId: selected.id, type: "call" as const }, ...prev]);
-                }
-                setZoomModalOpen(false);
-              }}
-                className="px-5 py-[9px] rounded-lg text-[12px] font-normal text-white"
+              <a href={`tel:${selected.phone?.replace(/\D/g, "")}`}
+                onClick={() => {
+                  setActivityLogs(prev => [{
+                    id: String(Date.now()), action: "Phone Call", clientId: selected.id,
+                    description: `Called ${getClientName(selected)} at ${selected.phone} from ${AGENCY_PHONE}`,
+                    timestamp: new Date().toLocaleString("en-US", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                    user: selected.assignedAgent, type: "call" as const,
+                  }, ...prev]);
+                  setCallModalOpen(false);
+                }}
+                className="inline-flex items-center gap-2 px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white no-underline"
                 style={{ fontFamily: FONT, background: c.accentGrad }}>
-                Schedule Meeting
-              </button>
+                <Phone className="w-3.5 h-3.5" />Call Now
+              </a>
             </div>
+
           </div>
         </div>
       )}
