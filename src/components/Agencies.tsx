@@ -1065,8 +1065,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     style={{ color: isSelectMode ? "#A855F7" : c.muted, background: isSelectMode ? "rgba(168,85,247,0.10)" : "transparent" }}>
                     <CheckSquare className="w-3.5 h-3.5" />
                   </button>
-                  {/* New button */}
-                  <div className="relative ml-1" onClick={e => e.stopPropagation()}>
+                  {/* New button — hidden in archive/trash */}
+                  {!showArchived && !showTrashed && <div className="relative ml-1" onClick={e => e.stopPropagation()}>
                     {selectedNote ? (
                       <button onClick={() => setNoteAddOpen(true)} className="w-7 h-7 flex items-center justify-center rounded-lg text-white transition-all" style={{ background: btnGrad }}>
                         <Plus className="w-3.5 h-3.5" />
@@ -1092,7 +1092,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         ))}
                       </div>
                     )}
-                  </div>
+                  </div>}
                 </div>
               </div>
 
@@ -1263,13 +1263,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               <p className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>No {type} notes</p>
                             </div>
                           )}
-                          <button onClick={() => { setNewNoteType(type); setNoteAddOpen(true); }}
-                            className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] transition-all w-full"
-                            style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}` }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = typeColor[type]?.text + "66")}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
-                            <Plus className="w-3 h-3" />New {type}
-                          </button>
+                          {!showArchived && !showTrashed && (
+                            <button onClick={() => { setNewNoteType(type); setNoteAddOpen(true); }}
+                              className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] transition-all w-full"
+                              style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.borderColor = typeColor[type]?.text + "66")}
+                              onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
+                              <Plus className="w-3 h-3" />New {type}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

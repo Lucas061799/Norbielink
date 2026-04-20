@@ -1709,8 +1709,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <CheckSquare className="w-3.5 h-3.5" />
                 </button>
 
-                {/* New button with dropdown */}
-                <div className="relative ml-1" onClick={e => e.stopPropagation()}>
+                {/* New button — hidden in archive/trash */}
+                {!showArchived && !showTrashed && <div className="relative ml-1" onClick={e => e.stopPropagation()}>
                   {selectedNote ? (
                     /* Compact icon-only when detail panel is open */
                     <button onClick={() => setNoteAddOpen(true)}
@@ -1745,7 +1745,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       ))}
                     </div>
                   )}
-                </div>
+                </div>}
               </div>
             </div>
 
@@ -1939,13 +1939,15 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                             <p className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>No {type} notes</p>
                           </div>
                         )}
-                        <button onClick={() => { setNewNoteType(type); setNoteAddOpen(true); }}
-                          className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] transition-all w-full"
-                          style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}` }}
-                          onMouseEnter={e => (e.currentTarget.style.borderColor = typeColor[type]?.text + "66")}
-                          onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
-                          <Plus className="w-3 h-3" />New {type}
-                        </button>
+                        {!showArchived && !showTrashed && (
+                          <button onClick={() => { setNewNoteType(type); setNoteAddOpen(true); }}
+                            className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] transition-all w-full"
+                            style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}` }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = typeColor[type]?.text + "66")}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = c.border)}>
+                            <Plus className="w-3 h-3" />New {type}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
