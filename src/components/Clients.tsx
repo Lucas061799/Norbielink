@@ -1588,7 +1588,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
           {/* ── LEFT PANEL (list / board / table) ── */}
           <div className="flex flex-col min-h-0 transition-all"
-            style={{ flex: selectedNote && !noteExpanded ? "0 0 42%" : "1 1 100%", minWidth: 0 }}>
+            style={{ flex: selectedNote && !noteExpanded ? "0 0 30%" : "1 1 100%", minWidth: 0 }}>
 
             {/* ── Notion-style toolbar ── */}
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
@@ -1894,12 +1894,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                           const isChecked = selectedNoteIds.has(n.id);
                           const isPinned = pinnedNoteIds.has(n.id);
                           return (
-                          <div key={n.id} className="rounded-xl p-3.5 transition-all cursor-pointer"
-                            style={{ background: isChecked ? (isDark ? "rgba(168,85,247,0.12)" : "rgba(92,46,212,0.07)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.07)" : "rgba(92,46,212,0.04)") : c.cardBg, border: `1px solid ${isChecked ? "rgba(168,85,247,0.45)" : selectedNote?.id === n.id ? typeColor[type]?.text + "66" : c.border}` }}
+                          <div key={n.id} className="rounded-xl transition-all cursor-pointer"
+                            style={{ padding: selectedNote ? "8px 10px" : "14px", background: isChecked ? (isDark ? "rgba(168,85,247,0.12)" : "rgba(92,46,212,0.07)") : selectedNote?.id === n.id ? (isDark ? "rgba(168,85,247,0.07)" : "rgba(92,46,212,0.04)") : c.cardBg, border: `1px solid ${isChecked ? "rgba(168,85,247,0.45)" : selectedNote?.id === n.id ? typeColor[type]?.text + "66" : c.border}` }}
                             onClick={e => { e.stopPropagation(); if (isSelectMode) { setSelectedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); } else { openNote(n); } }}
                             onMouseEnter={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = typeColor[type]?.text + "55"; }}
                             onMouseLeave={e => { if (!isChecked && selectedNote?.id !== n.id) e.currentTarget.style.borderColor = c.border; }}>
-                            <div className="flex items-start justify-between gap-1 mb-1">
+                            <div className="flex items-start justify-between gap-1" style={{ marginBottom: selectedNote ? 0 : 4 }}>
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {isSelectMode && (
                                   <div className="w-3.5 h-3.5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
@@ -1907,7 +1907,6 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                                     {isChecked && <svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M0.5 2.5L2.5 4.5L6.5 0.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                   </div>
                                 )}
-                                {/* Pin button before title */}
                                 <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                                   className="p-0.5 rounded flex-shrink-0 transition-all"
                                   style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
@@ -1915,7 +1914,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
                                   <Pin className="w-2.5 h-2.5" />
                                 </button>
-                                <span className="text-[12px] font-semibold leading-snug" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
+                                <span className="text-[11px] font-semibold leading-snug truncate" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
                               </div>
                               {!isSelectMode && (
                                 <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity: 0.5 }}
@@ -1925,12 +1924,15 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                                 </button>
                               )}
                             </div>
-                            <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                                style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
-                              <span className="text-[10px]" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp).split(" ").slice(0,3).join(" ")}</span>
-                            </div>
+                            {/* Content preview + author — hidden in compact mode */}
+                            {!selectedNote && <>
+                              <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
+                                  style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
+                                <span className="text-[10px]" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp).split(" ").slice(0,3).join(" ")}</span>
+                              </div>
+                            </>}
                           </div>
                           );
                         })}
