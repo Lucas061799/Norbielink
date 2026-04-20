@@ -1183,7 +1183,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             <TypeBadge type={n.type} />
                           </div>
                           {!isSelectMode && (
-                            <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded-md flex-shrink-0" style={{ color:"#EF4444", opacity:0.6 }}
+                            <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-1 rounded-md flex-shrink-0" style={{ color:"#EF4444", opacity:0.6 }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="1"; (e.currentTarget as HTMLElement).style.background="rgba(239,68,68,0.08)"; }}
                               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.6"; (e.currentTarget as HTMLElement).style.background="transparent"; }}>
                               <X className="w-3.5 h-3.5" />
@@ -1242,7 +1242,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     <span className="text-[12px] font-semibold leading-snug" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
                                   </div>
                                   {!isSelectMode && (
-                                    <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity:0.5 }}
+                                    <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity:0.5 }}
                                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="1"; (e.currentTarget as HTMLElement).style.color="#EF4444"; }}
                                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.5"; (e.currentTarget as HTMLElement).style.color=c.muted; }}>
                                       <X className="w-3 h-3" />
@@ -2328,7 +2328,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="rounded-xl p-5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.03)":"#F9FAFB" }}>
                 <p className="text-[14px] font-bold mb-2" style={{ fontFamily:FONT, color:c.text }}>CSV File Format</p>
                 <p className="text-[13px] mb-2" style={{ fontFamily:FONT, color:c.muted }}>Please upload a CSV file with the following columns (header row required):</p>
-                <p className="text-[13px] font-mono mb-3" style={{ color:teal }}>Name, Role, Job Title, Email, Phone, Ext</p>
+                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:teal, background: isDark ? "rgba(115,201,183,0.10)" : "rgba(115,201,183,0.12)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>Example: John Doe, Admin, Manager, john@example.com, 555-1234, 123</p>
               </div>
 

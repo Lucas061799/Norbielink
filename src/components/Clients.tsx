@@ -1857,7 +1857,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                         <TypeBadge type={n.type} />
                       </div>
                       {!isSelectMode && (
-                        <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded-md flex-shrink-0"
+                        <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-1 rounded-md flex-shrink-0"
                           style={{ color: "#EF4444", opacity: 0.6 }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
@@ -1918,7 +1918,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                                 <span className="text-[12px] font-semibold leading-snug" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
                               </div>
                               {!isSelectMode && (
-                                <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity: 0.5 }}
+                                <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-0.5 rounded flex-shrink-0" style={{ color: c.muted, opacity: 0.5 }}
                                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#EF4444"; }}
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; (e.currentTarget as HTMLElement).style.color = c.muted; }}>
                                   <X className="w-3 h-3" />
@@ -2011,7 +2011,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                         <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>
                         <td className="py-2.5">
                           {!isSelectMode && (
-                            <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded" style={{ color: c.muted, opacity: 0.5 }}
+                            <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-1 rounded" style={{ color: c.muted, opacity: 0.5 }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#EF4444"; }}
                               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; (e.currentTarget as HTMLElement).style.color = c.muted; }}>
                               <X className="w-3.5 h-3.5" />
