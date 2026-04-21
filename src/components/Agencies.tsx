@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Search, Plus, Star, MapPin, Users, ChevronDown, ChevronUp,
   ChevronsUpDown, Building2, ChevronLeft, ChevronRight, X,
@@ -10,6 +10,7 @@ import {
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
   MoreVertical, UserCircle, Download, Upload, UserCog, Pencil,
 } from "lucide-react";
+import { AddressAutocomplete } from "./AddressAutocomplete";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
@@ -222,7 +223,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [eMZip,       setEMZip]       = useState("");
   const [eStatus,     setEStatus]     = useState<string>(agency.status);
   const [eApptDate,   setEApptDate]   = useState(agency.apptDate);
-  const [eLevel,      setELevel]      = useState<Set<string>>(new Set(["Wholesale"]));
   const [eContact,    setEContact]    = useState(agency.contact);
   const [eEmail,      setEEmail]      = useState(agency.contactEmail);
   const [eBizType,    setEBizType]    = useState(agency.bizType);
@@ -414,8 +414,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   const Checkbox = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
     <button onClick={onClick} className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0 transition-all"
-      style={{ border: `1.5px solid ${checked ? "#14B8A6" : c.borderStrong}`, background: checked ? "#14B8A6" : c.cardBg }}>
-      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      style={{
+        border: checked ? "none" : `1.5px solid ${c.borderStrong}`,
+        background: checked ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : c.cardBg,
+      }}>
+      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </button>
   );
 
@@ -428,7 +431,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const InfoCard = ({ title, icon, children }: { title: string; icon: React.ReactElement; children: React.ReactNode }) => (
     <div className="flex-1 rounded-2xl p-5 relative min-w-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
       <p className="text-[12px] font-semibold mb-3" style={{ ...font, color: c.muted }}>{title}</p>
-      <div className="absolute top-4 right-4 opacity-30">{icon}</div>
+      <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>{icon}</div>
       {children}
     </div>
   );
@@ -470,7 +473,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
       {/* Section title */}
       <div className="pb-4 mb-0 flex items-center gap-2" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
-        <h1 className="text-[22px] font-semibold" style={{ ...font, color: c.text }}>Agencies</h1>
+        <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
       </div>
 
         {/* Back link */}
@@ -495,8 +498,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <h2 className="text-[24px] font-bold" style={{ ...font, color: c.text }}>{agency.name}</h2>
               {agency.badge && (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap"
-                  style={{ background: "rgba(168,85,247,0.10)", color: "#A855F7" }}>
-                  {agency.badge}
+                  style={{ background: "rgba(168,85,247,0.10)" }}>
+                  <span style={{
+                    backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}>{agency.badge}</span>
                 </span>
               )}
             </div>
@@ -520,19 +528,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex items-center mb-3">
               <p className="text-[12px] font-semibold" style={{ ...font, color: c.muted }}>Agency Contact</p>
             </div>
-            {/* User icon — always pinned at top-right, same as InfoCards */}
+            {/* User icon — pinned at top-right, purple chip matching InfoCards */}
             {!contactCardEditing && (
-              <div className="absolute top-4 right-4 opacity-30" style={{ color: c.text }}>
-                <User className="w-5 h-5" />
+              <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>
+                <User className="w-5 h-5" style={{ color: "#A855F7" }} />
               </div>
             )}
             {/* Edit button — floats left of icon on hover only */}
             {!contactCardEditing && (
               <button onClick={() => setContactCardEditing(true)}
-                className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
-                style={{ top: "10px", right: "44px", fontFamily: FONT, color: c.muted, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}` }}
+                className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
+                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: "#090D11", border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, background: c.cardBg }}
                 onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                onMouseLeave={e => e.currentTarget.style.background = c.cardBg}>
                 <Pencil className="w-3.5 h-3.5" />Edit
               </button>
             )}
@@ -541,7 +549,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="absolute top-[10px] right-4 flex items-center gap-1.5">
                 <button onClick={() => setContactCardEditing(false)}
                   className="text-[11px] px-2 py-0.5 rounded-lg transition-colors"
-                  style={{ fontFamily: FONT, color: c.muted, border: `1px solid ${c.border}` }}
+                  style={{ fontFamily: FONT, color: "#090D11", border: `1px solid ${c.border}` }}
                   onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   Cancel
@@ -578,13 +586,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </>
             )}
           </div>
-          <InfoCard title="Agency Status" icon={<Building2 className="w-5 h-5" style={{ color: c.text }} />}>
+          <InfoCard title="Agency Status" icon={<Building2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             {agency.status === "Appointed" ? <AppointedBadge /> : <UnapptBadge />}
           </InfoCard>
-          <InfoCard title="Appointed Date" icon={<Calendar className="w-5 h-5" style={{ color: c.text }} />}>
+          <InfoCard title="Appointed Date" icon={<Calendar className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             <p className="text-[14px] font-semibold" style={{ ...font, color: c.text }}>{agency.apptDate}</p>
           </InfoCard>
-          <InfoCard title="Affiliations" icon={<Share2 className="w-5 h-5" style={{ color: c.text }} />}>
+          <InfoCard title="Affiliations" icon={<Share2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             <div className="text-[12px] leading-relaxed" style={{ ...font, color: c.muted }}>
               {agency.affiliations.slice(0, 4).join(" | ")}
             </div>
@@ -693,7 +701,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
               <button onClick={() => setIsEditing(false)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.muted }}
+                style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: "#090D11" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <Pencil className="w-3.5 h-3.5" />Cancel Edit
@@ -704,11 +712,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Agency Name:</label>
-                <input value={eName} onChange={e => setEName(e.target.value)} style={inputStyle} />
+                <input value={eName} onChange={e => setEName(e.target.value)} style={{ ...inputStyle, maxWidth: 320 }} />
               </div>
               <div>
                 <label style={labelStyle}>Agency Code:</label>
-                <div className="flex gap-2">
+                <div className="flex gap-2" style={{ maxWidth: 380 }}>
                   <input value={eCode} onChange={e => setECode(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                   <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
                     style={{ ...font, border: `1px solid #A855F7`, color: "#A855F7", background: "transparent" }}
@@ -720,14 +728,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Agency Type:</label>
-                <div className="flex gap-3">
-                  {(["Retail","Wholesale"] as const).map(t => (
-                    <button key={t} onClick={() => setEType(t)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
-                      style={{ ...font, border: `2px solid ${eType === t ? "#A855F7" : c.borderStrong}`, background: eType === t ? "rgba(168,85,247,0.06)" : "transparent", color: eType === t ? "#A855F7" : c.muted }}>
-                      <Radio checked={eType === t} onClick={() => setEType(t)} />{t}
-                    </button>
-                  ))}
+                <div className="flex" style={{ gap: 10 }}>
+                  {(["Retail","Wholesale"] as const).map(t => {
+                    const active = eType === t;
+                    return (
+                      <button key={t} onClick={() => setEType(t)}
+                        className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                        style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
+                          border: "1px solid transparent",
+                          backgroundImage: active
+                            ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                            : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
+                          backgroundOrigin: "padding-box, padding-box, border-box",
+                          backgroundClip: "padding-box, padding-box, border-box",
+                        }}>
+                        <Radio checked={active} onClick={() => setEType(t)} />
+                        {active
+                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
+                          : <span style={{ color: "#6B7280" }}>{t}</span>
+                        }
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -740,7 +762,20 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <select value={eCountry} onChange={e => setECountry(e.target.value)} style={selectStyle}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
                   </select>
-                  <input value={eStreet} onChange={e => setEStreet(e.target.value)} placeholder="Street address" style={inputStyle} />
+                  <AddressAutocomplete
+                    value={eStreet}
+                    onChange={setEStreet}
+                    onSelect={a => {
+                      setEStreet(a.street);
+                      if (a.city) setECity(a.city);
+                      if (a.state) setEState(a.state);
+                      if (a.zip) setEZip(a.zip);
+                      if (a.country) setECountry(a.country);
+                    }}
+                    placeholder="Street address"
+                    inputStyle={inputStyle}
+                    dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                  />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <input value={eCity} onChange={e => setECity(e.target.value)} placeholder="City" style={inputStyle} />
@@ -756,11 +791,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="mb-6">
               <label style={{ ...labelStyle, marginBottom: 8 }}>Mailing Address:</label>
               <div className="flex items-center gap-2 mb-3">
-                <button onClick={() => setESameAddr(p => !p)}
-                  className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0 transition-all"
-                  style={{ border: `1.5px solid ${eSameAddr ? "#14B8A6" : c.borderStrong}`, background: eSameAddr ? "#14B8A6" : c.cardBg }}>
-                  {eSameAddr && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </button>
+                <Checkbox checked={eSameAddr} onClick={() => setESameAddr(p => !p)} />
                 <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
               </div>
               <div className="space-y-3">
@@ -769,8 +800,22 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     style={{ ...selectStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
                   </select>
-                  <input value={eSameAddr ? eStreet : eMStreet} onChange={e => setEMStreet(e.target.value)}
-                    placeholder="Street address" style={{ ...inputStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
+                  <AddressAutocomplete
+                    value={eSameAddr ? eStreet : eMStreet}
+                    onChange={setEMStreet}
+                    onSelect={a => {
+                      setEMStreet(a.street);
+                      if (a.city) setEMCity(a.city);
+                      if (a.state) setEMState(a.state);
+                      if (a.zip) setEMZip(a.zip);
+                      if (a.country) setEMCountry(a.country);
+                    }}
+                    placeholder="Street address"
+                    containerStyle={{ opacity: eSameAddr ? 0.5 : 1 }}
+                    inputStyle={inputStyle}
+                    disabled={eSameAddr}
+                    dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                  />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <input value={eSameAddr ? eCity : eMCity} onChange={e => setEMCity(e.target.value)}
@@ -785,11 +830,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
             </div>
 
-            {/* Status | Appt Date | Agency Level */}
-            <div className="grid grid-cols-3 gap-6 mb-6">
+            {/* Status | Appt Date */}
+            <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Status:</label>
-                <select value={eStatus} onChange={e => setEStatus(e.target.value)} style={selectStyle}>
+                <select value={eStatus} onChange={e => setEStatus(e.target.value)} style={{ ...selectStyle, maxWidth: 240 }}>
                   <option value="">- Select one</option>
                   <option value="Appointed">Appointed</option>
                   <option value="Unappointed">Un Appointed</option>
@@ -797,24 +842,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Appt. Date</label>
-                <div className="relative">
+                <div className="relative" style={{ maxWidth: 260 }}>
                   <input value={eApptDate} onChange={e => setEApptDate(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Agency Level <span className="text-[11px] font-normal" style={{ color: c.muted }}>(Select all that apply)</span></label>
-                <div className="flex gap-2 flex-wrap">
-                  {["Retail","Wholesale"].map(lv => {
-                    const sel = eLevel.has(lv);
-                    return (
-                      <button key={lv} onClick={() => toggleSet(eLevel, lv, setELevel)}
-                        className="px-4 py-2 rounded-lg text-[13px] font-semibold transition-all"
-                        style={{ ...font, border: `2px solid ${sel ? "#A855F7" : c.borderStrong}`, background: sel ? "rgba(168,85,247,0.06)" : "transparent", color: sel ? "#A855F7" : c.muted }}>
-                        {lv}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
             </div>
@@ -823,11 +853,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Agency Contact:</label>
-                <input value={eContact} onChange={e => setEContact(e.target.value)} style={inputStyle} />
+                <input value={eContact} onChange={e => setEContact(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
               </div>
               <div>
                 <label style={labelStyle}>Email Address:</label>
-                <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={inputStyle} type="email" />
+                <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={{ ...inputStyle, maxWidth: 360 }} type="email" />
               </div>
             </div>
 
@@ -835,7 +865,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Type of Business:</label>
-                <select value={eBizType} onChange={e => setEBizType(e.target.value)} style={selectStyle}>
+                <select value={eBizType} onChange={e => setEBizType(e.target.value)} style={{ ...selectStyle, maxWidth: 280 }}>
                   <option value="">-Business Type</option>
                   <option>Corporation</option>
                   <option>Joint Venture</option>
@@ -848,11 +878,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Tax ID:</label>
-                <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={inputStyle} />
+                <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={{ ...inputStyle, maxWidth: 240 }} />
               </div>
               <div>
                 <label style={labelStyle}>Website Url:</label>
-                <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={inputStyle} />
+                <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={{ ...inputStyle, maxWidth: 360 }} />
               </div>
             </div>
 
@@ -860,11 +890,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Phone Number:</label>
-                <input value={ePhone} onChange={e => setEPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+                <input value={ePhone} onChange={e => setEPhone(e.target.value)} placeholder="(000) 000-0000" style={{ ...inputStyle, maxWidth: 240 }} />
               </div>
               <div>
                 <label style={labelStyle}>Toll Free Number:</label>
-                <input value={eTollFree} onChange={e => setETollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+                <input value={eTollFree} onChange={e => setETollFree(e.target.value)} placeholder="(000) 000-0000" style={{ ...inputStyle, maxWidth: 240 }} />
               </div>
             </div>
 
@@ -872,11 +902,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>License Number:</label>
-                <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={inputStyle} />
+                <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative">
+                <div className="relative" style={{ maxWidth: 200 }}>
                   <input value={eLicExp} onChange={e => setELicExp(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
                 </div>
@@ -887,11 +917,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>E&O Policy #:</label>
-                <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={inputStyle} />
+                <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative">
+                <div className="relative" style={{ maxWidth: 200 }}>
                   <input value={eEoExp} onChange={e => setEEoExp(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
                 </div>
@@ -908,13 +938,27 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <div key={lbl}>
                   <label style={labelStyle}>{lbl}</label>
                   <div className="flex gap-3">
-                    {([["Yes", true], ["No", false]] as [string, boolean][]).map(([opt, bool]) => (
-                      <button key={opt} onClick={() => set(bool)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
-                        style={{ ...font, border: `2px solid ${val === bool ? "#A855F7" : c.borderStrong}`, background: val === bool ? "rgba(168,85,247,0.06)" : "transparent", color: val === bool ? "#A855F7" : c.muted }}>
-                        <Radio checked={val === bool} onClick={() => set(bool)} />{opt}
-                      </button>
-                    ))}
+                    {([["Yes", true], ["No", false]] as [string, boolean][]).map(([opt, bool]) => {
+                      const active = val === bool;
+                      return (
+                        <button key={opt} onClick={() => set(bool)}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
+                          style={{ ...font, boxSizing: "border-box",
+                            border: "1.65px solid transparent",
+                            backgroundImage: active
+                              ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                              : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
+                            backgroundOrigin: "padding-box, padding-box, border-box",
+                            backgroundClip: "padding-box, padding-box, border-box",
+                          }}>
+                          <Radio checked={active} onClick={() => set(bool)} />
+                          {active
+                            ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
+                            : <span style={{ color: "#6B7280" }}>{opt}</span>
+                          }
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -950,14 +994,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <div className="flex items-center justify-between pb-2">
             <button onClick={() => setIsEditing(false)}
               className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: "#090D11", background: "transparent" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               Cancel
             </button>
             <button onClick={() => setIsEditing(false)}
               className="text-[13px] font-semibold text-white transition-all"
-              style={{ ...font, background: "linear-gradient(90deg,#14B8A6 0%,#0D9488 100%)", padding:"10px 24px", borderRadius:"5.58px" }}
+              style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
               onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
               onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               Save Changes
@@ -977,33 +1021,35 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               {/* Toolbar */}
               <div className="flex items-center justify-between mb-3 flex-shrink-0">
                 <div className="flex items-center gap-0.5">
+                  {(() => { const collapsed = !!selectedNote && !noteExpanded; return (<>
                   {([["list","All Notes",List],["board","By Type",LayoutGrid],["table","Table",Table2]] as [typeof noteView, string, ({className}:{className?:string})=>React.ReactElement][]).map(([v, label, Icon]) => {
                     const isActive = noteView === v && !showArchived && !showTrashed;
                     return (
-                      <button key={v} onClick={e => { e.stopPropagation(); setNoteView(v); setShowArchived(false); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); setIsSelectMode(false); setSelectedNoteIds(new Set()); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap"
+                      <button key={v} title={label} onClick={e => { e.stopPropagation(); setNoteView(v); setShowArchived(false); setShowTrashed(false); setIsSelectMode(false); setSelectedNoteIds(new Set()); }}
+                        className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-3"} py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap`}
                         style={{ fontFamily: FONT, background: isActive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "transparent", color: isActive ? c.text : c.muted }}>
-                        <Icon className="w-3 h-3" />{label}
+                        <Icon className="w-3 h-3" />{!collapsed && label}
                       </button>
                     );
                   })}
                   <div className="mx-1.5" style={{ width:1, height:16, background:c.border }} />
                   {(() => { const n = agNotes.filter(x => archivedIds.has(x.id)).length; return (
-                    <button onClick={e => { e.stopPropagation(); setShowArchived(true); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                    <button title="Archive" onClick={e => { e.stopPropagation(); setShowArchived(true); setShowTrashed(false); }}
+                      className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
                       style={{ fontFamily: FONT, background: showArchived ? "rgba(245,158,11,0.10)" : "transparent", color: showArchived ? "#F59E0B" : c.muted }}>
-                      <Archive className="w-3 h-3" />Archive
-                      {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showArchived ? "#F59E0B" : c.muted }}>{n}</span>}
+                      <Archive className="w-3 h-3" />{!collapsed && "Archive"}
+                      {!collapsed && n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showArchived ? "#F59E0B" : c.muted }}>{n}</span>}
                     </button>
                   ); })()}
                   {(() => { const n = agNotes.filter(x => trashedIds.has(x.id)).length; return (
-                    <button onClick={e => { e.stopPropagation(); setShowTrashed(true); setShowArchived(false); setSelectedNote(null); setNoteExpanded(false); }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                    <button title="Trash" onClick={e => { e.stopPropagation(); setShowTrashed(true); setShowArchived(false); }}
+                      className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
                       style={{ fontFamily: FONT, background: showTrashed ? "rgba(239,68,68,0.10)" : "transparent", color: showTrashed ? "#EF4444" : c.muted }}>
-                      <Trash2 className="w-3 h-3" />Trash
-                      {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showTrashed ? "#EF4444" : c.muted }}>{n}</span>}
+                      <Trash2 className="w-3 h-3" />{!collapsed && "Trash"}
+                      {!collapsed && n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showTrashed ? "#EF4444" : c.muted }}>{n}</span>}
                     </button>
                   ); })()}
+                  </>); })()}
                 </div>
                 <div className="flex items-center gap-1">
                   {/* Filter */}
@@ -1365,7 +1411,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <p className="text-[15px] font-bold mb-2" style={{ fontFamily: FONT, color: c.text }}>Delete note?</p>
                     <p className="text-[13px] mb-5" style={{ fontFamily: FONT, color: c.muted }}>This action cannot be undone.</p>
                     <div className="flex gap-3 justify-end">
-                      <button onClick={() => setDeleteNoteId(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>Cancel</button>
+                      <button onClick={() => setDeleteNoteId(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>Cancel</button>
                       <button onClick={() => { setAgNotes(prev => prev.filter(n => n.id !== deleteNoteId)); if (selectedNote?.id === deleteNoteId) { setSelectedNote(null); setNoteExpanded(false); } setDeleteNoteId(null); }}
                         className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white" style={{ fontFamily: FONT, background: "#EF4444" }}>Delete</button>
                     </div>
@@ -1407,7 +1453,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                     <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                       <button onClick={() => setNoteAddOpen(false)} className="px-4 py-[7px] rounded-lg text-[12px]"
-                        style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: "transparent" }}>Cancel</button>
+                        style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>Cancel</button>
                       <button onClick={() => {
                         const titleFinal = newNoteTitle.trim() || (newNote.trim() ? newNote.trim().slice(0,40)+(newNote.trim().length>40?"…":"") : "Untitled Note");
                         if (!titleFinal) return;
@@ -1647,7 +1693,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-stretch overflow-hidden transition-all"
-                style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border:"1px solid transparent", borderRadius:10 }}
+                style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius:10 }}
                 onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>
                 <input placeholder="Search Policies" value={detailSearch} onChange={e=>setDetailSearch(e.target.value)}
                   className="outline-none px-4 py-2 text-[13px]"
@@ -1807,7 +1853,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-stretch overflow-hidden transition-all"
-                style={{ background:`linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border:"1px solid transparent", borderRadius:10 }}
+                style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius:10 }}
                 onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>
                 <input placeholder="Search Quotes" value={detailSearch} onChange={e=>setDetailSearch(e.target.value)}
                   className="outline-none px-4 py-2 text-[13px]"
@@ -1968,7 +2014,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-stretch overflow-hidden transition-all"
-                style={{ background:`linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border:"1px solid transparent", borderRadius:10 }}
+                style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius:10 }}
                 onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>
                 <input placeholder="Search User" value={userSearch} onChange={e=>setUserSearch(e.target.value)}
                   className="outline-none px-4 py-2 text-[13px]"
@@ -1977,7 +2023,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   style={{ background:btnGrad, fontFamily:FONT, borderRadius:"0 7px 7px 0" }}>Submit</button>
               </div>
               <button className="flex items-center gap-1.5 text-[12px] font-semibold text-white transition-all flex-shrink-0"
-                style={{ fontFamily:FONT, background:btnGrad, height:37, padding:"9px 16px", borderRadius:"5.58px", boxSizing:"border-box" as const }}
+                style={{ fontFamily:FONT, background:btnGrad, height:37, padding:"9px 16px", borderRadius:10, boxSizing:"border-box" as const }}
                 onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.1)")}
                 onMouseLeave={e=>(e.currentTarget.style.filter="none")}
                 onClick={e=>{e.stopPropagation();setAddUserOpen(true);}}>
@@ -2293,7 +2339,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
                 <button
                   className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors"
-                  style={{ fontFamily:FONT, background:"transparent", border:`1px solid ${isDark?"rgba(255,255,255,0.2)":"#E5E7EB"}`, color:c.text }}
+                  style={{ fontFamily:FONT, background:"transparent", border:`1px solid ${isDark?"rgba(255,255,255,0.2)":"#E5E7EB"}`, color:"#090D11" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                   onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
@@ -2438,15 +2484,24 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
   const [note, setNote]               = useState("");
   const [notes, setNotes]             = useState<string[]>([]);
 
+  const apptDateRef    = useRef<HTMLInputElement>(null);
+  const licenseExpRef  = useRef<HTMLInputElement>(null);
+  const eoExpRef       = useRef<HTMLInputElement>(null);
+
+  // Convert MM/DD/YYYY ↔ YYYY-MM-DD for native date input
+  const toISO  = (d: string) => { const [m,dd,y] = d.split('/'); return y && m && dd ? `${y}-${m.padStart(2,'0')}-${dd.padStart(2,'0')}` : ''; };
+  const fromISO = (d: string) => { const [y,m,dd] = d.split('-'); return y && m && dd ? `${m}/${dd}/${y}` : d; };
+
   const font = { fontFamily: FONT };
 
   const inputStyle: React.CSSProperties = {
     fontFamily: FONT, color: c.text, background: c.cardBg,
-    border: `1px solid ${c.borderStrong}`, borderRadius: 8,
-    padding: "9px 12px", fontSize: 13, outline: "none", width: "100%",
+    border: `1px solid ${c.borderStrong}`, borderRadius: 14,
+    padding: "14px 16px", fontSize: 13, outline: "none", width: "100%",
+    height: 50, boxSizing: "border-box",
   };
   const labelStyle: React.CSSProperties = {
-    fontFamily: FONT, fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 6, display: "block",
+    fontFamily: FONT, fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 10, display: "block",
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: "none", cursor: "pointer",
@@ -2456,15 +2511,18 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
 
   const Radio = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
     <button onClick={onClick} className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 transition-all"
-      style={{ border: `2px solid ${checked ? "#A855F7" : c.borderStrong}`, background: "transparent" }}>
-      {checked && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#A855F7" }} />}
+      style={{ border: `2px solid ${checked ? "#8B3DD4" : "#D1D5DB"}`, background: "transparent" }}>
+      {checked && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />}
     </button>
   );
 
-  const Checkbox = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
+  const Checkbox = ({ checked, onClick }: { checked: boolean; onClick: () => void; color?: string }) => (
     <button onClick={onClick} className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0 transition-all"
-      style={{ border: `1.5px solid ${checked ? "#A855F7" : c.borderStrong}`, background: checked ? "#A855F7" : c.cardBg }}>
-      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      style={{
+        border: checked ? "none" : `1.5px solid ${c.borderStrong}`,
+        background: checked ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : c.cardBg,
+      }}>
+      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </button>
   );
 
@@ -2480,25 +2538,46 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
     setters: { country: (v:string)=>void; street: (v:string)=>void; city: (v:string)=>void; state: (v:string)=>void; zip: (v:string)=>void };
   }) => (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <select value={vals.country} onChange={e => setters.country(e.target.value)} style={selectStyle}
-          disabled={prefix === "m" && sameAddress} className="col-span-1">
+      {/* Row 1: Country 481px + Street 954px, gap 22px */}
+      <div className="flex" style={{ gap: 22 }}>
+        <select value={vals.country} onChange={e => setters.country(e.target.value)}
+          autoComplete="country-name"
+          style={{ ...selectStyle, width: 481, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          disabled={prefix === "m" && sameAddress}>
           <option>United States of America</option><option>Canada</option><option>Mexico</option>
         </select>
-        <input value={vals.street} onChange={e => setters.street(e.target.value)}
-          placeholder="Street address" style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          disabled={prefix === "m" && sameAddress} className="col-span-1" />
+        <AddressAutocomplete
+          value={vals.street}
+          onChange={setters.street}
+          onSelect={a => {
+            setters.street(a.street);
+            if (a.city) setters.city(a.city);
+            if (a.state) setters.state(a.state);
+            if (a.zip) setters.zip(a.zip);
+            if (a.country) setters.country(a.country);
+          }}
+          placeholder="Street address"
+          containerStyle={{ width: 954, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          inputStyle={{ ...inputStyle, width: "100%" }}
+          disabled={prefix === "m" && sameAddress}
+          dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+        />
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      {/* Row 2: City 481px + State 281px + ZIP 313px, gap 21px */}
+      <div className="flex" style={{ gap: 21 }}>
         <input value={vals.city} onChange={e => setters.city(e.target.value)} placeholder="City"
-          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          autoComplete="address-level2"
+          style={{ ...inputStyle, width: 481, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress} />
-        <select value={vals.state} onChange={e => setters.state(e.target.value)} style={{ ...selectStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+        <select value={vals.state} onChange={e => setters.state(e.target.value)}
+          autoComplete="address-level1"
+          style={{ ...selectStyle, width: 281, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress}>
           {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
         </select>
         <input value={vals.zip} onChange={e => setters.zip(e.target.value)} placeholder="ZIP"
-          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          autoComplete="postal-code"
+          style={{ ...inputStyle, width: 313, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress} />
       </div>
     </div>
@@ -2510,61 +2589,76 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
-      {/* Breadcrumb */}
-      <div className="pb-4 mb-5 flex items-center gap-2" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
-        <button onClick={onCancel} className="flex items-center gap-1.5 transition-all" style={{ color: c.muted }}
-          onMouseEnter={e => (e.currentTarget.style.color = c.text)}
-          onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <span className="text-[13px]" style={{ color: c.muted }}>Admin Tasks</span>
-        <span style={{ color: c.muted }}>/</span>
-        <span className="text-[13px] font-semibold" style={{ color: c.text }}>Add New</span>
-      </div>
-
-      {/* Form card */}
+      {/* Form card + breadcrumb scroll together */}
       <div className="flex-1 overflow-y-auto pr-1">
+        {/* Breadcrumb */}
+        <div className="pb-2 mb-3 flex items-center gap-2" style={{ marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 12 }}>
+          <button onClick={onCancel} className="flex items-center gap-1.5 transition-all" style={{ color: c.muted }}
+            onMouseEnter={e => (e.currentTarget.style.color = c.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[13px]" style={{ color: c.muted }}>Admin Tasks</span>
+          <span style={{ color: c.muted }}>/</span>
+          <span className="text-[13px] font-semibold" style={{ color: c.text }}>Add New</span>
+        </div>
+        <form autoComplete="on" onSubmit={e => e.preventDefault()}>
         <div className="rounded-2xl p-8 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[18px] font-bold" style={{ ...font, color: c.text }}>Add New Agency Information</h2>
-            <button onClick={onCancel} className="flex items-center gap-1.5 text-[12px] transition-all"
-              style={{ ...font, color: c.muted }}
-              onMouseEnter={e => (e.currentTarget.style.color = c.text)}
-              onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
-              <X className="w-3.5 h-3.5" />Cancel Edit
+            <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+              style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: "#090D11" }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <Pencil className="w-3.5 h-3.5" />Cancel Edit
             </button>
           </div>
 
-          {/* Row 1: Name | Code | Type */}
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            <div>
+          {/* Row 1: Name | Code | Type — Figma: 430 + gap102 + 490 + gap102 + 333 = 1457px */}
+          <div className="flex mb-6" style={{ gap: 102 }}>
+            <div style={{ width: 430 }}>
               <label style={labelStyle}>Agency Name:</label>
               <input value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Agency name" style={inputStyle} />
             </div>
-            <div>
+            <div style={{ width: 490 }}>
               <label style={labelStyle}>Agency Code:</label>
-              <div className="flex gap-2">
+              <div className="flex" style={{ gap: 10 }}>
                 <input value={agencyCode} onChange={e => setAgencyCode(e.target.value)} placeholder="Code" style={{ ...inputStyle, flex: 1 }} />
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
-                  style={{ ...font, border: `1px solid #A855F7`, color: "#A855F7", background: "transparent" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <RefreshCw className="w-3 h-3" />Create Code
+                <button className="flex items-center justify-center gap-2 flex-shrink-0 transition-all"
+                  style={{ ...font, background: isDark ? c.cardBg : "#FFFFFF", border: `1px solid ${c.borderStrong}`, borderRadius: 14, height: 50, width: 186, whiteSpace: "nowrap", boxSizing: "border-box" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB")}
+                  onMouseLeave={e => (e.currentTarget.style.background = isDark ? c.cardBg : "#FFFFFF")}>
+                  <RefreshCw className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#7C3AED" }} />
+                  <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 13, fontWeight: 600 }}>Create Code</span>
                 </button>
               </div>
             </div>
-            <div>
+            <div style={{ width: 382 }}>
               <label style={labelStyle}>Agency Type:</label>
-              <div className="flex gap-3">
-                {(["Retail","Wholesale"] as const).map(t => (
-                  <button key={t} onClick={() => setAgencyType(t)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
-                    style={{ ...font, border: `2px solid ${agencyType === t ? "#A855F7" : c.borderStrong}`, background: agencyType === t ? "rgba(168,85,247,0.06)" : "transparent", color: agencyType === t ? "#A855F7" : c.muted }}>
-                    <Radio checked={agencyType === t} onClick={() => setAgencyType(t)} />{t}
-                  </button>
-                ))}
+              <div className="flex" style={{ gap: 10 }}>
+                {(["Retail","Wholesale"] as const).map(t => {
+                  const active = agencyType === t;
+                  return (
+                    <button key={t} onClick={() => setAgencyType(t)}
+                      className="flex items-center gap-2 justify-center transition-all"
+                      style={{ ...font, fontSize: 13, fontWeight: 600, width: 186, height: 50, borderRadius: 14, boxSizing: "border-box",
+                        border: "1.65px solid transparent",
+                        backgroundImage: active
+                          ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                          : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
+                        backgroundOrigin: "padding-box, padding-box, border-box",
+                        backgroundClip: "padding-box, padding-box, border-box",
+                      }}>
+                      <Radio checked={active} onClick={() => setAgencyType(t)} />
+                      {active
+                        ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
+                        : <span style={{ color: "#6B7280" }}>{t}</span>
+                      }
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -2587,112 +2681,135 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
               setters={{ country: setMCountry, street: setMStreet, city: setMCity, state: setMState, zip: setMZip }} />
           </div>
 
-          {/* Status + Appt Date */}
-          <div className="grid grid-cols-4 gap-6 mb-6">
-            <div>
+          {/* Status + Appt Date — Figma: 327 + gap42 + 349 = 718px row */}
+          <div className="flex mb-6" style={{ gap: 42 }}>
+            <div style={{ width: 327 }}>
               <label style={labelStyle}>Status:</label>
               <select value={status} onChange={e => setStatus(e.target.value)} style={selectStyle}>
                 <option>Appointed</option><option>Unappointed</option>
               </select>
             </div>
-            <div>
+            <div style={{ width: 349 }}>
               <label style={labelStyle}>Appt. Date</label>
               <div className="relative">
-                <input value={apptDate} onChange={e => setApptDate(e.target.value)} style={inputStyle} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
+                <input value={apptDate} readOnly style={inputStyle} onClick={() => apptDateRef.current?.showPicker()} />
+                <input ref={apptDateRef} type="date" value={toISO(apptDate)} onChange={e => setApptDate(fromISO(e.target.value))}
+                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
+                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
+                  onClick={() => apptDateRef.current?.showPicker()} />
               </div>
             </div>
           </div>
 
-          {/* Agency Contact + Email */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
+          {/* Agency Contact + Email — Figma: 474 + gap21 + 474 = 969px */}
+          <div className="flex mb-6" style={{ gap: 21 }}>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Agency Contact:</label>
               <input value={contact} onChange={e => setContact(e.target.value)} placeholder="Contact name" style={inputStyle} />
             </div>
-            <div>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Email Address:</label>
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle} type="email" />
             </div>
           </div>
 
-          {/* Business Type | Tax ID | Website */}
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            <div>
+          {/* Business Type | Tax ID | Website — Figma: 474 + gap32 + 474 + gap32 + 446 = 1458px */}
+          <div className="flex mb-6" style={{ gap: 32 }}>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Type of Business:</label>
               <select value={bizType} onChange={e => setBizType(e.target.value)} style={selectStyle}>
                 <option value="">-Business Type</option><option>LLC</option><option>Corporation</option><option>Sole Proprietor</option><option>Partnership</option>
               </select>
             </div>
-            <div>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Tax ID:</label>
               <input value={taxId} onChange={e => setTaxId(e.target.value)} placeholder="Tax ID" style={inputStyle} />
             </div>
-            <div>
+            <div style={{ width: 446 }}>
               <label style={labelStyle}>Website Url:</label>
               <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" style={inputStyle} />
             </div>
           </div>
 
-          {/* Phone | Toll Free */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
+          {/* Phone | Toll Free — Figma: 474 + gap21 + 474 */}
+          <div className="flex mb-6" style={{ gap: 21 }}>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Phone Number:</label>
               <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
             </div>
-            <div>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>Toll Free Number:</label>
               <input value={tollFree} onChange={e => setTollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
             </div>
           </div>
 
           {/* License + Expiry */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
+          <div className="flex mb-6" style={{ gap: 21 }}>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>License Number:</label>
               <input value={licenseNo} onChange={e => setLicenseNo(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
-              <div className="relative">
-                <input value={licenseExp} onChange={e => setLicenseExp(e.target.value)} style={inputStyle} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
+              <div className="relative" style={{ width: 355 }}>
+                <input value={licenseExp} readOnly style={inputStyle} onClick={() => licenseExpRef.current?.showPicker()} />
+                <input ref={licenseExpRef} type="date" value={toISO(licenseExp)} onChange={e => setLicenseExp(fromISO(e.target.value))}
+                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
+                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
+                  onClick={() => licenseExpRef.current?.showPicker()} />
               </div>
             </div>
           </div>
 
           {/* E&O Policy + Expiry */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
+          <div className="flex mb-6" style={{ gap: 21 }}>
+            <div style={{ width: 474 }}>
               <label style={labelStyle}>E&O Policy #:</label>
               <input value={eoPolicyNo} onChange={e => setEoPolicyNo(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
-              <div className="relative">
-                <input value={eoExp} onChange={e => setEoExp(e.target.value)} style={inputStyle} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
+              <div className="relative" style={{ width: 355 }}>
+                <input value={eoExp} readOnly style={inputStyle} onClick={() => eoExpRef.current?.showPicker()} />
+                <input ref={eoExpRef} type="date" value={toISO(eoExp)} onChange={e => setEoExp(fromISO(e.target.value))}
+                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
+                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
+                  onClick={() => eoExpRef.current?.showPicker()} />
               </div>
             </div>
           </div>
 
-          {/* Agency Bill | Direct Bill | Premium Finance */}
-          <div className="grid grid-cols-3 gap-6 mb-2">
+          {/* Agency Bill | Direct Bill | Premium Finance — gap 42px between groups */}
+          <div className="flex mb-2" style={{ gap: 42 }}>
             {([
               ["Agency Bill:", agencyBill, setAgencyBill],
               ["Direct Bill:", directBill, setDirectBill],
               ["Premium Finance:", premiumFin, setPremiumFin],
             ] as [string, boolean, (v:boolean)=>void][]).map(([label, val, set]) => (
-              <div key={label}>
+              <div key={label} style={{ width: 492 }}>
                 <label style={labelStyle}>{label}</label>
-                <div className="flex gap-3">
-                  {([["Yes", true],["No", false]] as [string, boolean][]).map(([opt, bool]) => (
-                    <button key={opt} onClick={() => set(bool)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
-                      style={{ ...font, border: `2px solid ${val === bool ? "#A855F7" : c.borderStrong}`, background: val === bool ? "rgba(168,85,247,0.06)" : "transparent", color: val === bool ? "#A855F7" : c.muted }}>
-                      <Radio checked={val === bool} onClick={() => set(bool)} />{opt}
-                    </button>
-                  ))}
+                <div className="flex" style={{ gap: 10 }}>
+                  {([["Yes", true],["No", false]] as [string, boolean][]).map(([opt, bool]) => {
+                    const active = val === bool;
+                    return (
+                      <button key={opt} onClick={() => set(bool)}
+                        className="flex items-center gap-2 justify-center transition-all"
+                        style={{ ...font, height: 50, flex: 1, borderRadius: 14, boxSizing: "border-box",
+                          border: "1.65px solid transparent",
+                          backgroundImage: active
+                            ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                            : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
+                          backgroundOrigin: "padding-box, padding-box, border-box",
+                          backgroundClip: "padding-box, padding-box, border-box",
+                        }}>
+                        <Radio checked={active} onClick={() => set(bool)} />
+                        {active
+                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 13, fontWeight: 600 }}>{opt}</span>
+                          : <span style={{ color: "#6B7280", fontSize: 13, fontWeight: 600 }}>{opt}</span>
+                        }
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -2704,7 +2821,7 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
             {AFFILIATIONS.map(aff => (
               <label key={aff} className="flex items-start gap-2.5 cursor-pointer select-none">
                 <div className="mt-0.5 flex-shrink-0">
-                  <Checkbox checked={affiliations.has(aff)} onClick={() => setAffiliations(prev => { const s = new Set(prev); s.has(aff) ? s.delete(aff) : s.add(aff); return s; })} />
+                  <Checkbox checked={affiliations.has(aff)} onClick={() => setAffiliations(prev => { const s = new Set(prev); s.has(aff) ? s.delete(aff) : s.add(aff); return s; })} color="#73C9B7" />
                 </div>
                 <span className="text-[12px] leading-snug" style={{ ...font, color: c.text }}>{aff}</span>
               </label>
@@ -2717,7 +2834,7 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-4 gap-x-6 gap-y-3 mb-4">
             {WORKERS_COMP.map(w => (
               <label key={w} className="flex items-center gap-2.5 cursor-pointer select-none">
-                <Checkbox checked={workersComp.has(w)} onClick={() => setWorkersComp(prev => { const s = new Set(prev); s.has(w) ? s.delete(w) : s.add(w); return s; })} />
+                <Checkbox checked={workersComp.has(w)} onClick={() => setWorkersComp(prev => { const s = new Set(prev); s.has(w) ? s.delete(w) : s.add(w); return s; })} color="#73C9B7" />
                 <span className="text-[12px]" style={{ ...font, color: c.text }}>{w}</span>
               </label>
             ))}
@@ -2751,12 +2868,13 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
             )}
           </div>
         </div>
+        </form>
 
         {/* Footer buttons */}
         <div className="flex items-center justify-between pb-6">
           <button onClick={onCancel}
             className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: "#090D11", background: "transparent" }}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             Cancel
@@ -2788,16 +2906,18 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const [stars, setStars]             = useState<Set<string>>(
     new Set(mockAgencies.filter(a => a.isStarred).map(a => a.id))
   );
+  const [starLimitToast, setStarLimitToast] = useState(false);
 
   /* colours */
   const c = {
     text:        isDark ? "#F9FAFB" : "#1F2937",
-    muted:       isDark ? "#6B7280" : "#9CA3AF",
+    muted:       isDark ? "#8B8FA8" : "#6B7280",
     border:      isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6",
     borderStrong:isDark ? "rgba(255,255,255,0.18)" : "#D1D5DB",
     cardBg:      isDark ? "#1E2240" : "#ffffff",
     hoverBg:     isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
     bg:          isDark ? "#0F1120" : "#ffffff",
+    teal:        "#73C9B7",
   };
   const font = { fontFamily: FONT };
   const btnGrad = isDark
@@ -2836,7 +2956,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const toggleStar = (id: string) => {
     setStars(prev => {
       const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
+      if (s.has(id)) { s.delete(id); } else if (s.size < 6) { s.add(id); } else { setStarLimitToast(true); setTimeout(() => setStarLimitToast(false), 3000); }
       return s;
     });
   };
@@ -2847,10 +2967,20 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   };
 
   const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ChevronsUpDown className="w-3 h-3 inline ml-1 opacity-40" />;
-    return sortDir === "asc"
-      ? <ChevronUp className="w-3 h-3 inline ml-1" style={{ color: "#A855F7" }} />
-      : <ChevronDown className="w-3 h-3 inline ml-1" style={{ color: "#A855F7" }} />;
+    const active = sortKey === col;
+    const sub = isDark ? "#6B7280" : "#9CA3AF";
+    const upColor   = active && sortDir === "asc"  ? c.text : sub;
+    const downColor = active && sortDir === "desc" ? c.text : sub;
+    return (
+      <span className="inline-flex items-center ml-1 flex-shrink-0" style={{ verticalAlign: "middle", gap: 1 }}>
+        <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+          <path d="M3.5 9V2M3.5 2L1.5 4M3.5 2L5.5 4" stroke={upColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+          <path d="M3.5 1V8M3.5 8L1.5 6M3.5 8L5.5 6" stroke={downColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+    );
   };
 
   const StatusBadge = ({ status }: { status: Agency["status"] }) => (
@@ -2871,25 +3001,33 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     const active = filterStatus === label;
     return (
       <button key={label} onClick={() => { setFilterStatus(label); setPage(1); }}
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all"
-        style={{ fontFamily: FONT, background: active ? (isDark ? "rgba(255,255,255,0.10)" : "#F3F3F3") : "transparent", color: active ? c.text : c.muted, border: `1px solid ${active ? c.borderStrong : c.border}` }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = "#A614C3"; }}
-        onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = c.border; }}>
-        {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ color: active ? "#F59E0B" : c.muted, fill: active ? "#F59E0B" : "none" }} />}
-        {label}
+        className="flex-shrink-0 transition-all"
+        style={{ fontFamily: FONT, background: active ? "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)" : "transparent", padding: active ? 1 : 0, borderRadius: 12, border: active ? "none" : `1px solid ${c.border}` }}
+        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; } }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ fontFamily: FONT, background: active ? `linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%), ${isDark ? "#0F1120" : "#ffffff"}` : "transparent", borderRadius: 11, padding: "5px 15px" }}>
+          {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
+          <span style={active ? { backgroundImage: "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" } : { color: c.muted }}>{label}</span>
+        </span>
       </button>
     );
   };
 
   /* Section title — same full-width divider style as Clients */
   const sectionTitle = (
-    <div className="pb-4 mb-5" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
-      <h1 className="text-[22px] font-semibold" style={{ ...font, color: c.text }}>Agencies</h1>
+    <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+      style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
+      <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
     </div>
   );
 
   if (addOpen) {
-    return <AddAgencyForm isDark={isDark} onCancel={() => setAddOpen(false)} c={c} btnGrad={btnGrad} FONT={FONT} />;
+    return (
+      <div className="flex flex-col flex-1 min-h-0">
+        {sectionTitle}
+        <AddAgencyForm isDark={isDark} onCancel={() => setAddOpen(false)} c={c} btnGrad={btnGrad} FONT={FONT} />
+      </div>
+    );
   }
 
   if (selectedAgency) {
@@ -2908,6 +3046,12 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => setPerPageOpen(false)}>
+      {starLimitToast && (
+        <div className="fixed top-[68px] right-6 z-50 px-4 py-2.5 rounded-xl text-[13px] font-semibold"
+          style={{ background: isDark ? "#1E2240" : "#fff", color: c.text, border: `1px solid ${c.border}`, fontFamily: FONT, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+          ⭐ You can only pin up to 6 agencies
+        </div>
+      )}
 
       {/* Section title */}
       {sectionTitle}
@@ -2915,25 +3059,21 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {/* Search + buttons */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex flex-1 max-w-[360px] transition-all"
-          style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden" }}>
-          <div className="flex items-center gap-2 px-3 py-2 flex-1">
-            <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
-            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search agencies..."
-              className="outline-none bg-transparent text-[13px] flex-1"
-              style={{ fontFamily: FONT, color: c.text }} />
-            {search && <button onClick={() => setSearch("")}><X className="w-3.5 h-3.5" style={{ color: c.muted }} /></button>}
-          </div>
+          style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
+          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search agencies..."
+            className="flex-1 outline-none"
+            style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
+          <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
+            style={{ background: btnGrad, fontFamily: FONT }}
+            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
+            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+            <Search className="w-3.5 h-3.5" />Search
+          </button>
         </div>
-        <button className="text-[13px] font-semibold text-white transition-all"
-          style={{ fontFamily: FONT, background: btnGrad, padding:"9px 16px", borderRadius:"5.58px" }}
-          onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
-          onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-          Search Agencies
-        </button>
         <button onClick={() => setAddOpen(true)}
           className="flex items-center gap-1.5 text-[13px] font-semibold text-white transition-all"
-          style={{ fontFamily: FONT, background: btnGrad, padding:"9px 16px", borderRadius:"5.58px" }}
+          style={{ fontFamily: FONT, background: btnGrad, padding:"9px 16px", borderRadius: 10 }}
           onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
           onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
           <Plus className="w-4 h-4" />Add New Agency
@@ -2951,12 +3091,12 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {/* Starred agencies strip */}
       {starred.length > 0 && filterStatus !== "Inactive" && (
         <div className="mb-5">
-          <p className="text-[13px] font-semibold mb-3 flex items-center gap-1.5"
-            style={{ fontFamily: FONT, color: c.text }}>
-            <Star className="w-4 h-4" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
-            Starred Agencies
-            <span className="text-[12px] font-normal" style={{ color: c.muted }}>({starred.length} of {allAgencies.length})</span>
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
+            <span className="text-[13px] font-bold" style={{ fontFamily: FONT, color: c.text }}>
+              Starred Agencies <span className="font-normal" style={{ color: c.muted }}>({starred.length} of {allAgencies.length})</span>
+            </span>
+          </div>
           <div className="flex gap-3 flex-wrap">
             {starred.map(a => (
               <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all"
@@ -2980,11 +3120,11 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           const active = tab === key;
           return (
             <button key={key} onClick={() => setTab(key)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-semibold transition-all relative"
-              style={{ fontFamily: FONT, color: active ? "#A855F7" : c.muted }}>
-              <Icon className="w-3.5 h-3.5" />
+              className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-normal relative transition-colors"
+              style={{ fontFamily: FONT, color: active ? (isDark ? "#fff" : "#74C3B7") : c.muted, letterSpacing: "0.01em" }}>
+              <Icon className="w-[15px] h-[15px]" style={{ color: active ? (isDark ? "#A614C3" : "#74C3B7") : undefined }} />
               {label}
-              {active && <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full" style={{ background: "linear-gradient(90deg,#5C2ED4,#A614C3)" }} />}
+              {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "#74C3B7" }} />}
             </button>
           );
         })}
@@ -3067,9 +3207,10 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between pt-4 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}` }}>
+      <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
+        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-24px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
-        <div className="flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
+        <div className="flex-1 flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           <span>Show</span>
           <div className="relative" onClick={e => e.stopPropagation()}>
             <button onClick={() => setPerPageOpen(p => !p)}
@@ -3097,28 +3238,27 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         {/* Page nav */}
         <div className="flex items-center gap-1">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ color: page === 1 ? c.muted : c.text, opacity: page === 1 ? 0.4 : 1 }}>
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
+            style={{ color: c.muted }}
+            onMouseEnter={e => { if (page > 1) e.currentTarget.style.background = c.hoverBg; }}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-            <button key={n} onClick={() => setPage(n)}
-              className="w-8 h-8 rounded-lg text-[12px] font-semibold transition-all"
-              style={{ fontFamily: FONT, background: page === n ? btnGrad : "transparent", color: page === n ? "#fff" : c.muted }}>
-              {n}
-            </button>
-          ))}
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-semibold"
+            style={{ fontFamily: FONT, background: c.teal, color: "#fff" }}>
+            {page}
+          </button>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ color: page === totalPages ? c.muted : c.text, opacity: page === totalPages ? 0.4 : 1 }}>
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
+            style={{ color: c.muted }}
+            onMouseEnter={e => { if (page < totalPages) e.currentTarget.style.background = c.hoverBg; }}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Page info */}
-        <span className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
+        <div className="flex-1 text-right text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           Page {page} of {totalPages}
-        </span>
+        </div>
       </div>
     </div>
   );

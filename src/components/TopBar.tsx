@@ -18,19 +18,22 @@ export default function TopBar({ isDark = false }: TopBarProps) {
       }}
     >
       {/* Search */}
-      <div
-        className="flex items-center gap-2 rounded-md px-3 py-[7px] w-[280px] transition-colors duration-300"
-        style={{
-          background: isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB",
-          border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`,
-        }}
-      >
-        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isDark ? "#6B7280" : "#9CA3AF" }} />
+      <div className="relative transition-colors duration-300" style={{ width: 400 }}>
+        <Search className="absolute left-[12.5px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 flex-shrink-0" style={{ color: isDark ? "#6B7280" : "#9CA3AF" }} />
         <input
           type="text"
           placeholder="Search clients, quotes or policies..."
-          className="bg-transparent text-[12px] outline-none w-full"
-          style={{ color: isDark ? "#9CA3AF" : "#6B7280" }}
+          className="bg-transparent outline-none w-full"
+          style={{
+            background: isDark ? "rgba(255,255,255,0.06)" : "#FFFFFF",
+            border: `0.78125px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`,
+            borderRadius: 10.9375,
+            padding: "7.8125px 12.5px 7.8125px 34.375px",
+            height: 35.94,
+            fontSize: 12,
+            color: isDark ? "#9CA3AF" : "#6B7280",
+            boxSizing: "border-box",
+          }}
         />
       </div>
 

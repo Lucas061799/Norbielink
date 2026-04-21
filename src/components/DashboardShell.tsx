@@ -25,15 +25,12 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         return (
           <>
             {pageTitle && (
-              <h1
-                className="text-[22px] font-semibold pb-4"
-                style={{
-                  color: darkMode ? "#F9FAFB" : "#1F2937",
-                  borderBottom: `1px solid ${darkMode ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-                }}
-              >
-                {pageTitle}
-              </h1>
+              <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+                style={{ height: 71, borderBottom: `0.87px solid ${darkMode ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
+                <h1 className="text-[22px] font-normal" style={{ color: darkMode ? "#F9FAFB" : "#1F2937" }}>
+                  {pageTitle}
+                </h1>
+              </div>
             )}
             {children}
           </>

@@ -51,7 +51,15 @@
       "Bash(git -C /Users/lucasye/Norbielink commit -m 'Fix search+submit pill shape to match Figma:*)",
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
-      "Bash(kill 12163)"
+      "Bash(kill 12163)",
+      "WebFetch(domain:agentportal-staging.btisinc.com)",
+      "Bash(rm /Users/lucasye/Norbielink/.git/index.lock)",
+      "WebFetch(domain:www.figma.com)",
+      "Bash(git commit -m ' *)",
+      "Bash(npx -y figma-developer-mcp --help)",
+      "Bash(npx --cache /tmp/npm-cache -y figma-developer-mcp --help)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}.keys\\(\\)\\)\\)\\)\")"
     ]
   }
 }

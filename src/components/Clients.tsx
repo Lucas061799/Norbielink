@@ -10,13 +10,14 @@ import {
   StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell, Paperclip,
   Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare,
 } from "lucide-react";
+import { AddressAutocomplete } from "./AddressAutocomplete";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 const AGENCY_PHONE = "+1 (888) 555-0188"; // Fixed agency outbound number
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 interface Client {
-  id: string; type: "Individual" | "Business";
+  id: string; type: "Individual" | "Corporation" | "LLC" | "Partnership";
   companyName?: string; dbaName?: string;
   firstName?: string; lastName?: string;
   contactFirstName?: string; contactLastName?: string;
@@ -39,11 +40,13 @@ interface Note { id: string; title: string; content: string; author: string; tim
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
-  { id:"1", type:"Business", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85" },
+  { id:"1", type:"Corporation", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85" },
   { id:"2", type:"Individual", firstName:"John", lastName:"Anderson", email:"john.anderson@email.com", phone:"(555) 234-5678", address:{street:"456 Oak Street",city:"Los Angeles",state:"CA",zipCode:"90001"}, status:"Active", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2024-02-20", lastActivity:"2024-04-08", isStarred:false, totalPremium:12000, activePolicies:2, pendingQuotes:0 },
-  { id:"3", type:"Business", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:17500, activePolicies:1, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
-  { id:"4", type:"Business", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
+  { id:"3", type:"LLC", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:17500, activePolicies:1, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
+  { id:"4", type:"Partnership", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
   { id:"5", type:"Individual", firstName:"Maria", lastName:"Rodriguez", email:"maria.r@email.com", phone:"(555) 567-8901", address:{street:"654 Palm Avenue",city:"Miami",state:"FL",zipCode:"33101"}, status:"Inactive", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2023-08-15", lastActivity:"2024-01-20", isStarred:false, totalPremium:8500, activePolicies:1, pendingQuotes:0 },
+  { id:"6", type:"Corporation", firstName:"Kevin", lastName:"Park", email:"kevin.park@email.com", phone:"(555) 678-9012", address:{street:"987 Maple Street",city:"Seattle",state:"WA",zipCode:"98101"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-08", lastActivity:"2024-04-05", isStarred:false, totalPremium:11200, activePolicies:2, pendingQuotes:1 },
+  { id:"7", type:"LLC", companyName:"Sunrise Properties LLC", dbaName:"Sunrise RE", contactFirstName:"Diana", contactLastName:"Nguyen", inspectionFirstName:"Diana", inspectionLastName:"Nguyen", email:"diana@sunriseproperties.com", phone:"(555) 789-0123", address:{street:"222 Harbor View",city:"Boston",state:"MA",zipCode:"02101"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-02-14", lastActivity:"2024-04-09", isStarred:false, totalPremium:22000, activePolicies:0, pendingQuotes:3, industry:"Real Estate", website:"www.sunriseproperties.com", primaryClassCode:"6400 - Real Estate", federalId:"04-1234567", grossSales:"$5,000,000", payroll:"$800,000", owners:"1", employees:"12" },
 ];
 const mockQuotes: Quote[] = [
   { id:"1", quoteId:"QMWC123456789", policyType:"Commercial Auto", status:"Sold/Issued", createdDate:"2024-05-01", premium:15000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", effectiveDate:"2024-01-01", lob:"Worker's Comp", producer:"Jane Smith" },
@@ -193,7 +196,7 @@ type SortDir = "asc" | "desc";
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 function getClientName(c: Client) {
-  return c.type === "Business" ? c.companyName || "Unnamed" : `${c.firstName} ${c.lastName}`;
+  return c.type !== "Individual" ? c.companyName || "Unnamed" : `${c.firstName} ${c.lastName}`;
 }
 
 /* ─── Tiny Dropdown ──────────────────────────────────────────────────────── */
@@ -288,11 +291,25 @@ function StatusBadge({ status, isDark }: { status: string; isDark: boolean }) {
 
 /* ─── Add Client Modal ───────────────────────────────────────────────────── */
 function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose: () => void; isDark: boolean }) {
-  const [clientType, setClientType] = useState<"Business" | "Individual">("Business");
+  const [clientType, setClientType] = useState("");
   const [sameAddress, setSameAddress] = useState(false);
+  const [street, setStreet]   = useState("");
+  const [city, setCity]       = useState("");
+  const [stateVal, setStateVal] = useState("");
+  const [zip, setZip]         = useState("");
+  const [mStreet, setMStreet] = useState("");
+  const [mCity, setMCity]     = useState("");
+  const [mState, setMState]   = useState("");
+  const [mZip, setMZip]       = useState("");
+
+  const handleSameAddress = (checked: boolean) => {
+    setSameAddress(checked);
+    if (checked) { setMStreet(street); setMCity(city); setMState(stateVal); setMZip(zip); }
+  };
+
   if (!isOpen) return null;
 
-  const bg      = isDark ? "#191D35" : "#F9FAFB";
+  const bg      = isDark ? "#191D35" : "#ffffff";
   const cardBg  = isDark ? "rgba(255,255,255,0.04)" : "#fff";
   const text    = isDark ? "#F9FAFB" : "#1F2937";
   const muted   = isDark ? "#8B8FA8" : "#6B7280";
@@ -304,8 +321,8 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
   const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: text, marginBottom: 5, display: "block" };
   const reqStar = <span style={{ color: "#EF4444", marginLeft: 1 }}>*</span>;
   const inpSty: React.CSSProperties = { fontFamily: FONT, background: inputBg, border: `1px solid ${border}`, color: text, width: "100%", padding: "9px 12px", borderRadius: 7, fontSize: 13, outline: "none" };
-  const secCard: React.CSSProperties = { border: `1px solid ${border}`, borderRadius: 10, padding: "20px 20px 24px", background: cardBg };
-  const secTitle: React.CSSProperties = { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: text, marginBottom: 16 };
+  const secCard: React.CSSProperties = { paddingBottom: 8 };
+  const secTitle: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 700, color: muted, marginBottom: 14, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
 
   const F = ({ label, placeholder, req, type = "text", cols = 1 }: { label: string; placeholder?: string; req?: boolean; type?: string; cols?: number }) => (
     <div style={cols > 1 ? { gridColumn: `span ${cols}` } : {}}>
@@ -334,30 +351,23 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-7 py-6 space-y-5">
-
-          {/* Client Type */}
-          <div>
-            <label style={{ ...lblSty, marginBottom: 8 }}>Client Type{reqStar}</label>
-            <div className="grid grid-cols-2 gap-3">
-              {(["Business", "Individual"] as const).map(t => (
-                <button key={t} onClick={() => setClientType(t)}
-                  className="flex items-center justify-center gap-2 py-[10px] rounded-lg text-[13px] font-semibold transition-all"
-                  style={clientType === t
-                    ? { background: "#F0FAF9", border: `2px solid ${teal}`, color: teal, fontFamily: FONT }
-                    : { background: cardBg, border: `1px solid ${border}`, color: text, fontFamily: FONT }}>
-                  {t === "Business" ? <Building2 className="w-4 h-4" /> : <UserCircle className="w-4 h-4" />}
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
+        <form autoComplete="on" onSubmit={e => e.preventDefault()} className="flex-1 overflow-y-auto px-7 py-6 space-y-5">
 
           {/* ── Account Information ── */}
           <div style={secCard}>
             <p style={secTitle}>Account Information</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-4">
               <F label="Company Name"   placeholder="Enter company name" req />
+              <div>
+                <label style={lblSty}>Entity{reqStar}</label>
+                <select value={clientType} onChange={e => setClientType(e.target.value)} style={{ ...inpSty, background: "transparent", cursor: "pointer" }}>
+                  <option value="">Select...</option>
+                  <option value="Individual">Individual</option>
+                  <option value="Corporation">Corporation</option>
+                  <option value="LLC">LLC</option>
+                  <option value="Partnership">Partnership</option>
+                </select>
+              </div>
               <F label="DBA Name or Operating Name" placeholder="Doing business as" />
               <F label="Contact First Name" placeholder="Enter first name" />
               <F label="Contact Last Name"  placeholder="Enter last name" />
@@ -385,11 +395,39 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
           <div style={secCard}>
             <p style={secTitle}>Physical Address</p>
             <div className="grid gap-y-4">
-              <F label="Street Address" placeholder="123 Main Street" req />
+              <div>
+                <label style={lblSty}>Street Address{reqStar}</label>
+                <AddressAutocomplete
+                  value={street}
+                  onChange={setStreet}
+                  onSelect={a => {
+                    setStreet(a.street);
+                    if (a.city) setCity(a.city);
+                    if (a.state) setStateVal(a.state);
+                    if (a.zip) setZip(a.zip);
+                  }}
+                  placeholder="123 Main Street"
+                  inputStyle={inpSty}
+                  className="outline-none w-full"
+                  dropdownBg={inputBg} dropdownText={text} dropdownBorder={border}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-x-4">
-                <F label="City" placeholder="City" req />
-                <F label="State" placeholder="" req />
-                <F label="ZIP Code" placeholder="12345" req />
+                <div>
+                  <label style={lblSty}>City{reqStar}</label>
+                  <input value={city} onChange={e => setCity(e.target.value)} placeholder="City"
+                    autoComplete="address-level2" style={inpSty} className="outline-none w-full" />
+                </div>
+                <div>
+                  <label style={lblSty}>State{reqStar}</label>
+                  <input value={stateVal} onChange={e => setStateVal(e.target.value)} placeholder="State"
+                    autoComplete="address-level1" style={inpSty} className="outline-none w-full" />
+                </div>
+                <div>
+                  <label style={lblSty}>ZIP Code{reqStar}</label>
+                  <input value={zip} onChange={e => setZip(e.target.value)} placeholder="12345"
+                    autoComplete="postal-code" style={inpSty} className="outline-none w-full" />
+                </div>
               </div>
             </div>
           </div>
@@ -398,19 +436,52 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
           <div style={secCard}>
             <p style={{ ...secTitle, marginBottom: 12 }}>Mailing Address</p>
             <label className="flex items-center gap-2 cursor-pointer select-none mb-4" style={{ fontFamily: FONT, fontSize: 12, color: "#6B7280" }}>
-              <div onClick={() => setSameAddress(!sameAddress)}
+              <div onClick={() => handleSameAddress(!sameAddress)}
                 className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
-                style={{ background: sameAddress ? teal : "transparent", border: `1.5px solid ${sameAddress ? teal : border}` }}>
-                {sameAddress && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                style={{ background: inputBg, border: `1.5px solid ${border}` }}>
+                {sameAddress && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#73C9B7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
               </div>
               Same as Physical Address
             </label>
             <div className="grid gap-y-4">
-              <F label="Street Address" placeholder="123 Main Street" />
+              <div>
+                <label style={lblSty}>Street Address</label>
+                <AddressAutocomplete
+                  value={sameAddress ? street : mStreet}
+                  onChange={setMStreet}
+                  onSelect={a => {
+                    setMStreet(a.street);
+                    if (a.city) setMCity(a.city);
+                    if (a.state) setMState(a.state);
+                    if (a.zip) setMZip(a.zip);
+                  }}
+                  placeholder="123 Main Street"
+                  disabled={sameAddress}
+                  containerStyle={{ opacity: sameAddress ? 0.6 : 1 }}
+                  inputStyle={inpSty}
+                  className="outline-none w-full"
+                  dropdownBg={inputBg} dropdownText={text} dropdownBorder={border}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-x-4">
-                <F label="City" placeholder="City" />
-                <F label="State" placeholder="" />
-                <F label="ZIP Code" placeholder="12345" />
+                <div>
+                  <label style={lblSty}>City</label>
+                  <input value={sameAddress ? city : mCity} onChange={e => setMCity(e.target.value)}
+                    placeholder="City" readOnly={sameAddress}
+                    autoComplete="address-level2" style={{ ...inpSty, opacity: sameAddress ? 0.6 : 1 }} className="outline-none w-full" />
+                </div>
+                <div>
+                  <label style={lblSty}>State</label>
+                  <input value={sameAddress ? stateVal : mState} onChange={e => setMState(e.target.value)}
+                    placeholder="State" readOnly={sameAddress}
+                    autoComplete="address-level1" style={{ ...inpSty, opacity: sameAddress ? 0.6 : 1 }} className="outline-none w-full" />
+                </div>
+                <div>
+                  <label style={lblSty}>ZIP Code</label>
+                  <input value={sameAddress ? zip : mZip} onChange={e => setMZip(e.target.value)}
+                    placeholder="12345" readOnly={sameAddress}
+                    autoComplete="postal-code" style={{ ...inpSty, opacity: sameAddress ? 0.6 : 1 }} className="outline-none w-full" />
+                </div>
               </div>
             </div>
           </div>
@@ -424,13 +495,13 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
                 style={{ ...inpSty, resize: "none" }} className="outline-none w-full" />
             </div>
           </div>
-        </div>
+        </form>
 
         {/* Footer */}
         <div className="flex items-center justify-between px-7 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${border}`, background: cardBg, borderRadius: "0 0 16px 16px" }}>
           <button onClick={onClose}
             className="px-5 py-[8px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
             Cancel
           </button>
           <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"
@@ -455,6 +526,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [stars, setStars] = useState<Set<string>>(new Set(mockClients.filter(c => c.isStarred).map(c => c.id)));
+  const [starLimitToast, setStarLimitToast] = useState(false);
   const [detailSearch, setDetailSearch] = useState("");
   const [docDragOver, setDocDragOver] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -575,7 +647,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   const toggleStar = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setStars(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setStars(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else if (n.size < 6) { n.add(id); } else { setStarLimitToast(true); setTimeout(() => setStarLimitToast(false), 3000); } return n; });
   };
 
   const openDetail = (cl: Client) => {
@@ -587,8 +659,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   /* Section title */
   const sectionTitle = (
-    <div className="pb-4 mb-5" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
-      <h1 className="text-[22px] font-semibold" style={{ ...font, color: c.text }}>Clients</h1>
+    <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+      style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
+      <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Clients</h1>
     </div>
   );
 
@@ -597,17 +670,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     const active = filterStatus === label;
     return (
       <button key={label} onClick={() => { setFilterStatus(label); setPage(1); }}
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all"
-        style={{
-          fontFamily: FONT,
-          background: active ? (isDark ? "rgba(255,255,255,0.10)" : "#F3F3F3") : "transparent",
-          color: active ? c.text : c.muted,
-          border: `1px solid ${active ? c.borderStrong : c.border}`,
-        }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
+        className="flex-shrink-0 transition-all"
+        style={{ fontFamily: FONT, background: active ? "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)" : "transparent", padding: active ? 1 : 0, borderRadius: 12, border: active ? "none" : `1px solid ${c.border}` }}
+        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; } }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-        {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
-        {label}
+        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ fontFamily: FONT, background: active ? `linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%), ${isDark ? "#0F1120" : "#ffffff"}` : "transparent", borderRadius: 11, padding: "5px 15px" }}>
+          {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
+          <span style={active ? { backgroundImage: "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" } : { color: c.muted }}>{label}</span>
+        </span>
       </button>
     );
   };
@@ -635,7 +705,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const th = (label: string, col?: SortKey) => (
     <button
       className="flex items-center gap-0.5 text-[11px] font-bold uppercase tracking-wider text-left w-full"
-      style={{ fontFamily: FONT, color: c.muted, cursor: col ? "pointer" : "default", background: "none", border: "none", padding: 0 }}
+      style={{ fontFamily: FONT, color: c.muted, cursor: col ? "pointer" : "default", background: "none", border: "none", padding: 0, minWidth: 0, overflow: "hidden" }}
       onClick={() => col && handleSort(col)}
     >
       {label}
@@ -677,13 +747,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   /* ══════════════════════ LIST VIEW ══════════════════════ */
   if (view === "list") return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => setOpenMenuId(null)}>
+      {starLimitToast && (
+        <div className="fixed top-[68px] right-6 z-50 px-4 py-2.5 rounded-xl text-[13px] font-semibold"
+          style={{ background: isDark ? "#1E2240" : "#fff", color: c.text, border: `1px solid ${c.border}`, fontFamily: FONT, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+          ⭐ You can only pin up to 6 clients
+        </div>
+      )}
       {/* Top section */}
       <div>
         {sectionTitle}
 
         {/* Search + Add */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden" }}>
+          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
             <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
@@ -695,7 +771,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </div>
           <button onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 text-[12px] font-semibold text-white transition-all"
-            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius:"5.58px" }}
+            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius: 10 }}
             onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
             onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
             <Plus className="w-4 h-4" />Add Client
@@ -741,27 +817,26 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* Table — no outer card border, just row dividers */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Header */}
-        <div className="grid py-3" style={{
-          gridTemplateColumns: "32px 2fr 1fr 1.8fr 1.3fr 1fr 0.7fr 1.1fr 80px",
-          borderBottom: `1px solid ${c.border}`,
-          background: isDark ? "rgba(255,255,255,0.02)" : "#FDFDFD",
-          gap: "20px",
-          padding: "12px 0",
-        }}>
-          <div />
-          {th("Client Name", "name")}
-          {th("Type", "type")}
-          {th("Contact")}
-          {th("Agent", "assignedAgent")}
-          {th("Status", "status")}
-          {th("Policies", "activePolicies")}
-          {th("Last Activity", "lastActivity")}
-          {th("Action")}
-        </div>
+        {/* Header + Rows share one overflow-y: scroll container so scrollbar never shifts column widths */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: "scroll" }}>
+          <div className="grid sticky top-0 z-10" style={{
+            gridTemplateColumns: "32px 1.5fr 1fr 1.5fr 1.1fr 1fr 1fr 1.2fr 80px",
+            borderBottom: `1px solid ${c.border}`,
+            background: isDark ? "rgba(255,255,255,0.02)" : "#FDFDFD",
+            gap: "20px",
+            padding: "12px 0",
+          }}>
+            <div />
+            {th("Client Name", "name")}
+            {th("Entity", "type")}
+            {th("Contact")}
+            {th("Agent", "assignedAgent")}
+            {th("Status", "status")}
+            {th("Policies", "activePolicies")}
+            {th("Last Activity", "lastActivity")}
+            {th("Action")}
+          </div>
 
-        {/* Rows */}
-        <div className="flex-1 overflow-y-auto">
           {pageItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32 gap-2">
               <Users className="w-8 h-8" style={{ color: c.sub }} />
@@ -770,7 +845,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           ) : pageItems.map((cl, i) => (
             <div key={cl.id} onClick={() => openDetail(cl)}
               className="grid py-4 items-center cursor-pointer transition-colors"
-              style={{ gridTemplateColumns: "32px 2fr 1fr 1.8fr 1.3fr 1fr 0.7fr 1.1fr 80px", gap: "20px", borderBottom: `1px solid ${c.border}`, padding: "18px 0" }}
+              style={{ gridTemplateColumns: "32px 1.5fr 1fr 1.5fr 1.1fr 1fr 1fr 1.2fr 80px", gap: "20px", borderBottom: `1px solid ${c.border}`, padding: "18px 0" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               {/* Star */}
@@ -794,11 +869,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               {/* Status */}
               <div><StatusBadge status={cl.status} isDark={isDark} /></div>
               {/* Policies */}
-              <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>
+              <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text, paddingLeft: 10 }}>
                 {cl.activePolicies}
               </div>
               {/* Last activity */}
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
+              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted, paddingLeft: 10 }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
               {/* Menu */}
               <div onClick={e => e.stopPropagation()}>
                 <ActionMenu isDark={isDark} items={["Edit Client","New Quote","Send Email"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
@@ -812,7 +887,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
         style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-24px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
-        <div className="flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
+        <div className="flex-1 flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           Show
           <div className="relative">
             <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
@@ -833,13 +908,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-            <button key={n} onClick={() => setPage(n)}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-semibold transition-all"
-              style={{ fontFamily: FONT, background: page === n ? c.teal : "transparent", color: page === n ? "#fff" : c.muted }}>
-              {n}
-            </button>
-          ))}
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-semibold"
+            style={{ fontFamily: FONT, background: c.teal, color: "#fff" }}>
+            {page}
+          </button>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
             style={{ color: c.muted }}
@@ -849,7 +921,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </button>
         </div>
         {/* Page label */}
-        <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
+        <div className="flex-1 text-right text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           Page {page} of {totalPages}
         </div>
       </div>
@@ -864,6 +936,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => setOpenMenuId(null)}>
+      {sectionTitle}
+
       {/* Back + header */}
       <div className="pb-4 mb-5" style={{ borderBottom: `1px solid ${c.border}` }}>
         <button onClick={() => { setView("list"); setSelected(null); }}
@@ -893,8 +967,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <button key={label}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all text-white"
                 style={{ fontFamily: FONT, background: i === 0 ? btnGrad : "transparent", border: i === 0 ? "none" : `1px solid ${c.border}`, color: i === 0 ? "#fff" : c.muted }}
-                onMouseEnter={e => { if (i === 0) e.currentTarget.style.filter = "brightness(1.12)"; else { e.currentTarget.style.borderColor = "#A614C3"; e.currentTarget.style.color = "#7C3AED"; } }}
-                onMouseLeave={e => { if (i === 0) e.currentTarget.style.filter = "none"; else { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.muted; } }}
+                onMouseEnter={e => { if (i === 0) e.currentTarget.style.filter = "brightness(1.12)"; else e.currentTarget.style.background = c.hoverBg; }}
+                onMouseLeave={e => { if (i === 0) e.currentTarget.style.filter = "none"; else e.currentTarget.style.background = "transparent"; }}
                 onClick={() => {
                   if (label === "Phone Call") { setCallModalOpen(true); }
                   if (label === "Send Email") { if (selected?.email) window.location.href = `mailto:${selected.email}`; }
@@ -913,21 +987,73 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           { label: "Incomplete Quotes",  value: String(incompleteQuotesCount),   icon: <ClipboardList className="w-5 h-5" style={{ color: "#A855F7" }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("incomplete-quotes"); setDetailSearch(""); }, highlight: incompleteQuotesCount > 0   },
           { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: "#A855F7" }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter("active-policies"); setDetailSearch(""); }, highlight: false },
           { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: "#A855F7" }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
-          { label: "Primary Contact",   value: selected.assignedAgent,          icon: <UserCircle className="w-5 h-5" style={{ color: "#A855F7" }} />,     onClick: () => { setDetailTab("overview"); setHighlightFilter(null);            setDetailSearch(""); document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth" }); }, highlight: false },
         ].map((card, i) => (
           <button key={i} onClick={card.onClick}
-            className="rounded-xl p-4 text-left transition-all"
+            className="rounded-xl p-5 text-left transition-all relative"
             style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", width: "100%" }}
             onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg; e.currentTarget.style.border = `1px solid ${card.highlight ? "transparent" : c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>{card.icon}</div>
-              {card.highlight && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Action needed</span>}
+            <div className="flex items-center gap-2 mb-3 pr-12" style={{ minHeight: 24 }}>
+              <p className="text-[12px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>{card.label}</p>
+              {card.highlight && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Action needed</span>}
             </div>
-            <div className="text-[18px] font-bold mb-0.5" style={{ fontFamily: FONT, color: c.text }}>{card.value}</div>
-            <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{card.label}</div>
+            <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>{card.icon}</div>
+            <div className="text-[18px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{card.value}</div>
           </button>
         ))}
+
+        {/* Primary Contact — Edit jumps to Client Information section */}
+        {(() => {
+          const fullName = selected.type === "Individual"
+            ? `${selected.firstName ?? ""} ${selected.lastName ?? ""}`.trim()
+            : `${selected.contactFirstName ?? ""} ${selected.contactLastName ?? ""}`.trim() || selected.assignedAgent;
+          const jumpToEditContact = () => {
+            setDetailTab("overview");
+            setEditFields({
+              companyName: selected.companyName || "", dbaName: selected.dbaName || "", agencyType: selected.type,
+              contactName: selected.type !== "Individual"
+                ? `${selected.contactFirstName || ""} ${selected.contactLastName || ""}`.trim()
+                : `${selected.firstName || ""} ${selected.lastName || ""}`.trim(),
+              inspectionName: `${selected.inspectionFirstName || ""} ${selected.inspectionLastName || ""}`.trim(),
+              email: selected.email, phone: selected.phone, websiteUrl: selected.website || "",
+              primaryClassCode: selected.primaryClassCode || "", federalId: selected.federalId || "",
+              contractorLicense: selected.contractorLicense || "",
+              grossSales: selected.grossSales || "", payroll: selected.payroll || "",
+              owners: selected.owners || "", employees: selected.employees || "",
+              firstName: selected.firstName || "", lastName: selected.lastName || "",
+            });
+            setEditingInfo(true);
+            requestAnimationFrame(() => {
+              document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              setTimeout(() => {
+                const inp = document.getElementById("edit-contact-name-input") as HTMLInputElement | null;
+                inp?.focus();
+                inp?.select();
+              }, 350);
+            });
+          };
+          return (
+            <div className="rounded-xl p-5 relative min-w-0 group transition-all"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+              onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
+              <div className="flex items-center gap-2 mb-3 pr-12" style={{ minHeight: 24 }}>
+                <p className="text-[12px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>Primary Contact</p>
+              </div>
+              <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>
+                <UserCircle className="w-5 h-5" style={{ color: "#A855F7" }} />
+              </div>
+              <button onClick={jumpToEditContact}
+                className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
+                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: "#090D11", border: `1px solid ${c.border}`, background: c.cardBg }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                <Pencil className="w-3.5 h-3.5" />Edit
+              </button>
+              <div className="text-[18px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{fullName || "—"}</div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Tabs */}
@@ -950,10 +1076,10 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="text-[13px]" style={{ fontFamily: FONT, color: tealColor ? c.teal : c.text }}>{value || "—"}</div>
           </div>
         );
-        const editField = (label: string, key: string, placeholder?: string) => (
+        const editField = (label: string, key: string, placeholder?: string, id?: string) => (
           <div>
             <label style={lblSty}>{label}:</label>
-            <input value={editFields[key] || ""} onChange={e => setEditFields(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} style={inpSty} className="outline-none" />
+            <input id={id} value={editFields[key] || ""} onChange={e => setEditFields(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} style={inpSty} className="outline-none" />
           </div>
         );
         const editSelect = (label: string, key: string, options: string[]) => (
@@ -968,7 +1094,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         const startEditInfo = () => {
           setEditFields({
             companyName: selected.companyName || "", dbaName: selected.dbaName || "", agencyType: selected.type,
-            contactName: selected.type === "Business" ? "" : `${selected.firstName || ""} ${selected.lastName || ""}`.trim(),
+            contactName: selected.type !== "Individual" ? "" : `${selected.firstName || ""} ${selected.lastName || ""}`.trim(),
             inspectionName: "", email: selected.email, phone: selected.phone, websiteUrl: selected.website || "",
             primaryClassCode: "", federalId: "", contractorLicense: "",
             grossSales: "", payroll: "", owners: "", employees: "",
@@ -998,7 +1124,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </button>
               ) : (
                 <button onClick={() => setEditingInfo(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
               )}
@@ -1007,7 +1133,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             {!editingInfo ? (
               /* ── View Mode ── */
               <div className="grid gap-x-8 gap-y-5" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                {selected.type === "Business" ? (<>
+                {selected.type !== "Individual" ? (<>
                   {viewField("Company Name", selected.companyName)}
                   {viewField("DBA Name or Operating Name", selected.dbaName)}
                   {viewField("Agency Type", selected.type, true)}
@@ -1037,18 +1163,18 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               /* ── Edit Mode ── */
               <>
                 <div className="grid gap-x-6 gap-y-5" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                  {selected.type === "Business" ? (<>
+                  {selected.type !== "Individual" ? (<>
                     {editField("Company Name", "companyName")}
                     {editField("DBA Name or Operating Name", "dbaName")}
-                    {editSelect("Agency Type", "agencyType", ["Business", "Individual"])}
-                    {editField("Contact Name", "contactName")}
+                    {editSelect("Entity", "agencyType", ["Individual", "Corporation", "LLC", "Partnership"])}
+                    {editField("Contact Name", "contactName", undefined, "edit-contact-name-input")}
                     {editField("Inspection Name", "inspectionName")}
                     <div />
                   </>) : (<>
                     {editField("First Name", "firstName")}
                     {editField("Last Name", "lastName")}
-                    {editSelect("Agency Type", "agencyType", ["Business", "Individual"])}
-                    {editField("Contact Name", "contactName")}
+                    {editSelect("Entity", "agencyType", ["Individual", "Corporation", "LLC", "Partnership"])}
+                    {editField("Contact Name", "contactName", undefined, "edit-contact-name-input")}
                     {editField("Inspection Name", "inspectionName")}
                     <div />
                   </>)}
@@ -1065,7 +1191,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </div>
                 <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingInfo(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
@@ -1084,7 +1210,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </button>
               ) : (
                 <button onClick={() => setEditingAddr(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
               )}
@@ -1115,7 +1241,22 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
                     </div>
-                    <input value={editFields.street || ""} onChange={e => setEditFields(f => ({ ...f, street: e.target.value }))} placeholder="Street Address" style={inpSty} className="outline-none" />
+                    <AddressAutocomplete
+                      value={editFields.street || ""}
+                      onChange={v => setEditFields(f => ({ ...f, street: v }))}
+                      onSelect={a => setEditFields(f => ({
+                        ...f,
+                        street: a.street,
+                        city: a.city || f.city,
+                        state: a.state || f.state,
+                        zipCode: a.zip || f.zipCode,
+                        country: a.country || f.country,
+                      }))}
+                      placeholder="Street Address"
+                      inputStyle={inpSty}
+                      className="outline-none"
+                      dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                    />
                   </div>
                   <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                     <input value={editFields.city || ""} onChange={e => setEditFields(f => ({ ...f, city: e.target.value }))} placeholder="City" style={inpSty} className="outline-none" />
@@ -1136,8 +1277,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <label className="flex items-center gap-2 mb-3 cursor-pointer select-none" style={{ fontFamily: FONT, fontSize: 12, color: c.text }}>
                     <div onClick={() => setEditFields(f => ({ ...f, sameAddr: f.sameAddr === "true" ? "false" : "true" }))}
                       className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
-                      style={{ background: editFields.sameAddr === "true" ? c.accentGrad : c.inputBg, border: `1px solid ${editFields.sameAddr === "true" ? "#75C9B7" : c.border}` }}>
-                      {editFields.sameAddr === "true" && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      style={{ background: c.inputBg, border: `1.5px solid ${c.border}` }}>
+                      {editFields.sameAddr === "true" && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#73C9B7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
                     Same as Agency Address
                   </label>
@@ -1148,8 +1289,23 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
                     </div>
-                    <input value={editFields.sameAddr === "true" ? editFields.street || "" : editFields.mailStreet || ""} readOnly={editFields.sameAddr === "true"}
-                      onChange={e => setEditFields(f => ({ ...f, mailStreet: e.target.value }))} placeholder="Street Address" style={{ ...inpSty, opacity: editFields.sameAddr === "true" ? 0.6 : 1 }} className="outline-none" />
+                    <AddressAutocomplete
+                      value={editFields.sameAddr === "true" ? editFields.street || "" : editFields.mailStreet || ""}
+                      onChange={v => setEditFields(f => ({ ...f, mailStreet: v }))}
+                      onSelect={a => setEditFields(f => ({
+                        ...f,
+                        mailStreet: a.street,
+                        mailCity: a.city || f.mailCity,
+                        mailState: a.state || f.mailState,
+                        mailZip: a.zip || f.mailZip,
+                      }))}
+                      placeholder="Street Address"
+                      disabled={editFields.sameAddr === "true"}
+                      containerStyle={{ opacity: editFields.sameAddr === "true" ? 0.6 : 1 }}
+                      inputStyle={inpSty}
+                      className="outline-none"
+                      dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                    />
                   </div>
                   <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                     <input value={editFields.sameAddr === "true" ? editFields.city || "" : editFields.mailCity || ""} readOnly={editFields.sameAddr === "true"}
@@ -1170,7 +1326,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
                 <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingAddr(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.muted, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingAddr(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
@@ -1185,7 +1341,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "policies" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <input placeholder="Search Policies" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
@@ -1252,7 +1408,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+            <div className="flex items-stretch overflow-hidden transition-all" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10 }} onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")} onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <input placeholder="Search Quotes" value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="outline-none px-4 py-2 text-[13px]"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, width: 200, borderRadius: "10px 0 0 10px" }} />
@@ -1321,7 +1477,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "documents" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex" style={{ background: `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`, border: "1px solid transparent", borderRadius: 10, overflow: "hidden", width: 320 }}>
+            <div className="flex" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden", width: 320 }}>
               <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="flex-1 outline-none"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
@@ -1518,7 +1674,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setAddActivityOpen(false)}
                       className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                      style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:c.muted, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                      style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                     <button onClick={() => {
                       if (!newActivityAction.trim() || !selected) return;
                       const now = new Date();
@@ -1594,13 +1750,14 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
               {/* Left: view switcher */}
               <div className="flex items-center gap-0.5">
+                {(() => { const collapsed = !!selectedNote && !noteExpanded; return (<>
                 {([["list","All Notes",List],["board","By Type",LayoutGrid],["table","Table",Table2]] as [typeof noteView, string, ({className}:{className?:string})=>React.ReactElement][]).map(([v, label, Icon]) => {
                   const isActive = noteView === v && !showArchived && !showTrashed;
                   return (
-                    <button key={v} onClick={e => { e.stopPropagation(); setNoteView(v); setShowArchived(false); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); setIsSelectMode(false); setSelectedNoteIds(new Set()); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap"
+                    <button key={v} title={label} onClick={e => { e.stopPropagation(); setNoteView(v); setShowArchived(false); setShowTrashed(false); setIsSelectMode(false); setSelectedNoteIds(new Set()); }}
+                      className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-3"} py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap`}
                       style={{ fontFamily: FONT, background: isActive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "transparent", color: isActive ? c.text : c.muted }}>
-                      <Icon className="w-3 h-3" />{label}
+                      <Icon className="w-3 h-3" />{!collapsed && label}
                     </button>
                   );
                 })}
@@ -1608,22 +1765,23 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <div className="mx-1.5" style={{ width: 1, height: 16, background: c.border }} />
                 {/* Archived tab */}
                 {(() => { const n = clientNotes.filter(x => archivedNoteIds.has(x.id)).length; return (
-                  <button onClick={e => { e.stopPropagation(); setShowArchived(true); setShowTrashed(false); setSelectedNote(null); setNoteExpanded(false); }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                  <button title="Archive" onClick={e => { e.stopPropagation(); setShowArchived(true); setShowTrashed(false); }}
+                    className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
                     style={{ fontFamily: FONT, background: showArchived ? "rgba(245,158,11,0.10)" : "transparent", color: showArchived ? "#F59E0B" : c.muted }}>
-                    <Archive className="w-3 h-3" />Archive
-                    {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showArchived ? "#F59E0B" : c.muted }}>{n}</span>}
+                    <Archive className="w-3 h-3" />{!collapsed && "Archive"}
+                    {!collapsed && n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showArchived ? "#F59E0B" : c.muted }}>{n}</span>}
                   </button>
                 ); })()}
                 {/* Trash tab */}
                 {(() => { const n = clientNotes.filter(x => trashedNoteIds.has(x.id)).length; return (
-                  <button onClick={e => { e.stopPropagation(); setShowTrashed(true); setShowArchived(false); setSelectedNote(null); setNoteExpanded(false); }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all"
+                  <button title="Trash" onClick={e => { e.stopPropagation(); setShowTrashed(true); setShowArchived(false); }}
+                    className={`flex items-center ${collapsed ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
                     style={{ fontFamily: FONT, background: showTrashed ? "rgba(239,68,68,0.10)" : "transparent", color: showTrashed ? "#EF4444" : c.muted }}>
-                    <Trash2 className="w-3 h-3" />Trash
-                    {n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showTrashed ? "#EF4444" : c.muted }}>{n}</span>}
+                    <Trash2 className="w-3 h-3" />{!collapsed && "Trash"}
+                    {!collapsed && n > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showTrashed ? "#EF4444" : c.muted }}>{n}</span>}
                   </button>
                 ); })()}
+                </>); })()}
               </div>
 
               {/* Right: action icons + New */}
@@ -2072,7 +2230,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   </div>
                   <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                     <button onClick={() => setNoteAddOpen(false)} className="px-4 py-[7px] rounded-lg text-[12px]"
-                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: "transparent" }}>Cancel</button>
+                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>Cancel</button>
                     <button onClick={() => {
                       if (!selected) return;
                       const titleFinal = newNoteTitle.trim() || (newNote.trim() ? newNote.trim().slice(0, 40) + (newNote.trim().length > 40 ? "…" : "") : "Untitled Note");
@@ -2428,7 +2586,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteNoteId(null)}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:c.muted, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
@@ -2512,7 +2670,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setCallModalOpen(false)}
                 className="px-5 py-[9px] rounded-lg text-[12px] font-normal"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted, background: "transparent" }}>
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>
                 Cancel
               </button>
               <a href={`tel:${selected.phone?.replace(/\D/g, "")}`}
