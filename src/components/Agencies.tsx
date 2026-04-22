@@ -8,11 +8,12 @@ import {
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Link as LinkIcon, Globe, Eye, Headphones, Crown,
+  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Link as LinkIcon, Globe, Eye, Headphones, Crown, Mail, Phone, Bell,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
+const AGENCY_PHONE = "+1 (888) 555-0188";
 
 function generateAgencyCode(): string {
   const letters = Array.from({ length: 2 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join("");
@@ -207,7 +208,7 @@ type TabKey = "agencies" | "users";
 const mockAgencies: Agency[] = [
   { id: "1", name: "Acme Insurance Agency", code: "ACME01", city: "Des Moines", state: "IA", totalUsers: 7,  status: "Appointed",   isStarred: true  },
   { id: "2", name: "Summit Solutions",      code: "SUMIT22", city: "Chicago",    state: "IL", totalUsers: 3,  status: "Appointed",   isStarred: true  },
-  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "Des Moines", state: "IA", totalUsers: 1,  status: "Unappointed", isStarred: true  },
+  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "",           state: "",   totalUsers: 1,  status: "Unappointed", isStarred: true  },
   { id: "4", name: "Lakefront Coverage",    code: "LAKE04",  city: "Denver",     state: "CO", totalUsers: 10, status: "Appointed",   isStarred: false },
   { id: "5", name: "Ridgeline Insurance",   code: "RIDG05",  city: "Des Moines", state: "IA", totalUsers: 23, status: "Appointed",   isStarred: false },
   { id: "6", name: "Harbor Risk Group",     code: "HARB06",  city: "New York",   state: "NY", totalUsers: 5,  status: "Unappointed", isStarred: false },
@@ -248,7 +249,7 @@ interface AgencyDetail extends Agency {
 const mockDetails: Record<string, Partial<AgencyDetail>> = {
   "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badge: "Strategic Partner" },
   "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "BTIS"], workersComp: ["CNA"], badge: "" },
-  "3": { website: "www.pioneerbrok.com",  street: "333 Walnut St",   zip: "50309", apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "515-333-4400", contactEmail: "tom@pioneerbrok.com",   bizType: "Sole Proprietor",taxId: "456789012",   phone: "515-333-4400", tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badge: "" },
+  "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badge: "" },
 };
 
 function getDetail(a: Agency): AgencyDetail {
@@ -524,6 +525,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   /* ── users tab state ── */
   const [importUsersOpen, setImportUsersOpen] = useState(false);
   const [addUserOpen,     setAddUserOpen]     = useState(false);
+  const [editUserId,      setEditUserId]      = useState<string|null>(null);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
   const [userSearch,      setUserSearch]      = useState("");
   const [jobTitleFilter,  setJobTitleFilter]  = useState<Set<string>>(new Set());
   const [jobTitleOpen,    setJobTitleOpen]    = useState(false);
@@ -909,9 +913,84 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             {/* Subtitle indented to sit under the title text */}
             <p className="text-[12px] mt-0.5 ml-[29px]" style={{ ...font, color: c.muted }}>Agency Code: {agency.code}</p>
           </div>
-          <div className="text-right flex-shrink-0 ml-4">
-            <p className="text-[13px]" style={{ ...font, color: c.muted }}>{agency.website}</p>
-            <p className="text-[13px]" style={{ ...font, color: c.muted }}>{agency.street}, {agency.city}, {agency.state}, {agency.zip}</p>
+          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+            {agency.website ? (
+              <a href={agency.website.startsWith("http") ? agency.website : `https://${agency.website}`}
+                target="_blank" rel="noopener noreferrer"
+                title={agency.website}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <Globe className="w-3.5 h-3.5" />Website
+              </a>
+            ) : (
+              <button onClick={() => setIsEditing(true)}
+                title="Add a website"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ ...font, background: "transparent", border: `1px dashed ${c.borderStrong}`, color: c.muted }}
+                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                <Plus className="w-3.5 h-3.5" />Add Website
+              </button>
+            )}
+            {(agency.street || agency.city || agency.state || agency.zip) ? (
+              <button onClick={() => setAddressModalOpen(true)}
+                title={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <MapPin className="w-3.5 h-3.5" />Address
+              </button>
+            ) : (
+              <button onClick={() => setIsEditing(true)}
+                title="Add an address"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ ...font, background: "transparent", border: `1px dashed ${c.borderStrong}`, color: c.muted }}
+                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                <Plus className="w-3.5 h-3.5" />Add Address
+              </button>
+            )}
+            {agency.contactEmail ? (
+              <a href={`mailto:${agency.contactEmail}`}
+                title={agency.contactEmail}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <Mail className="w-3.5 h-3.5" />Send Email
+              </a>
+            ) : (
+              <button onClick={() => setIsEditing(true)}
+                title="Add an email"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ ...font, background: "transparent", border: `1px dashed ${c.borderStrong}`, color: c.muted }}
+                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                <Plus className="w-3.5 h-3.5" />Add Email
+              </button>
+            )}
+            {agency.contactPhone ? (
+              <button onClick={() => setCallModalOpen(true)}
+                title="Phone Call"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <Phone className="w-3.5 h-3.5" />Phone Call
+              </button>
+            ) : (
+              <button onClick={() => setIsEditing(true)}
+                title="Add a phone number"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ ...font, background: "transparent", border: `1px dashed ${c.borderStrong}`, color: c.muted }}
+                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                <Plus className="w-3.5 h-3.5" />Add Phone
+              </button>
+            )}
           </div>
         </div>
 
@@ -1011,7 +1090,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div />
               <LabelValue label="Type of Business" value={agency.bizType} />
               <LabelValue label="Tax ID"           value={agency.taxId || "—"} />
-              <LabelValue label="Website Url"      value={agency.website} />
+              <LabelValue
+                label="Website Url"
+                value={
+                  agency.website
+                    ? agency.website
+                    : <span style={{ fontStyle: "italic", color: c.muted }}>No website added for this agency yet.</span>
+                }
+              />
               <LabelValue label="Phone Number"     value={agency.phone} />
               <LabelValue label="Toll Free Number" value={agency.tollFree || "—"} />
               <div />
@@ -2713,13 +2799,35 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           <MoreVertical className="w-4 h-4"/>
                         </button>
                         {userMenuId === u.id && (
-                          <div className="absolute right-0 top-9 z-20 rounded-xl shadow-xl py-1.5 min-w-[150px]"
+                          <div className="absolute right-0 top-9 z-20 rounded-xl shadow-xl overflow-hidden min-w-[150px]"
                             style={{ background:isDark?"#1E2240":c.cardBg, border:`1px solid ${c.border}` }}>
                             {["Edit User","Reset Password","Deactivate","Remove"].map(action => (
                               <button key={action} className="w-full text-left px-4 py-2 text-[12px] transition-colors"
                                 style={{ fontFamily:FONT, color:action==="Remove"?"#EF4444":c.text }}
                                 onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
-                                onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
+                                onClick={() => {
+                                  if (action === "Edit User") {
+                                    const parts = u.name.trim().split(/\s+/);
+                                    setAuFirstName(parts[0] || "");
+                                    setAuLastName(parts.slice(1).join(" "));
+                                    setAuIsAdmin(u.isAdmin);
+                                    setAuAdminLevel("");
+                                    setAuJobTitle(u.jobTitle);
+                                    setAuStatus("Active");
+                                    setAuPhone(u.phone);
+                                    setAuExt(u.ext);
+                                    setAuMobile("");
+                                    setAuSms(false);
+                                    setAuEmail(u.email);
+                                    setAuAddress("");
+                                    setAuCity("");
+                                    setAuState("");
+                                    setAuZip("");
+                                    setEditUserId(u.id);
+                                  }
+                                  setUserMenuId(null);
+                                }}>
                                 {action}
                               </button>
                             ))}
@@ -2734,8 +2842,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         )}
 
-      {/* ── Add User Modal ── */}
-      {addUserOpen && (() => {
+      {/* ── Add/Edit User Modal ── */}
+      {(addUserOpen || editUserId) && (() => {
+        const isEditMode = !!editUserId;
+        const closeModal = () => { setAddUserOpen(false); setEditUserId(null); };
         const fieldBg   = isDark ? "rgba(255,255,255,0.06)" : "#fff";
         const fieldBorder = isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid #E5E7EB";
         const labelColor  = isDark ? "#D1D5DB" : "#374151";
@@ -2796,15 +2906,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background:"rgba(0,0,0,0.45)" }}
-            onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
+            onClick={()=>{ closeModal(); closeAll(); }}>
             <div className="rounded-2xl w-[620px] max-w-[95vw] max-h-[92vh] flex flex-col"
               style={{ background:isDark?"#1E2240":"#fff", boxShadow:"0 20px 60px rgba(0,0,0,0.25)" }}
               onClick={e=>{ e.stopPropagation(); closeAll(); }}>
 
               {/* Header */}
               <div className="flex items-center justify-between px-8 pt-7 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-                <h2 className="text-[20px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>Add User</h2>
-                <button onClick={()=>{ setAddUserOpen(false); closeAll(); }}
+                <h2 className="text-[20px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>{isEditMode ? "Edit User" : "Add User"}</h2>
+                <button onClick={()=>{ closeModal(); closeAll(); }}
                   className="p-1.5 rounded-lg transition-colors" style={{ color:c.muted }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                   onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
@@ -2915,7 +3025,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     className="flex items-center gap-2 pb-2.5 flex-shrink-0 transition-opacity"
                     style={{ fontFamily:FONT, color:c.text, fontSize:13 }}>
                     <span className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
-                      style={{ border:`1.5px solid ${auSms?"#4ECDC4":"#D1D5DB"}`, background:auSms?"#4ECDC4":"transparent" }}>
+                      style={{ border:`1.5px solid ${auSms?"transparent":c.borderStrong}`, backgroundImage: auSms ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : "none", background: auSms ? undefined : "transparent" }}>
                       {auSms && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </span>
                     I agree to receive SMS texts
@@ -2969,7 +3079,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                   onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))")}
-                  onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
+                  onClick={()=>{ closeModal(); closeAll(); }}>
                   Cancel Changes
                 </button>
                 <button
@@ -2977,8 +3087,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   style={{ fontFamily:FONT, background:btnGrad, padding:"10px 32px", borderRadius:"8px" }}
                   onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")}
                   onMouseLeave={e=>(e.currentTarget.style.filter="none")}
-                  onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
-                  Save
+                  onClick={()=>{ closeModal(); closeAll(); }}>
+                  {isEditMode ? "Save Changes" : "Save"}
                 </button>
               </div>
 
@@ -2986,6 +3096,151 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         );
       })()}
+
+      {/* ── Address Modal ── */}
+      {addressModalOpen && (() => {
+        const fullAddress = `${agency.street}, ${agency.city}, ${agency.state} ${agency.zip}`;
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+        const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setAddressModalOpen(false)}>
+            <div className="w-[480px] max-w-[95vw] rounded-2xl shadow-2xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-start justify-between px-6 py-5" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${c.border}` }}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.15) 0%,rgba(166,20,195,0.15) 100%)" }}>
+                    <MapPin className="w-5 h-5" style={{ color: "#A855F7" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{agency.name}</h2>
+                    <p className="text-[11px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>Agency location</p>
+                  </div>
+                </div>
+                <button onClick={() => setAddressModalOpen(false)} className="p-1 rounded-lg transition-colors" style={{ color: c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Body */}
+              <div className="px-6 py-5 space-y-4">
+                <div className="rounded-xl p-4 relative" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-[10px] uppercase tracking-wide font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Address</p>
+                      <p className="text-[14px] font-semibold leading-relaxed" style={{ fontFamily: FONT, color: c.text }}>{agency.street}</p>
+                      <p className="text-[14px] font-semibold leading-relaxed" style={{ fontFamily: FONT, color: c.text }}>{agency.city}, {agency.state} {agency.zip}</p>
+                    </div>
+                    <button onClick={() => { setAddressModalOpen(false); setIsEditing(true); }}
+                      title="Edit in Agency Info"
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors flex-shrink-0"
+                      style={{ fontFamily: FONT, color: c.muted, border: `1px solid ${c.border}`, background: "transparent" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      <Pencil className="w-3 h-3" />Edit
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+                  <iframe src={embedUrl} className="w-full" style={{ height: 220, border: 0 }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                </div>
+              </div>
+              {/* Footer */}
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setAddressModalOpen(false)}
+                  className="px-5 py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: "transparent" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  Close
+                </button>
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white no-underline"
+                  style={{ fontFamily: FONT, background: btnGrad }}>
+                  <Globe className="w-3.5 h-3.5" />Open in Google Maps
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Phone Call Modal ── */}
+      {callModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setCallModalOpen(false)}>
+          <div className="w-[420px] rounded-2xl shadow-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-start justify-between px-6 py-5 rounded-t-2xl" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(243,244,246,0.30)", borderBottom: `1px solid ${c.border}` }}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.15) 0%,rgba(166,20,195,0.15) 100%)" }}>
+                  <Phone className="w-5 h-5" style={{ color: "#A855F7" }} />
+                </div>
+                <div>
+                  <h2 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Call {agency.name}</h2>
+                  <p className="text-[11px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>Outbound call from your agency line</p>
+                </div>
+              </div>
+              <button onClick={() => setCallModalOpen(false)} className="p-1 rounded-lg" style={{ color: c.muted }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <div className="rounded-xl p-4 space-y-3" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                {/* From (your line) */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,rgba(92,46,212,0.15) 0%,rgba(166,20,195,0.15) 100%)" }}>
+                    <Phone className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ fontFamily: FONT, color: c.muted }}>From (Your Agency Line)</p>
+                    <p className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{AGENCY_PHONE}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pl-4">
+                  <div className="w-px h-4 ml-3.5" style={{ background: c.border }} />
+                </div>
+
+                {/* To (agency) */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[12px] font-bold text-white" style={{ background: btnGrad }}>
+                    {agency.name.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ fontFamily: FONT, color: c.muted }}>To (Agency)</p>
+                    <p className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{agency.contactPhone || "No number on file"}</p>
+                    <p className="text-[11px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{agency.name}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.04)", border: `1px solid ${isDark ? "rgba(168,85,247,0.15)" : "rgba(92,46,212,0.10)"}` }}>
+                <Bell className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#A855F7" }} />
+                <p className="text-[11px] leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}>
+                  Clicking <span style={{ color: c.text, fontWeight: 600 }}>Call Now</span> will open your default phone dialer. On desktop this may launch software like FaceTime, Skype, or your VoIP app.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setCallModalOpen(false)}
+                className="px-5 py-[9px] rounded-lg text-[12px] font-normal"
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: "transparent" }}>
+                Cancel
+              </button>
+              <a href={`tel:${(agency.contactPhone || "").replace(/\D/g, "")}`}
+                onClick={() => setCallModalOpen(false)}
+                className="inline-flex items-center gap-2 px-5 py-[9px] rounded-lg text-[12px] font-semibold text-white no-underline"
+                style={{ fontFamily: FONT, background: btnGrad }}>
+                <Phone className="w-3.5 h-3.5" />Call Now
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Edit Agency Contact Modal (admin) ── */}
       {contactCardEditing && (
