@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Search, Plus, Star, MapPin, Users, ChevronDown, ChevronUp,
   ChevronsUpDown, Building2, ChevronLeft, ChevronRight, X,
@@ -13,6 +13,178 @@ import {
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
+
+function generateAgencyCode(): string {
+  const letters = Array.from({ length: 2 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join("");
+  const digits = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+  return letters + digits;
+}
+
+function DatePicker({ value, onChange, inputStyle, c, btnGrad, font }: {
+  value: string;
+  onChange: (v: string) => void;
+  inputStyle: React.CSSProperties;
+  c: { text: string; muted: string; cardBg: string; border: string; borderStrong: string; hoverBg: string };
+  btnGrad: string;
+  font: React.CSSProperties;
+}) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"day" | "month" | "year">("day");
+  const parts = value?.split("/") ?? [];
+  const initDate = parts[2] ? new Date(+parts[2], +parts[0] - 1, +parts[1]) : new Date();
+  const [viewY, setViewY] = useState(initDate.getFullYear());
+  const [viewM, setViewM] = useState(initDate.getMonth());
+  const [yearPage, setYearPage] = useState(Math.floor(initDate.getFullYear() / 12) * 12);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) { setOpen(false); setMode("day"); }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const WEEKDAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+  const firstDay = new Date(viewY, viewM, 1).getDay();
+  const selY = parts[2] ? +parts[2] : null;
+  const selM = parts[0] ? +parts[0] - 1 : null;
+  const selD = parts[1] ? +parts[1] : null;
+  const today = new Date();
+
+  const prev = () => {
+    if (mode === "day") { if (viewM === 0) { setViewY(viewY - 1); setViewM(11); } else setViewM(viewM - 1); }
+    else if (mode === "month") setViewY(viewY - 1);
+    else setYearPage(yearPage - 12);
+  };
+  const next = () => {
+    if (mode === "day") { if (viewM === 11) { setViewY(viewY + 1); setViewM(0); } else setViewM(viewM + 1); }
+    else if (mode === "month") setViewY(viewY + 1);
+    else setYearPage(yearPage + 12);
+  };
+  const pick = (d: number) => {
+    const mm = String(viewM + 1).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    onChange(`${mm}/${dd}/${viewY}`);
+    setOpen(false);
+    setMode("day");
+  };
+
+  const headerLabel = mode === "day"
+    ? `${MONTHS[viewM]} ${viewY}`
+    : mode === "month"
+    ? String(viewY)
+    : `${yearPage} – ${yearPage + 11}`;
+  const onHeaderClick = () => {
+    if (mode === "day") setMode("month");
+    else if (mode === "month") { setYearPage(Math.floor(viewY / 12) * 12); setMode("year"); }
+    else setMode("day");
+  };
+
+  const cellStyle = (isSel: boolean, isCurrent: boolean): React.CSSProperties => ({
+    height: 30,
+    color: isSel ? "#fff" : (isCurrent ? "#A855F7" : c.text),
+    background: isSel ? btnGrad : "transparent",
+    fontWeight: (isSel || isCurrent) ? 700 : 500,
+    border: isCurrent && !isSel ? "1px solid rgba(168,85,247,0.45)" : "1px solid transparent",
+  });
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input value={value} readOnly style={{ ...inputStyle, cursor: "pointer" }} onClick={() => setOpen(o => !o)} />
+      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }} onClick={() => setOpen(o => !o)} />
+      {open && (
+        <div className="absolute z-50 mt-2 rounded-2xl p-4"
+          style={{ ...font, background: c.cardBg, border: `1px solid ${c.border}`, width: 280, boxShadow: "0 10px 30px rgba(0,0,0,0.12)", left: 0 }}>
+          <div className="flex items-center justify-between mb-3">
+            <button type="button" onClick={prev} className="p-1.5 rounded-lg transition-colors"
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <ChevronLeft className="w-4 h-4" style={{ color: c.text }} />
+            </button>
+            <button type="button" onClick={onHeaderClick}
+              className="text-[13px] font-semibold px-2 py-1 rounded-lg transition-colors"
+              style={{ color: c.text }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              {headerLabel}
+            </button>
+            <button type="button" onClick={next} className="p-1.5 rounded-lg transition-colors"
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <ChevronRight className="w-4 h-4" style={{ color: c.text }} />
+            </button>
+          </div>
+          {mode === "day" && (
+            <>
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {WEEKDAYS.map((w, i) => (
+                  <div key={i} className="text-center text-[10px] font-semibold py-1" style={{ color: c.muted }}>{w}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const d = i + 1;
+                  const isSel = selY === viewY && selM === viewM && selD === d;
+                  const isToday = !isSel && today.getFullYear() === viewY && today.getMonth() === viewM && today.getDate() === d;
+                  return (
+                    <button key={d} type="button" onClick={() => pick(d)}
+                      className="text-[12px] rounded-lg transition-all"
+                      style={cellStyle(isSel, isToday)}
+                      onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = c.hoverBg; }}
+                      onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {mode === "month" && (
+            <div className="grid grid-cols-3 gap-2">
+              {MONTHS_SHORT.map((m, i) => {
+                const isSel = selY === viewY && selM === i;
+                const isCurrent = !isSel && today.getFullYear() === viewY && today.getMonth() === i;
+                return (
+                  <button key={m} type="button" onClick={() => { setViewM(i); setMode("day"); }}
+                    className="text-[12px] rounded-lg transition-all"
+                    style={{ ...cellStyle(isSel, isCurrent), height: 40 }}
+                    onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = c.hoverBg; }}
+                    onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}>
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {mode === "year" && (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 12 }).map((_, i) => {
+                const y = yearPage + i;
+                const isSel = selY === y;
+                const isCurrent = !isSel && today.getFullYear() === y;
+                return (
+                  <button key={y} type="button" onClick={() => { setViewY(y); setMode("month"); }}
+                    className="text-[12px] rounded-lg transition-all"
+                    style={{ ...cellStyle(isSel, isCurrent), height: 40 }}
+                    onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = c.hoverBg; }}
+                    onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}>
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 interface Agency {
@@ -298,11 +470,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   /* ── notes states ── */
   const NOTE_TYPES: AgencyNote["type"][] = ["General","Policy","Follow-up","Meeting","Task"];
   const typeColor: Record<string, { bg: string; text: string }> = {
-    "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",              text: isDark ? "#9CA3AF" : "#6B7280" },
-    "Policy":    { bg: isDark ? "rgba(59,130,246,0.15)"  : "rgba(59,130,246,0.10)", text: "#3B82F6" },
-    "Follow-up": { bg: isDark ? "rgba(245,158,11,0.15)"  : "rgba(245,158,11,0.10)", text: "#F59E0B" },
-    "Meeting":   { bg: isDark ? "rgba(16,185,129,0.15)"  : "rgba(16,185,129,0.10)", text: "#10B981" },
-    "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",  text: "#EF4444" },
+    "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",                text: isDark ? "#9CA3AF" : "#6B7280" },
+    "Policy":    { bg: isDark ? "rgba(166,20,195,0.18)"  : "rgba(166,20,195,0.10)",  text: isDark ? "#C87BE0" : "#A614C3" },
+    "Follow-up": { bg: isDark ? "rgba(255,164,124,0.18)" : "rgba(255,164,124,0.20)", text: isDark ? "#FFA47C" : "#D96B3E" },
+    "Meeting":   { bg: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.20)", text: "#73C9B7" },
+    "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",   text: "#EF4444" },
   };
   const [agNotes,        setAgNotes]        = useState<AgencyNote[]>(mockAgencyNotes.filter(n => n.agencyId === agency.id));
   const [newNote,        setNewNote]        = useState("");
@@ -916,11 +1088,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <label style={labelStyle}>Agency Code:</label>
                 <div className="flex gap-2">
                   <input value={eCode} onChange={e => setECode(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
-                    style={{ ...font, border: `1px solid #A855F7`, color: "#A855F7", background: "transparent" }}
+                  <button type="button" onClick={() => setECode(generateAgencyCode())}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
+                    style={{ ...font, border: `1px solid #A855F7`, background: "transparent" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                    <RefreshCw className="w-3 h-3" />Create Code
+                    <RefreshCw className="w-3 h-3" style={{ color: "#7C3AED" }} />
+                    <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
                   </button>
                 </div>
               </div>
@@ -956,7 +1130,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="mb-4">
               <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:</label>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-6">
                   <select value={eCountry} onChange={e => setECountry(e.target.value)} style={selectStyle}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
                   </select>
@@ -975,7 +1149,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-6">
                   <input value={eCity} onChange={e => setECity(e.target.value)} placeholder="City" style={inputStyle} />
                   <select value={eState} onChange={e => setEState(e.target.value)} style={selectStyle}>
                     {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
@@ -993,7 +1167,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
               </div>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-6">
                   <select value={eSameAddr ? eCountry : eMCountry} onChange={e => setEMCountry(e.target.value)}
                     style={{ ...selectStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
@@ -1015,7 +1189,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-6">
                   <input value={eSameAddr ? eCity : eMCity} onChange={e => setEMCity(e.target.value)}
                     placeholder="City" style={{ ...inputStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
                   <select value={eSameAddr ? eState : eMState} onChange={e => setEMState(e.target.value)}
@@ -1040,10 +1214,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Appt. Date</label>
-                <div className="relative">
-                  <input value={eApptDate} onChange={e => setEApptDate(e.target.value)} style={inputStyle} />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
-                </div>
+                <DatePicker value={eApptDate} onChange={setEApptDate} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
               </div>
               <div />
             </div>
@@ -1054,7 +1225,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <label style={labelStyle}>Agency Contact:</label>
                 <input value={eContact} onChange={e => setEContact(e.target.value)} style={inputStyle} />
               </div>
-              <div className="col-span-2">
+              <div>
                 <label style={labelStyle}>Email Address:</label>
                 <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={inputStyle} type="email" />
               </div>
@@ -1106,10 +1277,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative">
-                  <input value={eLicExp} onChange={e => setELicExp(e.target.value)} style={inputStyle} />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
-                </div>
+                <DatePicker value={eLicExp} onChange={setELicExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
               </div>
               <div />
             </div>
@@ -1122,10 +1290,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative">
-                  <input value={eEoExp} onChange={e => setEEoExp(e.target.value)} style={inputStyle} />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
-                </div>
+                <DatePicker value={eEoExp} onChange={setEEoExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
               </div>
               <div />
             </div>
@@ -1195,6 +1360,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
 
         {/* Footer buttons */}
+          <div style={{ borderTop: editExpanded ? `1px solid ${c.border}` : "none", marginTop: editExpanded ? 24 : 0, paddingTop: editExpanded ? 20 : 0, marginLeft: editExpanded ? 32 : 0, marginRight: editExpanded ? 32 : 0 }}>
           <div className="flex items-center justify-between pb-2">
             <button onClick={() => setIsEditing(false)}
               className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
@@ -1210,6 +1376,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               Save Changes
             </button>
+          </div>
           </div>
           </div>
           </>
@@ -3064,14 +3231,6 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
   const [note, setNote]               = useState("");
   const [notes, setNotes]             = useState<string[]>([]);
 
-  const apptDateRef    = useRef<HTMLInputElement>(null);
-  const licenseExpRef  = useRef<HTMLInputElement>(null);
-  const eoExpRef       = useRef<HTMLInputElement>(null);
-
-  // Convert MM/DD/YYYY ↔ YYYY-MM-DD for native date input
-  const toISO  = (d: string) => { const [m,dd,y] = d.split('/'); return y && m && dd ? `${y}-${m.padStart(2,'0')}-${dd.padStart(2,'0')}` : ''; };
-  const fromISO = (d: string) => { const [y,m,dd] = d.split('-'); return y && m && dd ? `${m}/${dd}/${y}` : d; };
-
   const font = { fontFamily: FONT };
 
   const inputStyle: React.CSSProperties = {
@@ -3118,46 +3277,48 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
     setters: { country: (v:string)=>void; street: (v:string)=>void; city: (v:string)=>void; state: (v:string)=>void; zip: (v:string)=>void };
   }) => (
     <div className="space-y-3">
-      {/* Row 1: Country 481px + Street 954px, gap 22px */}
-      <div className="flex" style={{ gap: 22 }}>
+      {/* Row 1: Country | Street (spans 2 cols) */}
+      <div className="grid grid-cols-3 gap-6">
         <select value={vals.country} onChange={e => setters.country(e.target.value)}
           autoComplete="country-name"
-          style={{ ...selectStyle, width: 481, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          style={{ ...selectStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress}>
           <option>United States of America</option><option>Canada</option><option>Mexico</option>
         </select>
-        <AddressAutocomplete
-          value={vals.street}
-          onChange={setters.street}
-          onSelect={a => {
-            setters.street(a.street);
-            if (a.city) setters.city(a.city);
-            if (a.state) setters.state(a.state);
-            if (a.zip) setters.zip(a.zip);
-            if (a.country) setters.country(a.country);
-          }}
-          placeholder="Street address"
-          containerStyle={{ width: 954, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          inputStyle={{ ...inputStyle, width: "100%" }}
-          disabled={prefix === "m" && sameAddress}
-          dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
-        />
+        <div className="col-span-2">
+          <AddressAutocomplete
+            value={vals.street}
+            onChange={setters.street}
+            onSelect={a => {
+              setters.street(a.street);
+              if (a.city) setters.city(a.city);
+              if (a.state) setters.state(a.state);
+              if (a.zip) setters.zip(a.zip);
+              if (a.country) setters.country(a.country);
+            }}
+            placeholder="Street address"
+            containerStyle={{ width: "100%", opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+            inputStyle={{ ...inputStyle, width: "100%" }}
+            disabled={prefix === "m" && sameAddress}
+            dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+          />
+        </div>
       </div>
-      {/* Row 2: City 481px + State 281px + ZIP 313px, gap 21px */}
-      <div className="flex" style={{ gap: 21 }}>
+      {/* Row 2: City | State | ZIP */}
+      <div className="grid grid-cols-3 gap-6">
         <input value={vals.city} onChange={e => setters.city(e.target.value)} placeholder="City"
           autoComplete="address-level2"
-          style={{ ...inputStyle, width: 481, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress} />
         <select value={vals.state} onChange={e => setters.state(e.target.value)}
           autoComplete="address-level1"
-          style={{ ...selectStyle, width: 281, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          style={{ ...selectStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress}>
           {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
         </select>
         <input value={vals.zip} onChange={e => setters.zip(e.target.value)} placeholder="ZIP"
           autoComplete="postal-code"
-          style={{ ...inputStyle, width: 313, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
+          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
           disabled={prefix === "m" && sameAddress} />
       </div>
     </div>
@@ -3196,18 +3357,19 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
             </button>
           </div>
 
-          {/* Row 1: Name | Code | Type — Figma: 430 + gap102 + 490 + gap102 + 333 = 1457px */}
-          <div className="flex mb-6" style={{ gap: 102 }}>
-            <div style={{ width: 430 }}>
+          {/* Row 1: Name | Code | Type */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>Agency Name:</label>
               <input value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Agency name" style={inputStyle} />
             </div>
-            <div style={{ width: 490 }}>
+            <div>
               <label style={labelStyle}>Agency Code:</label>
               <div className="flex" style={{ gap: 10 }}>
                 <input value={agencyCode} onChange={e => setAgencyCode(e.target.value)} placeholder="Code" style={{ ...inputStyle, flex: 1 }} />
-                <button className="flex items-center justify-center gap-2 flex-shrink-0 transition-all"
-                  style={{ ...font, background: isDark ? c.cardBg : "#FFFFFF", border: `1px solid ${c.borderStrong}`, borderRadius: 14, height: 50, width: 186, whiteSpace: "nowrap", boxSizing: "border-box" }}
+                <button type="button" onClick={() => setAgencyCode(generateAgencyCode())}
+                  className="flex items-center justify-center gap-2 flex-shrink-0 transition-all"
+                  style={{ ...font, background: isDark ? c.cardBg : "#FFFFFF", border: `1px solid ${c.borderStrong}`, borderRadius: 14, height: 50, width: 140, whiteSpace: "nowrap", boxSizing: "border-box" }}
                   onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB")}
                   onMouseLeave={e => (e.currentTarget.style.background = isDark ? c.cardBg : "#FFFFFF")}>
                   <RefreshCw className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#7C3AED" }} />
@@ -3215,7 +3377,7 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
                 </button>
               </div>
             </div>
-            <div style={{ width: 382 }}>
+            <div>
               <label style={labelStyle}>Agency Type:</label>
               <div className="flex" style={{ gap: 10 }}>
                 {(["Retail","Wholesale"] as const).map(t => {
@@ -3261,112 +3423,98 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
               setters={{ country: setMCountry, street: setMStreet, city: setMCity, state: setMState, zip: setMZip }} />
           </div>
 
-          {/* Status + Appt Date — Figma: 327 + gap42 + 349 = 718px row */}
-          <div className="flex mb-6" style={{ gap: 42 }}>
-            <div style={{ width: 327 }}>
+          {/* Status + Appt Date */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>Status:</label>
               <select value={status} onChange={e => setStatus(e.target.value)} style={selectStyle}>
                 <option>Appointed</option><option>Unappointed</option>
               </select>
             </div>
-            <div style={{ width: 349 }}>
+            <div>
               <label style={labelStyle}>Appt. Date</label>
-              <div className="relative">
-                <input value={apptDate} readOnly style={inputStyle} onClick={() => apptDateRef.current?.showPicker()} />
-                <input ref={apptDateRef} type="date" value={toISO(apptDate)} onChange={e => setApptDate(fromISO(e.target.value))}
-                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
-                  onClick={() => apptDateRef.current?.showPicker()} />
-              </div>
+              <DatePicker value={apptDate} onChange={setApptDate} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
             </div>
+            <div />
           </div>
 
-          {/* Agency Contact + Email — Figma: 474 + gap21 + 474 = 969px */}
-          <div className="flex mb-6" style={{ gap: 21 }}>
-            <div style={{ width: 474 }}>
+          {/* Agency Contact + Email */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>Agency Contact:</label>
               <input value={contact} onChange={e => setContact(e.target.value)} placeholder="Contact name" style={inputStyle} />
             </div>
-            <div style={{ width: 474 }}>
+            <div>
               <label style={labelStyle}>Email Address:</label>
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle} type="email" />
             </div>
           </div>
 
-          {/* Business Type | Tax ID | Website — Figma: 474 + gap32 + 474 + gap32 + 446 = 1458px */}
-          <div className="flex mb-6" style={{ gap: 32 }}>
-            <div style={{ width: 474 }}>
+          {/* Business Type | Tax ID | Website */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>Type of Business:</label>
               <select value={bizType} onChange={e => setBizType(e.target.value)} style={selectStyle}>
                 <option value="">-Business Type</option><option>LLC</option><option>Corporation</option><option>Sole Proprietor</option><option>Partnership</option>
               </select>
             </div>
-            <div style={{ width: 474 }}>
+            <div>
               <label style={labelStyle}>Tax ID:</label>
               <input value={taxId} onChange={e => setTaxId(e.target.value)} placeholder="Tax ID" style={inputStyle} />
             </div>
-            <div style={{ width: 446 }}>
+            <div>
               <label style={labelStyle}>Website Url:</label>
               <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" style={inputStyle} />
             </div>
           </div>
 
-          {/* Phone | Toll Free — Figma: 474 + gap21 + 474 */}
-          <div className="flex mb-6" style={{ gap: 21 }}>
-            <div style={{ width: 474 }}>
+          {/* Phone | Toll Free */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>Phone Number:</label>
               <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
             </div>
-            <div style={{ width: 474 }}>
+            <div>
               <label style={labelStyle}>Toll Free Number:</label>
               <input value={tollFree} onChange={e => setTollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
             </div>
+            <div />
           </div>
 
           {/* License + Expiry */}
-          <div className="flex mb-6" style={{ gap: 21 }}>
-            <div style={{ width: 474 }}>
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>License Number:</label>
               <input value={licenseNo} onChange={e => setLicenseNo(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
-              <div className="relative" style={{ width: 355 }}>
-                <input value={licenseExp} readOnly style={inputStyle} onClick={() => licenseExpRef.current?.showPicker()} />
-                <input ref={licenseExpRef} type="date" value={toISO(licenseExp)} onChange={e => setLicenseExp(fromISO(e.target.value))}
-                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
-                  onClick={() => licenseExpRef.current?.showPicker()} />
-              </div>
+              <DatePicker value={licenseExp} onChange={setLicenseExp} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
             </div>
+            <div />
           </div>
 
           {/* E&O Policy + Expiry */}
-          <div className="flex mb-6" style={{ gap: 21 }}>
-            <div style={{ width: 474 }}>
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div>
               <label style={labelStyle}>E&O Policy #:</label>
               <input value={eoPolicyNo} onChange={e => setEoPolicyNo(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
-              <div className="relative" style={{ width: 355 }}>
-                <input value={eoExp} readOnly style={inputStyle} onClick={() => eoExpRef.current?.showPicker()} />
-                <input ref={eoExpRef} type="date" value={toISO(eoExp)} onChange={e => setEoExp(fromISO(e.target.value))}
-                  style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, top: 0, left: 0 }} />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 cursor-pointer" style={{ color: c.muted }}
-                  onClick={() => eoExpRef.current?.showPicker()} />
-              </div>
+              <DatePicker value={eoExp} onChange={setEoExp} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
             </div>
+            <div />
           </div>
 
-          {/* Agency Bill | Direct Bill | Premium Finance — gap 42px between groups */}
-          <div className="flex mb-2" style={{ gap: 42 }}>
+          {/* Agency Bill | Direct Bill | Premium Finance */}
+          <div className="grid grid-cols-3 gap-6 mb-2">
             {([
               ["Agency Bill:", agencyBill, setAgencyBill],
               ["Direct Bill:", directBill, setDirectBill],
               ["Premium Finance:", premiumFin, setPremiumFin],
             ] as [string, boolean, (v:boolean)=>void][]).map(([label, val, set]) => (
-              <div key={label} style={{ width: 492 }}>
+              <div key={label}>
                 <label style={labelStyle}>{label}</label>
                 <div className="flex" style={{ gap: 10 }}>
                   {([["Yes", true],["No", false]] as [string, boolean][]).map(([opt, bool]) => {
@@ -3399,11 +3547,11 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <SectionHeader title="Affiliations" />
           <div className="grid grid-cols-4 gap-x-6 gap-y-3">
             {AFFILIATIONS.map(aff => (
-              <label key={aff} className="flex items-start gap-2.5 cursor-pointer select-none">
-                <div className="mt-0.5 flex-shrink-0">
+              <label key={aff} className="flex items-center gap-2.5 cursor-pointer select-none">
+                <div className="flex-shrink-0">
                   <Checkbox checked={affiliations.has(aff)} onClick={() => setAffiliations(prev => { const s = new Set(prev); s.has(aff) ? s.delete(aff) : s.add(aff); return s; })} color="#73C9B7" />
                 </div>
-                <span className="text-[12px] leading-snug" style={{ ...font, color: c.text }}>{aff}</span>
+                <span className="text-[12px]" style={{ ...font, color: c.text }}>{aff}</span>
               </label>
             ))}
           </div>

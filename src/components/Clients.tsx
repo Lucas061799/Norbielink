@@ -2211,11 +2211,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       {detailTab === "notes" && (() => {
         const NOTE_TYPES: Note["type"][] = ["General","Policy","Follow-up","Meeting","Task"];
         const typeColor: Record<string, { bg: string; text: string }> = {
-          "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",             text: isDark ? "#9CA3AF" : "#6B7280" },
-          "Policy":    { bg: isDark ? "rgba(59,130,246,0.15)"  : "rgba(59,130,246,0.10)", text: "#3B82F6" },
-          "Follow-up": { bg: isDark ? "rgba(245,158,11,0.15)"  : "rgba(245,158,11,0.10)", text: "#F59E0B" },
-          "Meeting":   { bg: isDark ? "rgba(16,185,129,0.15)"  : "rgba(16,185,129,0.10)", text: "#10B981" },
-          "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",  text: "#EF4444" },
+          "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",                text: isDark ? "#9CA3AF" : "#6B7280" },
+          "Policy":    { bg: isDark ? "rgba(166,20,195,0.18)"  : "rgba(166,20,195,0.10)",  text: isDark ? "#C87BE0" : "#A614C3" },
+          "Follow-up": { bg: isDark ? "rgba(255,164,124,0.18)" : "rgba(255,164,124,0.20)", text: isDark ? "#FFA47C" : "#D96B3E" },
+          "Meeting":   { bg: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.20)", text: "#73C9B7" },
+          "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",   text: "#EF4444" },
         };
         const TypeBadge = ({ type }: { type: string }) => (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap"
@@ -2997,11 +2997,11 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
                   const NOTE_TYPES: Note["type"][] = ["General","Policy","Follow-up","Meeting","Task"];
                   const typeColor: Record<string, { bg: string; text: string }> = {
-                    "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",             text: isDark ? "#9CA3AF" : "#6B7280" },
-                    "Policy":    { bg: isDark ? "rgba(59,130,246,0.15)"  : "rgba(59,130,246,0.10)", text: "#3B82F6" },
-                    "Follow-up": { bg: isDark ? "rgba(245,158,11,0.15)"  : "rgba(245,158,11,0.10)", text: "#F59E0B" },
-                    "Meeting":   { bg: isDark ? "rgba(16,185,129,0.15)"  : "rgba(16,185,129,0.10)", text: "#10B981" },
-                    "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",  text: "#EF4444" },
+                    "General":   { bg: isDark ? "rgba(156,163,175,0.15)" : "#F3F4F6",                text: isDark ? "#9CA3AF" : "#6B7280" },
+                    "Policy":    { bg: isDark ? "rgba(166,20,195,0.18)"  : "rgba(166,20,195,0.10)",  text: isDark ? "#C87BE0" : "#A614C3" },
+                    "Follow-up": { bg: isDark ? "rgba(255,164,124,0.18)" : "rgba(255,164,124,0.20)", text: isDark ? "#FFA47C" : "#D96B3E" },
+                    "Meeting":   { bg: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.20)", text: "#73C9B7" },
+                    "Task":      { bg: isDark ? "rgba(239,68,68,0.15)"   : "rgba(239,68,68,0.10)",   text: "#EF4444" },
                   };
                   const fmtDate2 = (ts: string) => { const d = new Date(ts); return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})+" "+d.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}); };
                   return (<>
