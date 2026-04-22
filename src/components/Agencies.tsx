@@ -873,13 +873,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
-      {/* Section title */}
-      <div className="pb-4 mb-0 flex items-center gap-2" style={{ borderBottom: `1px solid ${c.border}`, marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 24 }}>
+      {/* Section title — same as list view */}
+      <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+        style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
         <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
       </div>
 
         {/* Back link */}
-        <div className="pt-5 pb-4 flex-shrink-0">
+        <div className="pb-4 flex-shrink-0">
           <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] transition-all" style={{ ...font, color: c.muted }}
             onMouseEnter={e => (e.currentTarget.style.color = c.text)}
             onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>

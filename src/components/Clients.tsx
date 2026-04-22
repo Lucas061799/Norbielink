@@ -1020,19 +1020,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
         {/* Search + Add */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex flex-1 max-w-[340px] transition-all" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
+          <div className="flex flex-1 max-w-[340px]" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden", transition: "background 0.15s, border-color 0.15s" }}>
             <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
-            <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
-              style={{ background: btnGrad, fontFamily: FONT }}
+            <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
+              style={{ background: btnGrad, fontFamily: FONT, transition: "filter 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
               onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
               <Search className="w-3.5 h-3.5" />Submit
             </button>
           </div>
           <button onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 text-[12px] font-semibold text-white transition-all"
-            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius: 10 }}
+            className="flex items-center gap-2 text-[12px] font-semibold text-white"
+            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius: 10, transition: "filter 0.15s" }}
             onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
             onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
             <Plus className="w-4 h-4" />Add Client
@@ -1250,8 +1250,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: "#A855F7" }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
         ].map((card, i) => (
           <button key={i} onClick={card.onClick}
-            className="flex-1 min-w-0 rounded-2xl p-5 text-left transition-all relative flex flex-col items-stretch"
-            style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", justifyContent: "flex-start" }}
+            className="flex-1 min-w-0 rounded-2xl p-5 text-left relative flex flex-col items-stretch"
+            style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", justifyContent: "flex-start", transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s" }}
             onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg; e.currentTarget.style.border = `1px solid ${card.highlight ? "transparent" : c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
             <div className="flex items-center gap-2 mb-3 pr-12">
@@ -1275,8 +1275,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             setContactCardEditing(true);
           };
           return (
-            <div className="flex-1 rounded-2xl p-5 relative min-w-0 group transition-all cursor-pointer"
-              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+            <div className="flex-1 rounded-2xl p-5 relative min-w-0 group cursor-pointer"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s" }}
               onMouseEnter={e => { if (!contactCardEditing) { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}}
               onMouseLeave={e => { if (!contactCardEditing) { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}}>
               <div className="flex items-center mb-3">
