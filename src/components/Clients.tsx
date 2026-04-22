@@ -501,7 +501,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
         <div className="flex items-center justify-between px-7 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${border}`, background: cardBg, borderRadius: "0 0 16px 16px" }}>
           <button onClick={onClose}
             className="px-5 py-[8px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
             Cancel
           </button>
           <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"
@@ -796,7 +796,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               </div>
               <button onClick={() => { setPendingRequests(prev => prev.filter(p => p.email !== req.email)); setCopyToast(`Denied ${req.name}`); setTimeout(()=>setCopyToast(""),2000); }}
                 className="px-3 py-1.5 rounded-lg text-[11px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Deny</button>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Deny</button>
               <button onClick={() => {
                 setExtraMembers(prev => [...prev, { name: req.name, email: req.email }]);
                 setShareAccess(prev => ({ ...prev, [req.name]: req.access }));
@@ -1369,7 +1369,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </button>
               ) : (
                 <button onClick={() => setEditingInfo(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
               )}
@@ -1436,7 +1436,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </div>
                 <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingInfo(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingInfo(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
@@ -1455,7 +1455,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 </button>
               ) : (
                 <button onClick={() => setEditingAddr(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}>
                   <Pencil className="w-3.5 h-3.5" />Cancel Edit
                 </button>
               )}
@@ -1571,7 +1571,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
                 <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${c.border}` }}>
                   <button onClick={() => setEditingAddr(false)} className="px-4 py-[7px] rounded-lg text-[12px] font-normal"
-                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                    style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                   <button onClick={() => setEditingAddr(false)} className="px-5 py-[7px] rounded-lg text-[12px] font-semibold text-white"
                     style={{ fontFamily: FONT, background: c.accentGrad }}>Save Changes</button>
                 </div>
@@ -2178,7 +2178,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setAddActivityOpen(false)}
                       className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                      style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
+                      style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Cancel</button>
                     <button onClick={() => {
                       if (!newActivityAction.trim() || !selected) return;
                       const now = new Date();
@@ -2751,7 +2751,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   </div>
                   <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                     <button onClick={() => setNoteAddOpen(false)} className="px-4 py-[7px] rounded-lg text-[12px]"
-                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>Cancel</button>
+                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: "transparent" }}>Cancel</button>
                     <button onClick={() => {
                       if (!selected) return;
                       const titleFinal = newNoteTitle.trim() || (newNote.trim() ? newNote.trim().slice(0, 40) + (newNote.trim().length > 40 ? "…" : "") : "Untitled Note");
@@ -3157,7 +3157,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setContactCardEditing(false)}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => setContactCardEditing(false)}
@@ -3198,7 +3198,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => { pendingEditAction?.(); setEditWarningOpen(false); setPendingEditAction(null); }}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Continue Editing
               </button>
               <button onClick={() => { setEditWarningOpen(false); setPendingEditAction(null); /* TODO: navigate to endorsement flow */ }}
@@ -3230,7 +3230,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteNoteId(null)}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => { setNotes(prev => prev.filter(n => n.id !== deleteNoteId)); setDeleteNoteId(null); }}
@@ -3314,7 +3314,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setCallModalOpen(false)}
                 className="px-5 py-[9px] rounded-lg text-[12px] font-normal"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: "transparent" }}>
                 Cancel
               </button>
               <a href={`tel:${selected.phone?.replace(/\D/g, "")}`}

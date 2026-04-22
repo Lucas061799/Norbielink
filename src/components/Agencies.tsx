@@ -617,7 +617,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <button onClick={() => { setPendingRequests(prev => prev.filter(p => p.email !== req.email)); setCopyToast(`Denied ${req.name}`); setTimeout(()=>setCopyToast(""),2000); }}
                 className="px-3 py-1.5 rounded-lg text-[11px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Deny</button>
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB" }}>Deny</button>
               <button onClick={() => {
                 setExtraMembers(prev => [...prev, { name: req.name, email: req.email }]);
                 setShareAccess(prev => ({ ...prev, [req.name]: req.access }));
@@ -1107,17 +1107,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       <button key={t} onClick={() => setEType(t)}
                         className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
                         style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                          border: "1px solid transparent",
+                          border: active ? "1px solid transparent" : `1px solid ${c.border}`,
+                          background: active ? undefined : c.cardBg,
                           backgroundImage: active
                             ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                            : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
-                          backgroundOrigin: "padding-box, padding-box, border-box",
-                          backgroundClip: "padding-box, padding-box, border-box",
+                            : undefined,
+                          backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                          backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
                         }}>
                         <Radio checked={active} onClick={() => setEType(t)} />
                         {active
                           ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
-                          : <span style={{ color: "#6B7280" }}>{t}</span>
+                          : <span style={{ color: c.muted }}>{t}</span>
                         }
                       </button>
                     );
@@ -1364,7 +1365,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <div className="flex items-center justify-between pb-2">
             <button onClick={() => setIsEditing(false)}
               className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: "#090D11", background: "transparent" }}
+              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               Cancel
@@ -1798,7 +1799,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <p className="text-[15px] font-bold mb-2" style={{ fontFamily: FONT, color: c.text }}>Delete note?</p>
                     <p className="text-[13px] mb-5" style={{ fontFamily: FONT, color: c.muted }}>This action cannot be undone.</p>
                     <div className="flex gap-3 justify-end">
-                      <button onClick={() => setDeleteNoteId(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11" }}>Cancel</button>
+                      <button onClick={() => setDeleteNoteId(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}>Cancel</button>
                       <button onClick={() => { setAgNotes(prev => prev.filter(n => n.id !== deleteNoteId)); if (selectedNote?.id === deleteNoteId) { setSelectedNote(null); setNoteExpanded(false); } setDeleteNoteId(null); }}
                         className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white" style={{ fontFamily: FONT, background: "#EF4444" }}>Delete</button>
                     </div>
@@ -1840,7 +1841,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                     <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                       <button onClick={() => setNoteAddOpen(false)} className="px-4 py-[7px] rounded-lg text-[12px]"
-                        style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: "#090D11", background: "transparent" }}>Cancel</button>
+                        style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: "transparent" }}>Cancel</button>
                       <button onClick={() => {
                         const titleFinal = newNoteTitle.trim() || (newNote.trim() ? newNote.trim().slice(0,40)+(newNote.trim().length>40?"…":"") : "Untitled Note");
                         if (!titleFinal) return;
@@ -2965,7 +2966,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
                 <button
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}
+                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                   onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))")}
                   onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
@@ -3030,7 +3031,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={() => setContactCardEditing(false)}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                 Cancel
               </button>
               <button onClick={() => setContactCardEditing(false)}
@@ -3105,7 +3106,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                 <button onClick={() => setContactRequestOpen(false)}
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
                   Cancel
                 </button>
                 <button onClick={() => { setContactRequestSent(true); setTimeout(() => { setContactRequestOpen(false); setContactRequestSent(false); }, 1800); }}
@@ -3350,7 +3351,7 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[18px] font-bold" style={{ ...font, color: c.text }}>Add New Agency Information</h2>
             <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-              style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: "#090D11" }}
+              style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               <Pencil className="w-3.5 h-3.5" />Cancel Edit
@@ -3386,17 +3387,18 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
                     <button key={t} onClick={() => setAgencyType(t)}
                       className="flex items-center gap-2 justify-center transition-all"
                       style={{ ...font, fontSize: 13, fontWeight: 600, width: 186, height: 50, borderRadius: 14, boxSizing: "border-box",
-                        border: "1.65px solid transparent",
+                        border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                        background: active ? undefined : c.cardBg,
                         backgroundImage: active
                           ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                          : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
-                        backgroundOrigin: "padding-box, padding-box, border-box",
-                        backgroundClip: "padding-box, padding-box, border-box",
+                          : undefined,
+                        backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                        backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
                       }}>
                       <Radio checked={active} onClick={() => setAgencyType(t)} />
                       {active
                         ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
-                        : <span style={{ color: "#6B7280" }}>{t}</span>
+                        : <span style={{ color: c.muted }}>{t}</span>
                       }
                     </button>
                   );
@@ -3602,7 +3604,7 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
         <div className="flex items-center justify-between pb-6">
           <button onClick={onCancel}
             className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: "#090D11", background: "transparent" }}
+            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             Cancel
