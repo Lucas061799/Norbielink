@@ -8,7 +8,7 @@ import {
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
   StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Link, Bell, Paperclip,
-  Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare,
+  Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare, Globe,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -36,7 +36,7 @@ interface Quote { id: string; quoteId: string; policyType: string; status: "Pend
 interface Policy { id: string; policyNumber: string; policyType: string; status: "Active"|"Expired"|"Cancelled"|"Upcoming Renewal"; effectiveDate: string; expirationDate: string; premium: number; clientId: string; applicant: string; dba?: string; lob: string; producer: string; createdDate: string; }
 interface Document { id: string; name: string; type: string; uploadDate: string; size: string; clientId: string; category: string; }
 interface ActivityLog { id: string; action: string; description: string; timestamp: string; user: string; clientId: string; type: "policy"|"quote"|"document"|"email"|"call"|"note"; }
-interface Note { id: string; title: string; content: string; author: string; timestamp: string; clientId: string; type: "General" | "Policy" | "Follow-up" | "Meeting" | "Task"; }
+interface Note { id: string; title: string; content: string; author: string; timestamp: string; clientId: string; type: "General" | "Policy" | "Follow-up" | "Meeting" | "Task"; visibility?: "Private" | "Shared" | "Public"; }
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
@@ -162,11 +162,11 @@ const mockActivity: ActivityLog[] = [
 ];
 const mockNotes: Note[] = [
   /* Client 1 — Tech Solutions Inc */
-  { id:"n1",  title:"Q2 Policy Discussion",      content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1", type:"Follow-up" },
-  { id:"n2",  title:"Renewal Documents Sent",    content:"Renewal documents sent via email. Waiting for signature on updated contract. Expected completion by end of week.", author:"Mike Chen", timestamp:"2026-04-03T10:15:00", clientId:"1", type:"Policy" },
-  { id:"n3",  title:"Q1 Performance Review",     content:"Outstanding performance this quarter — 25% increase in new policies. Discussed expanding coverage scope for Q2.", author:"Sarah Johnson", timestamp:"2026-04-01T16:45:00", clientId:"1", type:"Meeting" },
-  { id:"n4",  title:"Coverage Gap Identified",   content:"Identified two coverage gaps in current policy setup. Need to follow up with underwriter on cyber liability options before renewal.", author:"Sarah Johnson", timestamp:"2026-03-20T11:00:00", clientId:"1", type:"Policy" },
-  { id:"n5",  title:"Task: Send Updated SOV",    content:"Send updated schedule of values to underwriter before end of month. Client expanding to new warehouse — need to update property limits.", author:"Mike Chen", timestamp:"2026-03-15T09:30:00", clientId:"1", type:"Task" },
+  { id:"n1",  title:"Q2 Policy Discussion",      content:"Called to discuss new policy options. Principal mentioned interest in expanding into commercial auto insurance. Follow up scheduled for next week.", author:"Sarah Johnson", timestamp:"2026-04-05T14:30:00", clientId:"1", type:"Follow-up", visibility:"Shared"  },
+  { id:"n2",  title:"Renewal Documents Sent",    content:"Renewal documents sent via email. Waiting for signature on updated contract. Expected completion by end of week.", author:"Mike Chen", timestamp:"2026-04-03T10:15:00", clientId:"1", type:"Policy", visibility:"Public"  },
+  { id:"n3",  title:"Q1 Performance Review",     content:"Outstanding performance this quarter — 25% increase in new policies. Discussed expanding coverage scope for Q2.", author:"Sarah Johnson", timestamp:"2026-04-01T16:45:00", clientId:"1", type:"Meeting", visibility:"Private" },
+  { id:"n4",  title:"Coverage Gap Identified",   content:"Identified two coverage gaps in current policy setup. Need to follow up with underwriter on cyber liability options before renewal.", author:"Sarah Johnson", timestamp:"2026-03-20T11:00:00", clientId:"1", type:"Policy", visibility:"Shared"  },
+  { id:"n5",  title:"Task: Send Updated SOV",    content:"Send updated schedule of values to underwriter before end of month. Client expanding to new warehouse — need to update property limits.", author:"Mike Chen", timestamp:"2026-03-15T09:30:00", clientId:"1", type:"Task", visibility:"Public"  },
   /* Client 2 — John Anderson */
   { id:"n6",  title:"Umbrella Coverage Interest",content:"Client expressed interest in adding umbrella coverage on top of existing auto and homeowners. Prefers phone contact. Follow up in May for homeowners renewal.", author:"Mike Chen", timestamp:"2026-04-08T09:30:00", clientId:"2", type:"Follow-up" },
   { id:"n7",  title:"Homeowners Renewal Review", content:"Discussed upcoming homeowners renewal expiring Oct 1. Client wants to review deductible options and possibly increase dwelling coverage.", author:"Mike Chen", timestamp:"2026-03-22T14:00:00", clientId:"2", type:"Policy" },
@@ -189,7 +189,7 @@ const mockNotes: Note[] = [
 ];
 
 type ViewType = "list" | "detail";
-type DetailTab = "overview" | "policies" | "quotes" | "documents" | "activity" | "notes";
+type DetailTab = "overview" | "policies" | "quotes" | "policy-documents" | "file-cabinet" | "activity" | "notes";
 type FilterStatus = "All" | "Active" | "Inactive" | "Prospect" | "Starred";
 type SortKey = "name" | "status" | "lastActivity" | "activePolicies" | "assignedAgent" | "type" | null;
 type SortDir = "asc" | "desc";
@@ -221,12 +221,12 @@ function ActionMenu({ isDark, items, menuId, openMenuId, setOpenMenuId }: {
         <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-7 z-50 rounded-xl py-1 shadow-lg min-w-[160px]"
+        <div className="absolute right-0 top-7 z-50 rounded-xl shadow-lg min-w-[180px] overflow-hidden"
           style={{ background: bg, border: `1px solid ${border}`, fontFamily: FONT }}
           onMouseDown={e => e.preventDefault()}>
           {items.map(item => (
             <button key={item} onClick={() => setOpenMenuId(null)}
-              className="w-full text-left px-3.5 py-2 text-[12px] transition-colors"
+              className="w-full text-left px-3.5 py-2.5 text-[12px] transition-colors"
               style={{ color: item.toLowerCase().includes("delete") ? "#EF4444" : textColor }}
               onMouseEnter={e => (e.currentTarget.style.background = hover)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
@@ -316,7 +316,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
   const border  = isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC";
   const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#fff";
   const teal    = isDark ? "#A78BFA" : "#74C3B7";
-  const tealBg  = isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "linear-gradient(to bottom,#ACD697,#75C9B7)";
+  const tealBg  = "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
 
   const lblSty: React.CSSProperties = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: text, marginBottom: 5, display: "block" };
   const reqStar = <span style={{ color: "#EF4444", marginLeft: 1 }}>*</span>;
@@ -528,6 +528,19 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [stars, setStars] = useState<Set<string>>(new Set(mockClients.filter(c => c.isStarred).map(c => c.id)));
   const [starLimitToast, setStarLimitToast] = useState(false);
   const [detailSearch, setDetailSearch] = useState("");
+  // Quotes/Policies filter state (matches Agencies)
+  const [applicantFilter, setApplicantFilter] = useState<Set<string>>(new Set());
+  const [applicantSearch, setApplicantSearch] = useState("");
+  const [applicantOpen, setApplicantOpen] = useState(false);
+  const [lobFilter, setLobFilter] = useState("All LOBs");
+  const [lobOpen, setLobOpen] = useState(false);
+  const [qpStatusFilter, setQpStatusFilter] = useState("All Statuses");
+  const [qpStatusOpen, setQpStatusOpen] = useState(false);
+  const [producerFilter, setProducerFilter] = useState<Set<string>>(new Set());
+  const [producerSearch, setProducerSearch] = useState("");
+  const [producerOpen, setProducerOpen] = useState(false);
+  const [qpSortKey, setQpSortKey] = useState<"createdDate"|"submissionId"|"policyNumber"|"dba"|"effectiveDate">("createdDate");
+  const [qpSortDir, setQpSortDir] = useState<"asc"|"desc">("desc");
   const [docDragOver, setDocDragOver] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(null);
@@ -550,6 +563,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [editingNoteTitle, setEditingNoteTitle] = useState("");
   const [editingNoteContent, setEditingNoteContent] = useState("");
   const [editingNoteType, setEditingNoteType] = useState<Note["type"]>("General");
+  const [editingNoteVisibility, setEditingNoteVisibility] = useState<NonNullable<Note["visibility"]>>("Shared");
+  const [visibilityFilter, setVisibilityFilter] = useState<"All"|"Private"|"Shared"|"Public">("All");
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [noteLocked, setNoteLocked] = useState(false);
   const [lockedBy, setLockedBy] = useState("Sarah Johnson");
@@ -563,6 +578,16 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
   const [noteShareOpen, setNoteShareOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [shareAccess, setShareAccess] = useState<Record<string,string>>({ "Jane Smith": "edit", "Mike Chen": "view", "Tom Harris": "view" });
+  const [noteOwner, setNoteOwner] = useState("Sarah Johnson");
+  const [shareMenuFor, setShareMenuFor] = useState<string|null>(null);
+  const [removedShares, setRemovedShares] = useState<Set<string>>(new Set());
+  const [removeConfirm, setRemoveConfirm] = useState<string|null>(null);
+  const [pendingRequests, setPendingRequests] = useState<{name:string; email:string; access:"view"|"edit"}[]>([
+    { name: "Lokesh", email: "lokesh.gorijavolu@amyntagroup.com", access: "edit" },
+  ]);
+  const [extraMembers, setExtraMembers] = useState<{name:string; email:string}[]>([]);
   const [requestSent, setRequestSent] = useState(false);
   const CURRENT_USER = "Sarah Johnson";
   const [activityFilter, setActivityFilter] = useState<"all"|"policy"|"quote"|"document"|"email"|"call"|"note">("all");
@@ -581,6 +606,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [zoomNotes, setZoomNotes] = useState("");
   const [editingInfo, setEditingInfo] = useState(false);
   const [editingAddr, setEditingAddr] = useState(false);
+  const [editWarningOpen, setEditWarningOpen] = useState(false);
+  const [pendingEditAction, setPendingEditAction] = useState<(() => void) | null>(null);
+  const [contactCardEditing, setContactCardEditing] = useState(false);
+  const [contactDraftName, setContactDraftName] = useState("");
+  const [contactDraftPhone, setContactDraftPhone] = useState("");
+  const [contactDraftEmail, setContactDraftEmail] = useState("");
   const [editFields, setEditFields] = useState<Record<string, string>>({});
 
   /* Colours */
@@ -718,6 +749,206 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)"
     : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
 
+  const TEAMMATES = [
+    { name: CURRENT_USER, email: "sarah.johnson@btis.com" },
+    { name: "Mike Chen",  email: "mike.chen@btis.com" },
+    { name: "Jane Smith", email: "jane.smith@btis.com" },
+    { name: "Tom Harris", email: "tom.harris@btis.com" },
+    { name: "Amy Lee",    email: "amy.lee@btis.com" },
+  ];
+  const initials = (n: string) => { const parts = n.trim().split(/\s+/); return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : n.slice(0, 2).toUpperCase(); };
+  const avatarStyle: React.CSSProperties = { background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.12)" };
+  const avatarTextStyle: React.CSSProperties = { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
+  const renderSharePanel = () => (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center p-6"
+      onClick={() => setNoteShareOpen(false)}
+      style={{ background: "rgba(0,0,0,0.45)" }}>
+      <div id="note-share-panel" className="relative w-[480px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+        style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxHeight: "min(640px, 85vh)" }}>
+      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <span className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>Share note</span>
+        <div className="flex items-center gap-3">
+          <button onClick={() => { navigator.clipboard.writeText(window.location.href); setCopyToast("Link copied!"); setTimeout(()=>setCopyToast(""),2000); }}
+            className="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+            style={{ fontFamily: FONT, color: "#A855F7" }}>
+            <Link className="w-3 h-3" />Copy link
+          </button>
+          <button onClick={() => setNoteShareOpen(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      {/* Pending requests */}
+      {pendingRequests.length > 0 && (
+        <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+          {pendingRequests.map(req => (
+            <div key={req.email} className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={avatarStyle}><span style={avatarTextStyle}>{initials(req.name)}</span></div>
+                <div className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444", border: `2px solid ${c.cardBg}` }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}><strong>{req.name}</strong> wants to {req.access}</p>
+                <p className="text-[11px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{req.email}</p>
+              </div>
+              <button onClick={() => { setPendingRequests(prev => prev.filter(p => p.email !== req.email)); setCopyToast(`Denied ${req.name}`); setTimeout(()=>setCopyToast(""),2000); }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Deny</button>
+              <button onClick={() => {
+                setExtraMembers(prev => [...prev, { name: req.name, email: req.email }]);
+                setShareAccess(prev => ({ ...prev, [req.name]: req.access }));
+                setPendingRequests(prev => prev.filter(p => p.email !== req.email));
+                setCopyToast(`${req.name} joined the note`); setTimeout(()=>setCopyToast(""),2000);
+              }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all"
+                style={{ fontFamily: FONT, background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>Approve</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Visibility selector */}
+      <div className="px-4 pt-3 pb-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Visibility</p>
+        <div className="flex gap-1.5">
+          {([["Private",Lock,"Only you"],["Shared",Users,"Specific teammates"],["Public",Globe,"Everyone in team"]] as const).map(([v,Ic,desc]) => {
+            const active = editingNoteVisibility === v;
+            return (
+            <button key={v} onClick={() => setEditingNoteVisibility(v)}
+              className="flex-1 flex flex-col items-start gap-1 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"
+              style={{ fontFamily:FONT, background:active?"rgba(168,85,247,0.10)":"transparent", color:c.text, border:`1px solid ${active?"rgba(168,85,247,0.35)":c.border}` }}>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <Ic className="w-3 h-3" style={{ color: active ? "#A614C3" : c.text }} />
+                {active
+                  ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{v}</span>
+                  : <span>{v}</span>}
+              </span>
+              <span className="text-[10px] font-normal" style={{ color: c.muted }}>{desc}</span>
+            </button>
+          ); })}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-3 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <input placeholder="Add email to invite" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+          className="flex-1 outline-none px-3 py-2 text-[12px] rounded-lg"
+          style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}`, color: c.text }} />
+        <button onClick={() => { if (inviteEmail.trim()) { setCopyToast(`Invited ${inviteEmail.trim()}`); setTimeout(()=>setCopyToast(""),2000); setInviteEmail(""); } }}
+          disabled={!inviteEmail.trim()}
+          className="px-3 py-2 rounded-lg text-[11px] font-semibold transition-all"
+          style={{ fontFamily: FONT, background: inviteEmail.trim() ? btnGrad : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), color: inviteEmail.trim() ? "#fff" : c.muted, cursor: inviteEmail.trim() ? "pointer" : "not-allowed" }}>
+          Invite
+        </button>
+      </div>
+      <div className="px-4 pt-3 pb-1 flex-shrink-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted }}>Who has access</p>
+      </div>
+      <div className="flex-1 overflow-y-auto pb-2 min-h-0">
+        {[...TEAMMATES, ...extraMembers].filter(a => !removedShares.has(a.name)).map(a => {
+          const isOwner = a.name === noteOwner;
+          const isYou = a.name === CURRENT_USER;
+          const access = shareAccess[a.name] || "view";
+          const accessLabel = isOwner ? "Owner" : access === "edit" ? "can edit" : "can view";
+          return (
+            <div key={a.name} className="flex items-center justify-between px-4 py-2 transition-colors"
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={avatarStyle}>
+                  <span style={avatarTextStyle}>{initials(a.name)}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>
+                    {a.name}{isYou && <span className="ml-1 font-normal" style={{ color: c.muted }}>(You)</span>}
+                  </p>
+                  <p className="text-[10px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{a.email}</p>
+                </div>
+              </div>
+              {isOwner ? (
+                <span className="text-[11px] font-medium flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Owner</span>
+              ) : (
+                <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+                  <button onClick={e => { e.stopPropagation(); setShareMenuFor(p => p === a.name ? null : a.name); }}
+                    className="flex items-center gap-1 text-[11px] font-medium pl-2 pr-1 py-1 rounded-md transition-colors"
+                    style={{ fontFamily: FONT, background: "transparent", color: c.text }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    {accessLabel}
+                    <ChevronDown className="w-3 h-3" style={{ color: c.muted }} />
+                  </button>
+                  {shareMenuFor === a.name && (
+                    <div className="absolute right-0 top-8 z-50 w-36 rounded-xl shadow-2xl py-1.5"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                      onClick={e => e.stopPropagation()}>
+                      <button onClick={() => { setNoteOwner(a.name); setShareAccess(prev => ({ ...prev, [noteOwner]: "edit" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        Owner
+                      </button>
+                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "edit" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        can edit{access === "edit" && <span style={{ color: "#A855F7" }}>✓</span>}
+                      </button>
+                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "view" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        can view{access === "view" && <span style={{ color: "#A855F7" }}>✓</span>}
+                      </button>
+                      <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
+                      <button onClick={() => { setRemoveConfirm(a.name); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] transition-colors"
+                        style={{ fontFamily: FONT, color: "#EF4444" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {removeConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={e => { e.stopPropagation(); setRemoveConfirm(null); }}>
+          <div className="rounded-2xl p-6 w-[380px] shadow-2xl" style={{ background: c.cardBg }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)" }}>
+                <X className="w-6 h-6" style={{ color: "#EF4444" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Remove access?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}><strong style={{ color: c.text }}>{removeConfirm}</strong> will no longer have access to this note.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setRemoveConfirm(null)} className="px-4 py-2 rounded-lg text-[12px] font-medium transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>Cancel</button>
+              <button onClick={() => { setRemovedShares(prev => { const s = new Set(prev); s.add(removeConfirm!); return s; }); setRemoveConfirm(null); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ fontFamily: FONT, background: "#EF4444" }}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+
   /* Input style */
   const inputSty: React.CSSProperties = {
     fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`,
@@ -728,16 +959,46 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const detailTabBtn = (tab: DetailTab, label: string, Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>) => (
     <button onClick={() => { setDetailTab(tab); setDetailSearch(""); setHighlightFilter(null); }}
       className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
-      style={{ fontFamily: FONT, color: detailTab === tab ? (isDark ? "#fff" : "#74C3B7") : c.muted, letterSpacing: "0.01em" }}>
-      <Icon className="w-[15px] h-[15px]" style={{ color: detailTab === tab ? (isDark ? "#A614C3" : "#74C3B7") : undefined }} />
+      style={{ fontFamily: FONT, color: detailTab === tab ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}>
+      <Icon className="w-[15px] h-[15px]" style={{ color: detailTab === tab ? "#A614C3" : undefined }} />
       {label}
-      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "#74C3B7" }} />}
+      {detailTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
     </button>
   );
 
   /* ── DETAIL CLIENT DATA ── */
-  const clientPolicies = selected ? mockPolicies.filter(p => p.clientId === selected.id && (!detailSearch || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || p.status === "Upcoming Renewal") && (highlightFilter !== "active-policies" || p.status === "Active")) : [];
-  const clientQuotes   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || q.status === "Upcoming Renewals") && (highlightFilter !== "incomplete-quotes" || q.status === "Incomplete")) : [];
+  const closeAllQpDropdowns = () => { setApplicantOpen(false); setLobOpen(false); setQpStatusOpen(false); setProducerOpen(false); };
+  const toggleSetCl = (set: Set<string>, v: string, setter: (s: Set<string>) => void) => { const n = new Set(set); n.has(v) ? n.delete(v) : n.add(v); setter(n); };
+  const ALL_LOBS_CL = ["All LOBs","General Liability","Worker's Comp","Business Owners","Professional Liability","Excess","Bonds","Commercial Auto","Property","Cyber Liability","Builder's Risk","Equipment Floater","Auto Insurance","Homeowners","Umbrella"];
+  const POLICY_STATUSES_CL = ["All Statuses","Active","Expired","Upcoming Renewal","Cancelled"];
+  const QUOTE_STATUSES_CL  = ["All Statuses","Sold/Issued","Pending","Approved","Incomplete","Declined"];
+  const sortQp = <T extends { createdDate?: string; effectiveDate?: string; dba?: string; quoteId?: string; policyNumber?: string }>(arr: T[]) => arr.slice().sort((a, b) => {
+    let av: string | number = "", bv: string | number = "";
+    if (qpSortKey === "createdDate")    { av = new Date(a.createdDate || "").getTime(); bv = new Date(b.createdDate || "").getTime(); }
+    else if (qpSortKey === "effectiveDate") { av = new Date(a.effectiveDate || "").getTime(); bv = new Date(b.effectiveDate || "").getTime(); }
+    else if (qpSortKey === "dba")           { av = a.dba || ""; bv = b.dba || ""; }
+    else if (qpSortKey === "submissionId")  { av = a.quoteId || ""; bv = b.quoteId || ""; }
+    else if (qpSortKey === "policyNumber")  { av = a.policyNumber || ""; bv = b.policyNumber || ""; }
+    if (av < bv) return qpSortDir === "asc" ? -1 : 1;
+    if (av > bv) return qpSortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+  const clientPoliciesRaw = selected ? mockPolicies.filter(p => p.clientId === selected.id && (!detailSearch || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || p.status === "Upcoming Renewal") && (highlightFilter !== "active-policies" || p.status === "Active")) : [];
+  const clientQuotesRaw   = selected ? mockQuotes.filter(q => q.clientId === selected.id && (!detailSearch || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()) || q.policyType.toLowerCase().includes(detailSearch.toLowerCase())) && (highlightFilter !== "renewals" || q.status === "Upcoming Renewals") && (highlightFilter !== "incomplete-quotes" || q.status === "Incomplete")) : [];
+  const uniquePApplicants = Array.from(new Set(clientPoliciesRaw.map(p => p.applicant))).sort();
+  const uniquePProducers  = Array.from(new Set(clientPoliciesRaw.map(p => p.producer))).sort();
+  const uniqueQApplicants = Array.from(new Set(clientQuotesRaw.map(q => q.applicant))).sort();
+  const uniqueQProducers  = Array.from(new Set(clientQuotesRaw.map(q => q.producer))).sort();
+  const clientPolicies = sortQp(clientPoliciesRaw
+    .filter(p => applicantFilter.size === 0 || applicantFilter.has(p.applicant))
+    .filter(p => lobFilter === "All LOBs" || p.lob === lobFilter)
+    .filter(p => qpStatusFilter === "All Statuses" || p.status === qpStatusFilter)
+    .filter(p => producerFilter.size === 0 || producerFilter.has(p.producer)));
+  const clientQuotes = sortQp(clientQuotesRaw
+    .filter(q => applicantFilter.size === 0 || applicantFilter.has(q.applicant))
+    .filter(q => lobFilter === "All LOBs" || q.lob === lobFilter)
+    .filter(q => qpStatusFilter === "All Statuses" || q.status === qpStatusFilter)
+    .filter(q => producerFilter.size === 0 || producerFilter.has(q.producer)));
   const incompleteQuotesCount = selected ? mockQuotes.filter(q => q.clientId === selected.id && q.status === "Incomplete").length : 0;
   const upcomingRenewalsCount = selected ? mockPolicies.filter(p => p.clientId === selected.id && p.status === "Upcoming Renewal").length : 0;
   const clientDocs     = selected ? mockDocuments.filter(d => d.clientId === selected.id && (!detailSearch || d.name.toLowerCase().includes(detailSearch.toLowerCase()))) : [];
@@ -779,7 +1040,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         </div>
 
         {/* Filter Pills — no divider line */}
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           {filterPill("All")}
           {filterPill("Starred")}
           {filterPill("Active")}
@@ -790,7 +1051,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* Starred Cards */}
       {starredClients.length > 0 && filterStatus !== "Starred" && (
-        <div className="mb-4">
+        <div className="mb-2">
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-4 h-4" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
             <span className="text-[13px] font-bold" style={{ fontFamily: FONT, color: c.text }}>
@@ -802,12 +1063,12 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <button key={cl.id} onClick={() => openDetail(cl)}
                 className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-left transition-all"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: 190, flexShrink: 0 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.20)" : "#D1D5DB"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}>
                 <Star className="w-4 h-4 flex-shrink-0" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
                 <div style={{ minWidth: 0 }}>
                   <div className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
-                  <div className="text-[11px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#A614C3" : c.teal }}>{cl.type}</div>
+                  <div className="text-[11px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{cl.type}</div>
                 </div>
               </button>
             ))}
@@ -858,7 +1119,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 {cl.dbaName && <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>DBA: {cl.dbaName}</div>}
               </div>
               {/* Type */}
-              <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#A614C3" : c.teal }}>{cl.type}</div>
+              <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{cl.type}</div>
               {/* Contact */}
               <div>
                 <div className="text-[11px] mb-0.5 truncate" style={{ fontFamily: FONT, color: c.muted }}>{cl.email}</div>
@@ -876,7 +1137,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted, paddingLeft: 10 }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
               {/* Menu */}
               <div onClick={e => e.stopPropagation()}>
-                <ActionMenu isDark={isDark} items={["Edit Client","New Quote","Send Email"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                <ActionMenu isDark={isDark} items={["Edit Client","New Quote","Send Email","Start an Endorsement"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
               </div>
             </div>
           ))}
@@ -908,8 +1169,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-semibold"
-            style={{ fontFamily: FONT, background: c.teal, color: "#fff" }}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-bold text-white"
+            style={{ fontFamily: FONT, background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
             {page}
           </button>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
@@ -982,75 +1243,58 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="flex gap-4 mb-5 flex-shrink-0">
         {[
           { label: "Incomplete Quotes",  value: String(incompleteQuotesCount),   icon: <ClipboardList className="w-5 h-5" style={{ color: "#A855F7" }} />, onClick: () => { setDetailTab("quotes");   setHighlightFilter("incomplete-quotes"); setDetailSearch(""); }, highlight: incompleteQuotesCount > 0   },
           { label: "Active Policies",   value: String(selected.activePolicies), icon: <Shield className="w-5 h-5" style={{ color: "#A855F7" }} />,        onClick: () => { setDetailTab("policies"); setHighlightFilter("active-policies"); setDetailSearch(""); }, highlight: false },
           { label: "Upcoming Renewals", value: String(upcomingRenewalsCount),   icon: <Bell className="w-5 h-5" style={{ color: "#A855F7" }} />,           onClick: () => { setDetailTab("policies"); setHighlightFilter("renewals");        setDetailSearch(""); }, highlight: upcomingRenewalsCount > 0   },
         ].map((card, i) => (
           <button key={i} onClick={card.onClick}
-            className="rounded-xl p-5 text-left transition-all relative"
-            style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", width: "100%" }}
+            className="flex-1 min-w-0 rounded-2xl p-5 text-left transition-all relative flex flex-col items-stretch"
+            style={{ background: card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg, border: `1px solid ${card.highlight ? "transparent" : c.border}`, cursor: "pointer", justifyContent: "flex-start" }}
             onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = card.highlight ? `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box` : c.cardBg; e.currentTarget.style.border = `1px solid ${card.highlight ? "transparent" : c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
-            <div className="flex items-center gap-2 mb-3 pr-12" style={{ minHeight: 24 }}>
+            <div className="flex items-center gap-2 mb-3 pr-12">
               <p className="text-[12px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>{card.label}</p>
               {card.highlight && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Action needed</span>}
             </div>
             <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>{card.icon}</div>
-            <div className="text-[18px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{card.value}</div>
+            <p className="text-[18px] font-bold" style={{ fontFamily: FONT, color: c.text, paddingLeft: 4 }}>{card.value}</p>
           </button>
         ))}
 
-        {/* Primary Contact — Edit jumps to Client Information section */}
+        {/* Primary Contact — inline edit (matches Agency Contact card) */}
         {(() => {
           const fullName = selected.type === "Individual"
             ? `${selected.firstName ?? ""} ${selected.lastName ?? ""}`.trim()
             : `${selected.contactFirstName ?? ""} ${selected.contactLastName ?? ""}`.trim() || selected.assignedAgent;
-          const jumpToEditContact = () => {
-            setDetailTab("overview");
-            setEditFields({
-              companyName: selected.companyName || "", dbaName: selected.dbaName || "", agencyType: selected.type,
-              contactName: selected.type !== "Individual"
-                ? `${selected.contactFirstName || ""} ${selected.contactLastName || ""}`.trim()
-                : `${selected.firstName || ""} ${selected.lastName || ""}`.trim(),
-              inspectionName: `${selected.inspectionFirstName || ""} ${selected.inspectionLastName || ""}`.trim(),
-              email: selected.email, phone: selected.phone, websiteUrl: selected.website || "",
-              primaryClassCode: selected.primaryClassCode || "", federalId: selected.federalId || "",
-              contractorLicense: selected.contractorLicense || "",
-              grossSales: selected.grossSales || "", payroll: selected.payroll || "",
-              owners: selected.owners || "", employees: selected.employees || "",
-              firstName: selected.firstName || "", lastName: selected.lastName || "",
-            });
-            setEditingInfo(true);
-            requestAnimationFrame(() => {
-              document.getElementById("contact-info-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              setTimeout(() => {
-                const inp = document.getElementById("edit-contact-name-input") as HTMLInputElement | null;
-                inp?.focus();
-                inp?.select();
-              }, 350);
-            });
+          const startInlineEdit = () => {
+            setContactDraftName(fullName);
+            setContactDraftPhone(selected.phone);
+            setContactDraftEmail(selected.email);
+            setContactCardEditing(true);
           };
           return (
-            <div className="rounded-xl p-5 relative min-w-0 group transition-all"
+            <div className="flex-1 rounded-2xl p-5 relative min-w-0 group transition-all cursor-pointer"
               style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-              onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}>
-              <div className="flex items-center gap-2 mb-3 pr-12" style={{ minHeight: 24 }}>
-                <p className="text-[12px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>Primary Contact</p>
+              onMouseEnter={e => { if (!contactCardEditing) { e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%) border-box`; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(110,33,196,0.18)"; }}}
+              onMouseLeave={e => { if (!contactCardEditing) { e.currentTarget.style.background = c.cardBg; e.currentTarget.style.border = `1px solid ${c.border}`; e.currentTarget.style.boxShadow = "none"; }}}>
+              <div className="flex items-center mb-3">
+                <p className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: c.muted }}>Primary Contact</p>
               </div>
               <div className="absolute top-4 right-4 p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.10)" }}>
                 <UserCircle className="w-5 h-5" style={{ color: "#A855F7" }} />
               </div>
-              <button onClick={jumpToEditContact}
+              <button onClick={startInlineEdit}
                 className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
-                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: "#090D11", border: `1px solid ${c.border}`, background: c.cardBg }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: c.text, border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`, background: isDark ? "rgba(255,255,255,0.05)" : c.cardBg }}
+                onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : c.cardBg}>
                 <Pencil className="w-3.5 h-3.5" />Edit
               </button>
-              <div className="text-[18px] font-bold" style={{ fontFamily: FONT, color: c.text }}>{fullName || "—"}</div>
+              <p className="text-[13px] font-semibold mb-0.5" style={{ fontFamily: FONT, color: c.text }}>{fullName || "—"}</p>
+              {selected.phone && <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{selected.phone}</p>}
+              {selected.email && <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{selected.email}</p>}
             </div>
           );
         })()}
@@ -1061,7 +1305,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         {detailTabBtn("overview",   "Overview",   ClipboardList)}
         {detailTabBtn("quotes",     "Quotes",     FileText)}
         {detailTabBtn("policies",   "Policies",   Shield)}
-        {detailTabBtn("documents",  "Documents",  FolderOpen)}
+        {detailTabBtn("policy-documents", "Policy Documents", FileText)}
+        {detailTabBtn("file-cabinet",     "File Cabinet",     FolderOpen)}
         {detailTabBtn("notes",      "Notes",      CopyPlus)}
         {detailTabBtn("activity",   "Activity",   Activity)}
       </div>
@@ -1118,7 +1363,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Client Information</h3>
               {!editingInfo ? (
-                <button onClick={startEditInfo} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
+                <button onClick={() => { setPendingEditAction(() => startEditInfo); setEditWarningOpen(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Edit
                 </button>
@@ -1204,7 +1449,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Address Information</h3>
               {!editingAddr ? (
-                <button onClick={startEditAddr} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
+                <button onClick={() => { setPendingEditAction(() => startEditAddr); setEditWarningOpen(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors" onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.muted }}>
                   <Pencil className="w-3.5 h-3.5" />Edit
                 </button>
@@ -1356,28 +1601,131 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
             </div>
             <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <RefreshCw className="w-4 h-4" /></button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <LayoutGrid className="w-4 h-4" /></button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <Download className="w-4 h-4" /></button>
             </div>
           </div>
           <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
-              {["Created","Submission ID","Applicant","DBA","Effective","LOB","Status","Producer"].map((h,i) => (
-                <div key={i} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
-                  style={{ fontFamily:FONT, color:c.muted }}>
-                  {h}
-                  {i !== 2 && i !== 3 && <span className="inline-flex gap-[1px] ml-0.5">
-                    <svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={c.sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={c.sub}/></svg>
-                  </span>}
-                </div>
-              ))}
+              {/* Created */}
+              <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Policy Number (sortable) */}
+              <button onClick={()=>{if(qpSortKey==="policyNumber")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("policyNumber");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Policy Number<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="policyNumber"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="policyNumber"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Applicant filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
+                  Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {applicantOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setApplicantOpen(false)}/>
+                  <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`,left:-50}}>
+                    <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
+                        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={applicantSearch} onChange={e=>setApplicantSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniquePApplicants;setApplicantFilter(applicantFilter.size===all.length?new Set():new Set(all));}}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.size===uniquePApplicants.length&&uniquePApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                        Select All
+                      </button>
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto py-1">
+                      {uniquePApplicants.filter(a=>!applicantSearch||a.toLowerCase().includes(applicantSearch.toLowerCase())).map(applicant=>(
+                        <button key={applicant} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSetCl(applicantFilter,applicant,setApplicantFilter)}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          {applicant}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
+                  </div>
+                </>)}
+              </div>
+              {/* DBA (sortable) */}
+              <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Effective (sortable) */}
+              <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* LOB filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
+                  LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {lobOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
+                  <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    {ALL_LOBS_CL.map(lob=>(
+                      <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
+                        <span>{lob}</span>
+                        {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                    ))}
+                  </div>
+                </>)}
+              </div>
+              {/* Status filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setQpStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:qpStatusFilter!=="All Statuses"?"#A614C3":c.muted}}>
+                  Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={qpStatusFilter!=="All Statuses"?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {qpStatusOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setQpStatusOpen(false)}/>
+                  <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    {POLICY_STATUSES_CL.map(status=>(
+                      <button key={status} onClick={()=>{setQpStatusFilter(status);setQpStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:qpStatusFilter===status?"#A614C3":c.text,fontWeight:qpStatusFilter===status?600:400,background:qpStatusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=qpStatusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=qpStatusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
+                        <span>{status}</span>
+                        {qpStatusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                    ))}
+                  </div>
+                </>)}
+              </div>
+              {/* Producer filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
+                  Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {producerOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setProducerOpen(false)}/>
+                  <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`,left:-50}}>
+                    <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
+                        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={producerSearch} onChange={e=>setProducerSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniquePProducers;setProducerFilter(producerFilter.size===all.length?new Set():new Set(all));}}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.size===uniquePProducers.length&&uniquePProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                        Select All
+                      </button>
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto py-1">
+                      {uniquePProducers.filter(p=>!producerSearch||p.toLowerCase().includes(producerSearch.toLowerCase())).map(producer=>(
+                        <button key={producer} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSetCl(producerFilter,producer,setProducerFilter)}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          {producer}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
+                  </div>
+                </>)}
+              </div>
             </div>
             <div className="overflow-y-auto flex-1">
               {clientPolicies.map((p,i,arr) => {
@@ -1388,7 +1736,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(116,195,183,0.08)" : "transparent", borderLeft: isHighlighted ? "3px solid #74C3B7" : "3px solid transparent" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(116,195,183,0.08)":"transparent")}>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>
-                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{p.policyNumber}</div>
+                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{p.policyNumber}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba || "—"}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
@@ -1423,15 +1771,15 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
             </div>
             <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <LayoutGrid className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded-lg transition-colors" style={{ color: c.teal }}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <Download className="w-4 h-4" />
               </button>
@@ -1439,15 +1787,118 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </div>
           <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
-              {["Created","Submission ID","Applicant","DBA","Effective","LOB","Status","Producer"].map((h,i) => (
-                <div key={i} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
-                  style={{ fontFamily:FONT, color:c.muted }}>
-                  {h}
-                  {i !== 2 && i !== 3 && <span className="inline-flex gap-[1px] ml-0.5">
-                    <svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={c.sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={c.sub}/></svg>
-                  </span>}
-                </div>
-              ))}
+              {/* Created */}
+              <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Submission ID */}
+              <button onClick={()=>{if(qpSortKey==="submissionId")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("submissionId");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Submission ID<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="submissionId"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="submissionId"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Applicant filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
+                  Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {applicantOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setApplicantOpen(false)}/>
+                  <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`,left:-50}}>
+                    <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
+                        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={applicantSearch} onChange={e=>setApplicantSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniqueQApplicants;setApplicantFilter(applicantFilter.size===all.length?new Set():new Set(all));}}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.size===uniqueQApplicants.length&&uniqueQApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                        Select All
+                      </button>
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto py-1">
+                      {uniqueQApplicants.filter(a=>!applicantSearch||a.toLowerCase().includes(applicantSearch.toLowerCase())).map(applicant=>(
+                        <button key={applicant} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSetCl(applicantFilter,applicant,setApplicantFilter)}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          {applicant}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
+                  </div>
+                </>)}
+              </div>
+              {/* DBA */}
+              <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* Effective */}
+              <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
+                Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):c.sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+              </button>
+              {/* LOB filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
+                  LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {lobOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
+                  <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    {ALL_LOBS_CL.map(lob=>(
+                      <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
+                        <span>{lob}</span>
+                        {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                    ))}
+                  </div>
+                </>)}
+              </div>
+              {/* Status filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setQpStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:qpStatusFilter!=="All Statuses"?"#A614C3":c.muted}}>
+                  Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={qpStatusFilter!=="All Statuses"?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {qpStatusOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setQpStatusOpen(false)}/>
+                  <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    {QUOTE_STATUSES_CL.map(status=>(
+                      <button key={status} onClick={()=>{setQpStatusFilter(status);setQpStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:qpStatusFilter===status?"#A614C3":c.text,fontWeight:qpStatusFilter===status?600:400,background:qpStatusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=qpStatusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=qpStatusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
+                        <span>{status}</span>
+                        {qpStatusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                    ))}
+                  </div>
+                </>)}
+              </div>
+              {/* Producer filter */}
+              <div className="relative">
+                <button onClick={()=>{closeAllQpDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
+                  Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":c.sub}/></svg></span>
+                </button>
+                {producerOpen&&(<>
+                  <div className="fixed inset-0 z-10" onClick={()=>setProducerOpen(false)}/>
+                  <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`,left:-50}}>
+                    <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
+                        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={producerSearch} onChange={e=>setProducerSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
+                      <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniqueQProducers;setProducerFilter(producerFilter.size===all.length?new Set():new Set(all));}}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.size===uniqueQProducers.length&&uniqueQProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                        Select All
+                      </button>
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto py-1">
+                      {uniqueQProducers.filter(p=>!producerSearch||p.toLowerCase().includes(producerSearch.toLowerCase())).map(producer=>(
+                        <button key={producer} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSetCl(producerFilter,producer,setProducerFilter)}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          {producer}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
+                  </div>
+                </>)}
+              </div>
             </div>
             <div className="overflow-y-auto flex-1">
               {clientQuotes.map((q,i,arr) => {
@@ -1458,7 +1909,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background: isHighlighted ? "rgba(245,158,11,0.06)" : "transparent", borderLeft: isHighlighted ? "3px solid #F59E0B" : "3px solid transparent" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isHighlighted?"rgba(245,158,11,0.06)":"transparent")}>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>
-                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:c.teal }}>{q.quoteId}</div>
+                  <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{q.quoteId}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba || "—"}</div>
                   <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate ? new Date(q.effectiveDate).toLocaleDateString() : "—"}</div>
@@ -1473,12 +1924,65 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         </div>
       )}
 
-      {/* ── DOCUMENTS ── */}
-      {detailTab === "documents" && (
+      {/* ── POLICY DOCUMENTS (auto-extracted, read-only) ── */}
+      {detailTab === "policy-documents" && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden", width: 320 }}>
-              <input placeholder="Search documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
+              <input placeholder="Search policy documents..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
+                className="flex-1 outline-none"
+                style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
+              <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
+                style={{ fontFamily: FONT, background: btnGrad }}>
+                <Search className="w-3.5 h-3.5" />Submit
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold whitespace-nowrap"
+              style={{ fontFamily: FONT, padding: "6px 14px", borderRadius: 9999, border: "1.5px solid #A855F7", color: "#A855F7", background: "transparent" }}>
+              <RefreshCw className="w-3 h-3" />Auto-synced from policies
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+            <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"2.5fr 1.2fr 1fr 1.5fr 1fr 40px", borderBottom:`1px solid ${c.border}`, background:c.mutedBg }}>
+              {["Document Name","Policy","Type","Sync Date","Size",""].map((h,i) => (
+                <div key={i} className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{h}</div>
+              ))}
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {clientDocs.filter(d => d.category === "Policy" || d.category === "Endorsement" || d.category === "Certificate").length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full min-h-[220px]">
+                  <FileText className="w-7 h-7 mb-3" style={{ color: c.muted }} />
+                  <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>No policy documents yet</span>
+                  <span className="text-[11px] mt-1" style={{ fontFamily: FONT, color: c.muted }}>Documents will appear here automatically when policies are issued</span>
+                </div>
+              ) : clientDocs.filter(d => d.category === "Policy" || d.category === "Endorsement" || d.category === "Certificate").map((d,i,arr) => (
+                <div key={d.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors"
+                  style={{ gridTemplateColumns:"2.5fr 1.2fr 1fr 1.5fr 1fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.1)" }}>
+                      <FileText className="w-4 h-4" style={{ color: "#EF4444" }} />
+                    </div>
+                    <span className="text-[13px] font-medium" style={{ fontFamily:FONT, color:c.text }}>{d.name}</span>
+                  </div>
+                  <div className="text-[12px] px-2 py-0.5 rounded-lg" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3", background:"rgba(168,85,247,0.08)", display:"inline-block", width:"fit-content" }}>{d.category}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.type}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{new Date(d.uploadDate).toLocaleDateString()}</div>
+                  <div className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>{d.size}</div>
+                  <ActionMenu isDark={isDark} items={["Download","View"]} menuId={`pdoc-${d.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FILE CABINET (user-uploaded docs) ── */}
+      {detailTab === "file-cabinet" && (
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden", width: 320 }}>
+              <input placeholder="Search file cabinet..." value={detailSearch} onChange={e => setDetailSearch(e.target.value)}
                 className="flex-1 outline-none"
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
               <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
@@ -1503,16 +2007,16 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               onDragOver={e => { e.preventDefault(); setDocDragOver(true); }}
               onDragLeave={() => setDocDragOver(false)}
               onDrop={e => { e.preventDefault(); setDocDragOver(false); }}>
-              {clientDocs.length === 0 && (
+              {clientDocs.filter(d => d.category !== "Policy" && d.category !== "Endorsement" && d.category !== "Certificate").length === 0 && (
                 <label className="flex flex-col items-center justify-center h-full min-h-[220px] cursor-pointer transition-colors"
-                  style={{ background: docDragOver ? "rgba(116,195,183,0.06)" : "transparent" }}>
+                  style={{ background: docDragOver ? "rgba(168,85,247,0.06)" : "transparent" }}>
                   <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                  <Paperclip className="w-7 h-7 mb-3" style={{ color: "#74C3B7" }} />
+                  <Paperclip className="w-7 h-7 mb-3" style={{ color: "#A614C3" }} />
                   <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>Drag &amp; Drop or Click to Browse</span>
                   <span className="text-[11px] mt-1" style={{ fontFamily: FONT, color: c.muted }}>PDF, JPG, PNG · Max 10MB</span>
                 </label>
               )}
-              {clientDocs.map((d,i,arr) => (
+              {clientDocs.filter(d => d.category !== "Policy" && d.category !== "Endorsement" && d.category !== "Certificate").map((d,i,arr) => (
                 <div key={d.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors"
                   style={{ gridTemplateColumns:"2.5fr 1fr 1fr 1.5fr 1fr 40px", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
@@ -1726,7 +2230,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
         };
         const visibleNotes = clientNotes
           .filter(n => showTrashed ? trashedNoteIds.has(n.id) : showArchived ? archivedNoteIds.has(n.id) : (!trashedNoteIds.has(n.id) && !archivedNoteIds.has(n.id)))
+          .filter(n => (n.visibility ?? "Shared") !== "Private" || n.author === CURRENT_USER)
           .filter(n => noteFilterType === "All" || n.type === noteFilterType)
+          .filter(n => visibilityFilter === "All" || (n.visibility ?? "Shared") === visibilityFilter)
           .filter(n => !noteSearch || n.title.toLowerCase().includes(noteSearch.toLowerCase()) || n.content.toLowerCase().includes(noteSearch.toLowerCase()))
           .sort((a, b) => {
             const pa = pinnedNoteIds.has(a.id) ? 1 : 0, pb = pinnedNoteIds.has(b.id) ? 1 : 0;
@@ -1736,8 +2242,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
           });
 
-        const openNote = (n: Note) => { setSelectedNote(n); setEditingNoteTitle(n.title); setEditingNoteContent(n.content); setEditingNoteType(n.type); };
-        const saveNote = () => { if (!selectedNote) return; setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType } : n)); setSelectedNote(s => s ? { ...s, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType } : s); };
+        const openNote = (n: Note) => { setSelectedNote(n); setEditingNoteTitle(n.title); setEditingNoteContent(n.content); setEditingNoteType(n.type); setEditingNoteVisibility(n.visibility || "Shared"); };
+        const saveNote = () => { if (!selectedNote) return; setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType, visibility: editingNoteVisibility } : n)); setSelectedNote(s => s ? { ...s, title: editingNoteTitle, content: editingNoteContent, type: editingNoteType, visibility: editingNoteVisibility } : s); };
 
         return (
           <div className="flex flex-1 min-h-0 gap-4" onClick={() => { setNoteFilterOpen(false); setNoteSortOpen(false); setNoteNewOpen(false); setNoteMoreOpen(false); }}>
@@ -1790,19 +2296,34 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <div className="relative" onClick={e => e.stopPropagation()}>
                   <button onClick={() => { setNoteFilterOpen(p => !p); setNoteSortOpen(false); setNoteNewOpen(false); }}
                     className="p-1.5 rounded-md transition-all"
-                    style={{ color: noteFilterType !== "All" ? "#A855F7" : c.muted, background: noteFilterType !== "All" ? "rgba(168,85,247,0.10)" : "transparent" }}
+                    style={{ color: (noteFilterType !== "All" || visibilityFilter !== "All") ? "#A855F7" : c.muted, background: (noteFilterType !== "All" || visibilityFilter !== "All") ? "rgba(168,85,247,0.10)" : "transparent" }}
                     title="Filter">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5L9.5 10v5l-3-1.5V10L1 4.5V3z"/></svg>
                   </button>
                   {noteFilterOpen && (
-                    <div className="absolute right-0 top-8 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                    <div className="absolute right-0 top-8 z-30 w-52 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                       <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Type</p>
                       {(["All", ...NOTE_TYPES] as const).map(t => (
-                        <button key={t} onClick={() => { setNoteFilterType(t as typeof noteFilterType); setNoteFilterOpen(false); }}
+                        <button key={t} onClick={() => { setNoteFilterType(t as typeof noteFilterType); }}
                           className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                          style={{ fontFamily: FONT, color: noteFilterType === t ? "#A855F7" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          style={{ fontFamily: FONT, color: noteFilterType === t ? "#A614C3" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
                           {t === "All" ? "All Types" : t}
-                          {noteFilterType === t && <span style={{ color: "#A855F7" }}>✓</span>}
+                          {noteFilterType === t && <span style={{ color: "#A614C3" }}>✓</span>}
+                        </button>
+                      ))}
+                      <div style={{ height: 1, background: c.border, margin: "6px 0" }} />
+                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Visibility</p>
+                      {([
+                        ["All", null],
+                        ["Private", Lock],
+                        ["Shared", Users],
+                        ["Public", Globe],
+                      ] as const).map(([v, Ic]) => (
+                        <button key={v} onClick={() => { setVisibilityFilter(v as typeof visibilityFilter); }}
+                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                          style={{ fontFamily: FONT, color: visibilityFilter === v ? "#A614C3" : c.text, background: visibilityFilter === v ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          <span className="flex items-center gap-2">{Ic && <Ic className="w-3 h-3" />}{v === "All" ? "All Visibility" : v}</span>
+                          {visibilityFilter === v && <span style={{ color: "#A614C3" }}>✓</span>}
                         </button>
                       ))}
                       <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
@@ -1831,13 +2352,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2V4zm2 3.5h8V9H4V7.5zm2 3.5h4v1.5H6V11z"/></svg>
                   </button>
                   {noteSortOpen && (
-                    <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
+                    <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide px-3 pt-2 pb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
                       {([["desc","Newest first"],["asc","Oldest first"]] as const).map(([d, label]) => (
                         <button key={d} onClick={() => { setNoteSortDir(d); setNoteSortOpen(false); }}
-                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between"
-                          style={{ fontFamily: FONT, color: noteSortDir === d ? "#A855F7" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
-                          {label}{noteSortDir === d && <span style={{ color: "#A855F7" }}>✓</span>}
+                          className="w-full text-left px-3 py-2 text-[12px] flex items-center justify-between"
+                          style={{ fontFamily: FONT, color: noteSortDir === d ? "#A614C3" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          {label}{noteSortDir === d && <span style={{ color: "#A614C3" }}>✓</span>}
                         </button>
                       ))}
                     </div>
@@ -2005,9 +2526,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                         {/* Pin button before title */}
                         <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                           className="p-0.5 rounded flex-shrink-0 transition-all"
-                          style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                          style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : (isDark ? "0.6" : "0.3"); (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
                           <Pin className="w-3.5 h-3.5" />
                         </button>
                         {noteLocked && selectedNote?.id === n.id && <Lock className="w-3 h-3 flex-shrink-0" style={{ color: "#A855F7" }} />}
@@ -2023,7 +2544,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                         </button>
                       )}
                     </div>
-                    <p className="text-[12px] leading-relaxed mb-2" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                    <p className="text-[12px] leading-relaxed mb-2" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
                         style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
@@ -2067,9 +2588,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                                 )}
                                 <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                                   className="p-0.5 rounded flex-shrink-0 transition-all"
-                                  style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                                  style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
-                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : (isDark ? "0.6" : "0.3"); (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
                                   <Pin className="w-2.5 h-2.5" />
                                 </button>
                                 <span className="text-[11px] font-semibold leading-snug truncate" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
@@ -2084,7 +2605,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                             </div>
                             {/* Content preview + author — hidden in compact mode */}
                             {!selectedNote && <>
-                              <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                              <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                               <div className="flex items-center gap-1.5">
                                 <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
                                   style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
@@ -2122,7 +2643,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                       {isSelectMode && <th className="pb-2 w-8" />}
-                      {["Title","Created","Created By","Type"].map(h => (
+                      {(!!selectedNote && !noteExpanded ? ["Title","Created"] : ["Title","Created","Created By","Type"]).map(h => (
                         <th key={h} className="text-[11px] font-semibold pb-2 pr-6" style={{ fontFamily: FONT, color: c.muted }}>{h}</th>
                       ))}
                       <th className="text-[11px] font-semibold pb-2 w-12" />
@@ -2151,26 +2672,26 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                             {/* Pin button before title */}
                             <button onClick={e => { e.stopPropagation(); setPinnedNoteIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                               className="p-0.5 rounded flex-shrink-0 transition-all"
-                              style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                              style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
-                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : (isDark ? "0.6" : "0.3"); (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
                               <Pin className="w-3 h-3" />
                             </button>
                             <div>
                               <span className="text-[12px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
-                              <p className="text-[11px] truncate max-w-[200px]" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                              <p className="text-[11px] truncate max-w-[200px]" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                             </div>
                           </div>
                         </td>
                         <td className="py-2.5 pr-6 text-[12px] whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp)}</td>
-                        <td className="py-2.5 pr-6 whitespace-nowrap">
+                        {!(!!selectedNote && !noteExpanded) && <td className="py-2.5 pr-6 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
                               style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
                             <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{n.author}</span>
                           </div>
-                        </td>
-                        <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>
+                        </td>}
+                        {!(!!selectedNote && !noteExpanded) && <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>}
                         <td className="py-2.5">
                           {!isSelectMode && (
                             <button onClick={e => { e.stopPropagation(); if (showTrashed) { setDeleteNoteId(n.id); } else { setTrashedNoteIds(prev => { const s = new Set(prev); s.add(n.id); return s; }); } }} className="p-1 rounded" style={{ color: c.muted, opacity: 0.5 }}
@@ -2374,25 +2895,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     {copyToast && <div className="absolute top-3 right-4 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
 
                     {/* Share panel */}
-                    {noteShareOpen && (
-                      <div className="mb-5 rounded-xl p-4" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.03)", border: `1px solid ${isDark ? "rgba(168,85,247,0.20)" : "rgba(92,46,212,0.12)"}` }}
-                        onClick={e => e.stopPropagation()}>
-                        <p className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.text }}>Share with teammate</p>
-                        <div className="flex flex-col gap-1.5">
-                          {["Mike Chen", "Jane Smith", "Sarah Johnson"].filter(a => a !== CURRENT_USER).map(agent => (
-                            <div key={agent} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fff", border: `1px solid ${c.border}` }}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: btnGrad }}>{agent.charAt(0)}</div>
-                                <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{agent}</span>
-                              </div>
-                              <button onClick={() => { setCopyToast(`Shared with ${agent.split(" ")[0]}!`); setTimeout(() => setCopyToast(""), 2500); setNoteShareOpen(false); }}
-                                className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                                style={{ fontFamily: FONT, background: btnGrad, color: "#fff" }}>Share</button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {noteShareOpen && renderSharePanel()}
 
                     {/* Lock banner (other user locked) */}
                     {noteLocked && isLockedByOther && (
@@ -2421,6 +2924,33 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                         { icon: <Calendar className="w-3.5 h-3.5" />, label: "Created", value: <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{fmtDate(selectedNote.timestamp)}</span> },
                         { icon: <UserCircle className="w-3.5 h-3.5" />, label: "Created By", value: (<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{selectedNote.author}</span></div>) },
                         { icon: <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label: "Type", value: (<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t => (<button key={t} onClick={() => (!noteLocked && !showTrashed) && setEditingNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all" style={{ fontFamily: FONT, background: editingNoteType === t ? typeColor[t]?.bg : "transparent", color: editingNoteType === t ? typeColor[t]?.text : c.muted, border: `1px solid ${editingNoteType === t ? typeColor[t]?.text + "44" : c.border}`, cursor: (noteLocked || showTrashed) ? "default" : "pointer" }}>{t}</button>))}</div>) },
+                        { icon: <Lock className="w-3.5 h-3.5" />, label: "Visibility", value: (
+                          <div className="flex flex-col gap-2 min-w-0">
+                            <div className="flex flex-wrap gap-1.5">
+                              {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+                                <button key={v} title={tip} onClick={() => (!noteLocked&&!showTrashed)&&setEditingNoteVisibility(v)}
+                                  className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
+                                  style={{ fontFamily:FONT, background:editingNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editingNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editingNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>
+                                  <Ic className="w-3 h-3" />{v}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
+                              {editingNoteVisibility === "Private" && <span>Only you can see this note</span>}
+                              {editingNoteVisibility === "Public"  && <span>Visible to everyone in your team</span>}
+                              {editingNoteVisibility === "Shared"  && (<>
+                                <div className="flex -space-x-1">
+                                  {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
+                                    <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
+                                  ))}
+                                </div>
+                                <span>You + {TEAMMATES.length - 1} teammates</span>
+                                <span>·</span>
+                                <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }} className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
+                              </>)}
+                            </div>
+                          </div>
+                        ) },
                         { icon: <Users className="w-3.5 h-3.5" />, label: "Client", value: <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{selected ? getClientName(selected) : "—"}</span> },
                       ].map(({ icon, label, value }, idx, arr) => (
                         <div key={label} className="flex items-center px-4 py-2.5" style={{ borderBottom: idx < arr.length - 1 ? `1px solid ${c.border}` : undefined }}>
@@ -2509,19 +3039,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                     {/* Body */}
                     <div className="flex-1 overflow-y-auto px-16 py-8 relative">
                       {copyToast && <div className="absolute top-4 right-6 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
-                      {noteShareOpen && (
-                        <div className="mb-6 rounded-xl p-4" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.03)", border: `1px solid ${isDark ? "rgba(168,85,247,0.20)" : "rgba(92,46,212,0.12)"}` }} onClick={e => e.stopPropagation()}>
-                          <p className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.text }}>Share with teammate</p>
-                          <div className="flex flex-col gap-1.5">
-                            {["Mike Chen","Jane Smith","Sarah Johnson"].filter(a=>a!==CURRENT_USER).map(agent=>(
-                              <div key={agent} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isDark?"rgba(255,255,255,0.04)":"#fff", border:`1px solid ${c.border}` }}>
-                                <div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background:btnGrad }}>{agent.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agent}</span></div>
-                                <button onClick={() => { setCopyToast(`Shared with ${agent.split(" ")[0]}!`); setTimeout(()=>setCopyToast(""),2500); setNoteShareOpen(false); }} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-white" style={{ fontFamily:FONT, background:btnGrad }}>Share</button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      {noteShareOpen && renderSharePanel()}
                       {noteLocked && isLockedByOther && (
                         <div className="mb-5 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
                           <div className="flex items-center gap-2"><Lock className="w-4 h-4" style={{ color:"#A855F7" }}/><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>Locked by <strong>{lockedBy}</strong></span></div>
@@ -2534,8 +3052,34 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       <div className="mb-6 rounded-xl overflow-hidden" style={{ border:`1px solid ${c.border}` }}>
                         {[
                           {icon:<Calendar className="w-3.5 h-3.5"/>, label:"Created", value:<span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{fmtDate2(selectedNote.timestamp)}</span>},
-                          {icon:<UserCircle className="w-3.5 h-3.5"/>, label:"Created By", value:(<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{background:btnGrad}}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{selectedNote.author}</span></div>)},
+                          {icon:<UserCircle className="w-3.5 h-3.5"/>, label:"Created By", value:(<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={avatarStyle}><span style={avatarTextStyle}>{initials(selectedNote.author)}</span></div><span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{selectedNote.author}</span></div>)},
                           {icon:<svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label:"Type", value:(<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t=>(<button key={t} onClick={()=>!noteLocked&&setEditingNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium" style={{fontFamily:FONT,background:editingNoteType===t?typeColor[t]?.bg:"transparent",color:editingNoteType===t?typeColor[t]?.text:c.muted,border:`1px solid ${editingNoteType===t?typeColor[t]?.text+"44":c.border}`}}>{t}</button>))}</div>)},
+                          {icon:<Lock className="w-3.5 h-3.5"/>, label:"Visibility", value:(
+                            <div className="flex flex-col gap-2 min-w-0">
+                              <div className="flex flex-wrap gap-1.5">
+                                {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+                                  <button key={v} title={tip} onClick={() => !noteLocked && setEditingNoteVisibility(v)}
+                                    className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
+                                    style={{ fontFamily:FONT, background:editingNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editingNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editingNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:noteLocked?"default":"pointer" }}>
+                                    <Ic className="w-3 h-3" />{v}
+                                  </button>
+                                ))}
+                              </div>
+                              {editingNoteVisibility === "Shared" && (
+                                <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
+                                  <div className="flex -space-x-1">
+                                    {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
+                                      <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
+                                    ))}
+                                  </div>
+                                  <span>You + {TEAMMATES.length - 1} teammates</span>
+                                  <span>·</span>
+                                  <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }}
+                                    className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
+                                </div>
+                              )}
+                            </div>
+                          )},
                           {icon:<Users className="w-3.5 h-3.5"/>, label:"Client", value:<span className="text-[12px]" style={{fontFamily:FONT,color:c.text}}>{selected?getClientName(selected):"—"}</span>},
                         ].map(({icon,label,value},idx,arr)=>(
                           <div key={label} className="flex items-center px-4 py-2.5" style={{borderBottom:idx<arr.length-1?`1px solid ${c.border}`:undefined}}>
@@ -2568,6 +3112,106 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           </div>
         );
       })()}
+
+      {/* ── EDIT PRIMARY CONTACT MODAL ── */}
+      {contactCardEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setContactCardEditing(false)}>
+          <div className="rounded-2xl w-[440px] max-w-[95vw] overflow-hidden"
+            style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <h3 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Edit Primary Contact</h3>
+              <button onClick={() => setContactCardEditing(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Contact Name</label>
+                <input value={contactDraftName} onChange={e => setContactDraftName(e.target.value)} placeholder="Full name"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Phone</label>
+                <input value={contactDraftPhone} onChange={e => setContactDraftPhone(e.target.value)} placeholder="(000) 000-0000"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Email</label>
+                <input value={contactDraftEmail} onChange={e => setContactDraftEmail(e.target.value)} placeholder="email@example.com"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setContactCardEditing(false)}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                Cancel
+              </button>
+              <button onClick={() => setContactCardEditing(false)}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ fontFamily: FONT, background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT WARNING (Client Information / Address) ── */}
+      {editWarningOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => { setEditWarningOpen(false); setPendingEditAction(null); }}>
+          <div className="rounded-2xl w-[460px] max-w-[95vw] overflow-hidden"
+            style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-5 px-7 pt-7 pb-5">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,158,11,0.12)" }}>
+                <AlertTriangle className="w-[22px] h-[22px]" style={{ color: "#F59E0B" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Heads up before editing</h3>
+                <p className="text-[12px] leading-[1.55]" style={{ fontFamily: FONT, color: c.muted }}>
+                  Any changes made here <strong style={{ color: c.text }}>will not</strong> be applied to the policy via an endorsement. To update an active policy, please request an endorsement instead.
+                </p>
+              </div>
+              <button onClick={() => { setEditWarningOpen(false); setPendingEditAction(null); }} className="p-1 rounded-md transition-colors flex-shrink-0 -mt-1" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => { pendingEditAction?.(); setEditWarningOpen(false); setPendingEditAction(null); }}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                Continue Editing
+              </button>
+              <button onClick={() => { setEditWarningOpen(false); setPendingEditAction(null); /* TODO: navigate to endorsement flow */ }}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ fontFamily: FONT, background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Request Endorsement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── DELETE NOTE CONFIRM ── */}
       {deleteNoteId && (

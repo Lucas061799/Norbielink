@@ -4,11 +4,11 @@ import { useState, useRef } from "react";
 import {
   Search, Plus, Star, MapPin, Users, ChevronDown, ChevronUp,
   ChevronsUpDown, Building2, ChevronLeft, ChevronRight, X,
-  Calendar, RefreshCw, FileText, Edit2, Share2, User,
+  Calendar, RefreshCw, FileText, Edit2, Network, User,
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil,
+  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Link as LinkIcon, Globe, Eye, Headphones, Crown,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -142,13 +142,14 @@ interface AgencyNote {
   id: string; title: string; content: string; author: string;
   timestamp: string; agencyId: string;
   type: "General" | "Policy" | "Follow-up" | "Meeting" | "Task";
+  visibility?: "Private" | "Shared" | "Public";
 }
 const mockAgencyNotes: AgencyNote[] = [
-  { id:"an1", title:"Initial Appointment Call",   content:"Spoke with Jason Smith about getting appointed. They handle primarily commercial lines in the Midwest. Sent onboarding packet.",       author:"Sarah Johnson", timestamp:"2026-03-01T10:00:00", agencyId:"1", type:"Meeting"   },
-  { id:"an2", title:"E&O Verification",           content:"Confirmed E&O policy is current. Expires 03/24/2026. Requested updated cert for file.",                                              author:"Jane Smith",    timestamp:"2026-03-10T14:30:00", agencyId:"1", type:"Policy"    },
-  { id:"an3", title:"Follow up on license renewal", content:"License renewal reminder sent. LC-88210 expires soon. Jason confirmed they are in process.",                                      author:"Sarah Johnson", timestamp:"2026-03-20T09:00:00", agencyId:"1", type:"Follow-up" },
-  { id:"an4", title:"Portal access set up",       content:"Created login credentials for the agency portal. Sent welcome email with training links.",                                          author:"Mike Chen",     timestamp:"2026-04-01T11:15:00", agencyId:"1", type:"General"   },
-  { id:"an5", title:"Q1 Performance Review",      content:"Agency submitted 12 quotes in Q1. Conversion rate 41%. Strong performance in Workers Comp and GL lines. Recommended for Pro tier.", author:"Jane Smith",    timestamp:"2026-04-10T16:00:00", agencyId:"1", type:"Meeting"   },
+  { id:"an1", title:"Initial Appointment Call",   content:"Spoke with Jason Smith about getting appointed. They handle primarily commercial lines in the Midwest. Sent onboarding packet.",       author:"Sarah Johnson", timestamp:"2026-03-01T10:00:00", agencyId:"1", type:"Meeting",   visibility:"Shared"  },
+  { id:"an2", title:"E&O Verification",           content:"Confirmed E&O policy is current. Expires 03/24/2026. Requested updated cert for file.",                                              author:"Jane Smith",    timestamp:"2026-03-10T14:30:00", agencyId:"1", type:"Policy",    visibility:"Public"  },
+  { id:"an3", title:"Follow up on license renewal", content:"License renewal reminder sent. LC-88210 expires soon. Jason confirmed they are in process.",                                      author:"Sarah Johnson", timestamp:"2026-03-20T09:00:00", agencyId:"1", type:"Follow-up", visibility:"Private" },
+  { id:"an4", title:"Portal access set up",       content:"Created login credentials for the agency portal. Sent welcome email with training links.",                                          author:"Mike Chen",     timestamp:"2026-04-01T11:15:00", agencyId:"1", type:"General",   visibility:"Shared"  },
+  { id:"an5", title:"Q1 Performance Review",      content:"Agency submitted 12 quotes in Q1. Conversion rate 41%. Strong performance in Workers Comp and GL lines. Recommended for Pro tier.", author:"Jane Smith",    timestamp:"2026-04-10T16:00:00", agencyId:"1", type:"Meeting",   visibility:"Public"  },
 ];
 
 /* ─── Quote / Policy filter constants ───────────────────────────────────── */
@@ -182,7 +183,6 @@ const mockAgencyUsers: AgencyUser[] = [
   { id:"u4", name:"Amy Chen",       isAdmin:true,  jobTitle:"Producer",        email:"amy.chen@acmeins.com",    phone:"(888) 888-8888", ext:"125", agencyId:"1" },
   { id:"u5", name:"Brian Nguyen",   isAdmin:true,  jobTitle:"Producer",        email:"b.nguyen@acmeins.com",    phone:"(888) 888-8888", ext:"125", agencyId:"1" },
   { id:"u6", name:"Sandra Park",    isAdmin:true,  jobTitle:"Producer",        email:"s.park@acmeins.com",      phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u7", name:"James Acosta",   isAdmin:false, jobTitle:"",                email:"james.a@acmeins.com",     phone:"(890) 643-5678", ext:"",    agencyId:"1" },
   { id:"u8", name:"Maria Chen",     isAdmin:true,  jobTitle:"Principal",       email:"m.chen@summitsol.com",    phone:"(312) 555-0190", ext:"",    agencyId:"2" },
   { id:"u9", name:"Tom Harris",     isAdmin:false, jobTitle:"Producer",        email:"tom@summitsol.com",       phone:"(312) 555-0191", ext:"201", agencyId:"2" },
 ];
@@ -201,7 +201,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 }) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
   const [isEditing, setIsEditing]           = useState(false);
+  const [editExpanded, setEditExpanded]     = useState(false);
   const [contactCardEditing, setContactCardEditing] = useState(false);
+  const currentUserIsAdmin = true; // toggle to test — non-admin users see permission popup
+  const [contactRequestOpen, setContactRequestOpen] = useState(false);
+  const [requestedName, setRequestedName] = useState("");
+  const [requestedPhone, setRequestedPhone] = useState("");
+  const [requestedEmail, setRequestedEmail] = useState("");
+  const [contactRequestSent, setContactRequestSent] = useState(false);
   const [eContactPhone, setEContactPhone]   = useState(agency.contactPhone);
   const font = { fontFamily: FONT };
   const isStarred = stars.has(agency.id);
@@ -314,6 +321,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [editNoteTitle,  setEditNoteTitle]  = useState("");
   const [editNoteContent,setEditNoteContent]= useState("");
   const [editNoteType,   setEditNoteType]   = useState<AgencyNote["type"]>("General");
+  const [editNoteVisibility, setEditNoteVisibility] = useState<NonNullable<AgencyNote["visibility"]>>("Shared");
+  const [visibilityFilter, setVisibilityFilter] = useState<"All"|"Private"|"Shared"|"Public">("All");
   const [noteExpanded,   setNoteExpanded]   = useState(false);
   const [noteLocked,     setNoteLocked]     = useState(false);
   const [lockedBy,       setLockedBy]       = useState("Sarah Johnson");
@@ -324,6 +333,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [showTrashed,    setShowTrashed]    = useState(false);
   const [noteMoreOpen,   setNoteMoreOpen]   = useState(false);
   const [noteShareOpen,  setNoteShareOpen]  = useState(false);
+  const [inviteEmail,    setInviteEmail]    = useState("");
+  const [shareAccess,    setShareAccess]    = useState<Record<string,string>>({ "Jane Smith": "edit", "Mike Chen": "view", "Sarah Johnson": "view", "Tom Harris": "view" });
+  const [noteOwner,      setNoteOwner]      = useState("Sarah Johnson");
+  const [shareMenuFor,   setShareMenuFor]   = useState<string|null>(null);
+  const [removedShares,  setRemovedShares]  = useState<Set<string>>(new Set());
+  const [removeConfirm,  setRemoveConfirm]  = useState<string|null>(null);
+  const [pendingRequests, setPendingRequests] = useState<{name:string; email:string; access:"view"|"edit"}[]>([
+    { name: "Lokesh", email: "lokesh.gorijavolu@amyntagroup.com", access: "edit" },
+  ]);
+  const [extraMembers,   setExtraMembers]   = useState<{name:string; email:string}[]>([]);
   const [copyToast,      setCopyToast]      = useState("");
   const [isSelectMode,   setIsSelectMode]   = useState(false);
   const [selectedNoteIds,setSelectedNoteIds]= useState<Set<string>>(new Set());
@@ -334,12 +353,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [importUsersOpen, setImportUsersOpen] = useState(false);
   const [addUserOpen,     setAddUserOpen]     = useState(false);
   const [userSearch,      setUserSearch]      = useState("");
+  const [jobTitleFilter,  setJobTitleFilter]  = useState<Set<string>>(new Set());
+  const [jobTitleOpen,    setJobTitleOpen]    = useState(false);
+  const [jobTitleSearch,  setJobTitleSearch]  = useState("");
   const [userMenuId,      setUserMenuId]      = useState<string|null>(null);
   /* add-user form fields */
   const [auFirstName,  setAuFirstName]  = useState("");
   const [auLastName,   setAuLastName]   = useState("");
   const [auIsAdmin,    setAuIsAdmin]    = useState(false);
   const [auAdminLevel, setAuAdminLevel] = useState("");
+  const [auAdminLevelOpen, setAuAdminLevelOpen] = useState(false);
   const [auJobTitle,   setAuJobTitle]   = useState("");
   const [auJobOpen,    setAuJobOpen]    = useState(false);
   const [auStatus,     setAuStatus]     = useState("");
@@ -360,6 +383,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const agencyUsers = mockAgencyUsers
     .filter(u => u.agencyId === agency.id)
     .filter(u => !userSearch || u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+    .filter(u => jobTitleFilter.size === 0 || jobTitleFilter.has(u.jobTitle))
     .sort((a, b) => {
       if (a.jobTitle === "Principal" && b.jobTitle !== "Principal") return -1;
       if (b.jobTitle === "Principal" && a.jobTitle !== "Principal") return 1;
@@ -371,8 +395,208 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) + " " +
       d.toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" });
   };
-  const openNote = (n: AgencyNote) => { setSelectedNote(n); setEditNoteTitle(n.title); setEditNoteContent(n.content); setEditNoteType(n.type); };
-  const saveNote = () => { if (!selectedNote) return; setAgNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editNoteTitle, content: editNoteContent, type: editNoteType } : n)); setSelectedNote(s => s ? { ...s, title: editNoteTitle, content: editNoteContent, type: editNoteType } : s); };
+  const openNote = (n: AgencyNote) => { setSelectedNote(n); setEditNoteTitle(n.title); setEditNoteContent(n.content); setEditNoteType(n.type); setEditNoteVisibility(n.visibility || "Shared"); };
+  const saveNote = () => { if (!selectedNote) return; setAgNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editNoteTitle, content: editNoteContent, type: editNoteType, visibility: editNoteVisibility } : n)); setSelectedNote(s => s ? { ...s, title: editNoteTitle, content: editNoteContent, type: editNoteType, visibility: editNoteVisibility } : s); };
+
+  const TEAMMATES = [
+    { name: CURRENT_USER, email: "sarah.johnson@btis.com" },
+    { name: "Mike Chen",  email: "mike.chen@btis.com" },
+    { name: "Jane Smith", email: "jane.smith@btis.com" },
+    { name: "Tom Harris", email: "tom.harris@btis.com" },
+    { name: "Amy Lee",    email: "amy.lee@btis.com" },
+  ];
+  const initials = (n: string) => { const parts = n.trim().split(/\s+/); return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : n.slice(0, 2).toUpperCase(); };
+  const avatarStyle: React.CSSProperties = { background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.12)" };
+  const avatarTextStyle: React.CSSProperties = { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
+  const renderSharePanel = () => (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center p-6"
+      onClick={() => setNoteShareOpen(false)}
+      style={{ background: "rgba(0,0,0,0.45)" }}>
+      <div id="note-share-panel" className="relative w-[480px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+        style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxHeight: "min(640px, 85vh)" }}>
+      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <span className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>Share note</span>
+        <div className="flex items-center gap-3">
+          <button onClick={() => { navigator.clipboard.writeText(window.location.href); setCopyToast("Link copied!"); setTimeout(()=>setCopyToast(""),2000); }}
+            className="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+            style={{ fontFamily: FONT, color: "#A855F7" }}>
+            <LinkIcon className="w-3 h-3" />Copy link
+          </button>
+          <button onClick={() => setNoteShareOpen(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      {/* Pending requests */}
+      {pendingRequests.length > 0 && (
+        <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+          {pendingRequests.map(req => (
+            <div key={req.email} className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={avatarStyle}><span style={avatarTextStyle}>{initials(req.name)}</span></div>
+                <div className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444", border: `2px solid ${c.cardBg}` }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}><strong>{req.name}</strong> wants to {req.access}</p>
+                <p className="text-[11px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{req.email}</p>
+              </div>
+              <button onClick={() => { setPendingRequests(prev => prev.filter(p => p.email !== req.email)); setCopyToast(`Denied ${req.name}`); setTimeout(()=>setCopyToast(""),2000); }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>Deny</button>
+              <button onClick={() => {
+                setExtraMembers(prev => [...prev, { name: req.name, email: req.email }]);
+                setShareAccess(prev => ({ ...prev, [req.name]: req.access }));
+                setPendingRequests(prev => prev.filter(p => p.email !== req.email));
+                setCopyToast(`${req.name} joined the note`); setTimeout(()=>setCopyToast(""),2000);
+              }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all"
+                style={{ fontFamily: FONT, background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>Approve</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Visibility selector */}
+      <div className="px-4 pt-3 pb-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Visibility</p>
+        <div className="flex gap-1.5">
+          {([["Private",Lock,"Only you"],["Shared",Users,"Specific teammates"],["Public",Globe,"Everyone in team"]] as const).map(([v,Ic,desc]) => {
+            const active = editNoteVisibility === v;
+            return (
+            <button key={v} onClick={() => setEditNoteVisibility(v)}
+              className="flex-1 flex flex-col items-start gap-1 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"
+              style={{ fontFamily:FONT, background:active?"rgba(168,85,247,0.10)":"transparent", color:c.text, border:`1px solid ${active?"rgba(168,85,247,0.35)":c.border}` }}>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <Ic className="w-3 h-3" style={{ color: active ? "#A614C3" : c.text }} />
+                {active
+                  ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{v}</span>
+                  : <span>{v}</span>}
+              </span>
+              <span className="text-[10px] font-normal" style={{ color: c.muted }}>{desc}</span>
+            </button>
+          ); })}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-3 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+        <input placeholder="Add email to invite" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+          className="flex-1 outline-none px-3 py-2 text-[12px] rounded-lg"
+          style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}`, color: c.text }} />
+        <button onClick={() => { if (inviteEmail.trim()) { setCopyToast(`Invited ${inviteEmail.trim()}`); setTimeout(()=>setCopyToast(""),2000); setInviteEmail(""); } }}
+          disabled={!inviteEmail.trim()}
+          className="px-3 py-2 rounded-lg text-[11px] font-semibold transition-all"
+          style={{ fontFamily: FONT, background: inviteEmail.trim() ? btnGrad : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), color: inviteEmail.trim() ? "#fff" : c.muted, cursor: inviteEmail.trim() ? "pointer" : "not-allowed" }}>
+          Invite
+        </button>
+      </div>
+      <div className="px-4 pt-3 pb-1 flex-shrink-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted }}>Who has access</p>
+      </div>
+      <div className="flex-1 overflow-y-auto pb-2 min-h-0">
+        {[...TEAMMATES, ...extraMembers].filter(a => !removedShares.has(a.name)).map(a => {
+          const isOwner = a.name === noteOwner;
+          const isYou = a.name === CURRENT_USER;
+          const access = shareAccess[a.name] || "view";
+          const accessLabel = isOwner ? "Owner" : access === "edit" ? "can edit" : "can view";
+          return (
+            <div key={a.name} className="flex items-center justify-between px-4 py-2 transition-colors"
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={avatarStyle}>
+                  <span style={avatarTextStyle}>{initials(a.name)}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>
+                    {a.name}{isYou && <span className="ml-1 font-normal" style={{ color: c.muted }}>(You)</span>}
+                  </p>
+                  <p className="text-[10px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{a.email}</p>
+                </div>
+              </div>
+              {isOwner ? (
+                <span className="text-[11px] font-medium flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Owner</span>
+              ) : (
+                <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+                  <button onClick={e => { e.stopPropagation(); setShareMenuFor(p => p === a.name ? null : a.name); }}
+                    className="flex items-center gap-1 text-[11px] font-medium pl-2 pr-1 py-1 rounded-md transition-colors"
+                    style={{ fontFamily: FONT, background: "transparent", color: c.text }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    {accessLabel}
+                    <ChevronDown className="w-3 h-3" style={{ color: c.muted }} />
+                  </button>
+                  {shareMenuFor === a.name && (
+                    <div className="absolute right-0 top-8 z-50 w-36 rounded-xl shadow-2xl py-1.5"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                      onClick={e => e.stopPropagation()}>
+                      <button onClick={() => { setNoteOwner(a.name); setShareAccess(prev => ({ ...prev, [noteOwner]: "edit" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        Owner
+                      </button>
+                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "edit" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        can edit{access === "edit" && <span style={{ color: "#A855F7" }}>✓</span>}
+                      </button>
+                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "view" })); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                        style={{ fontFamily: FONT, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        can view{access === "view" && <span style={{ color: "#A855F7" }}>✓</span>}
+                      </button>
+                      <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
+                      <button onClick={() => { setRemoveConfirm(a.name); setShareMenuFor(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[12px] transition-colors"
+                        style={{ fontFamily: FONT, color: "#EF4444" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {removeConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={e => { e.stopPropagation(); setRemoveConfirm(null); }}>
+          <div className="rounded-2xl p-6 w-[380px] shadow-2xl" style={{ background: c.cardBg }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)" }}>
+                <X className="w-6 h-6" style={{ color: "#EF4444" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Remove access?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}><strong style={{ color: c.text }}>{removeConfirm}</strong> will no longer have access to this note.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setRemoveConfirm(null)} className="px-4 py-2 rounded-lg text-[12px] font-medium transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>Cancel</button>
+              <button onClick={() => { setRemovedShares(prev => { const s = new Set(prev); s.add(removeConfirm!); return s; }); setRemoveConfirm(null); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ fontFamily: FONT, background: "#EF4444" }}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </div>
+  );
 
   const TypeBadge = ({ type }: { type: string }) => (
     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap"
@@ -381,7 +605,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   const visibleNotes = agNotes
     .filter(n => showTrashed ? trashedIds.has(n.id) : showArchived ? archivedIds.has(n.id) : (!trashedIds.has(n.id) && !archivedIds.has(n.id)))
+    .filter(n => (n.visibility ?? "Shared") !== "Private" || n.author === CURRENT_USER)
     .filter(n => noteFilterType === "All" || n.type === noteFilterType)
+    .filter(n => visibilityFilter === "All" || (n.visibility ?? "Shared") === visibilityFilter)
     .filter(n => !noteSearch || n.title.toLowerCase().includes(noteSearch.toLowerCase()) || n.content.toLowerCase().includes(noteSearch.toLowerCase()))
     .sort((a, b) => {
       const pa = pinnedIds.has(a.id) ? 1 : 0, pb = pinnedIds.has(b.id) ? 1 : 0;
@@ -536,55 +762,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             )}
             {/* Edit button — floats left of icon on hover only */}
             {!contactCardEditing && (
-              <button onClick={() => setContactCardEditing(true)}
+              <button onClick={() => { if (currentUserIsAdmin) { setContactCardEditing(true); } else { setRequestedName(agency.contact); setRequestedPhone(agency.contactPhone); setRequestedEmail(agency.contactEmail); setContactRequestOpen(true); } }}
                 className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
-                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: "#090D11", border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, background: c.cardBg }}
+                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: c.text, border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`, background: isDark ? "rgba(255,255,255,0.05)" : c.cardBg }}
                 onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
-                onMouseLeave={e => e.currentTarget.style.background = c.cardBg}>
+                onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : c.cardBg}>
                 <Pencil className="w-3.5 h-3.5" />Edit
               </button>
             )}
-            {/* Cancel / Save when editing */}
-            {contactCardEditing && (
-              <div className="absolute top-[10px] right-4 flex items-center gap-1.5">
-                <button onClick={() => setContactCardEditing(false)}
-                  className="text-[11px] px-2 py-0.5 rounded-lg transition-colors"
-                  style={{ fontFamily: FONT, color: "#090D11", border: `1px solid ${c.border}` }}
-                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  Cancel
-                </button>
-                <button onClick={() => setContactCardEditing(false)}
-                  className="text-[11px] px-2 py-0.5 rounded-lg text-white transition-colors"
-                  style={{ fontFamily: FONT, background: btnGrad }}>
-                  Save
-                </button>
-              </div>
-            )}
             {/* Content */}
-            {contactCardEditing ? (
-              <div className="space-y-2">
-                <input value={eContact} onChange={e => setEContact(e.target.value)}
-                  className="w-full text-[13px] font-semibold px-2.5 py-1.5 rounded-lg outline-none"
-                  style={{ fontFamily: FONT, color: c.text, background: isDark ? "rgba(255,255,255,0.08)" : "#fff", border: `1px solid ${teal}` }} />
-                <input value={eContactPhone} onChange={e => setEContactPhone(e.target.value)}
-                  className="w-full text-[12px] px-2.5 py-1.5 rounded-lg outline-none"
-                  style={{ fontFamily: FONT, color: c.text, background: isDark ? "rgba(255,255,255,0.08)" : "#fff", border: `1px solid ${c.border}` }}
-                  onFocus={e => e.currentTarget.style.borderColor = teal}
-                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
-                <input value={eEmail} onChange={e => setEEmail(e.target.value)}
-                  className="w-full text-[12px] px-2.5 py-1.5 rounded-lg outline-none"
-                  style={{ fontFamily: FONT, color: c.text, background: isDark ? "rgba(255,255,255,0.08)" : "#fff", border: `1px solid ${c.border}` }}
-                  onFocus={e => e.currentTarget.style.borderColor = teal}
-                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
-              </div>
-            ) : (
-              <>
-                <p className="text-[13px] font-semibold mb-0.5" style={{ ...font, color: c.text }}>{eContact}</p>
-                <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eContactPhone}</p>
-                <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eEmail}</p>
-              </>
-            )}
+            <p className="text-[13px] font-semibold mb-0.5" style={{ ...font, color: c.text }}>{eContact}</p>
+            <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eContactPhone}</p>
+            <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eEmail}</p>
           </div>
           <InfoCard title="Agency Status" icon={<Building2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             {agency.status === "Appointed" ? <AppointedBadge /> : <UnapptBadge />}
@@ -592,7 +781,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <InfoCard title="Appointed Date" icon={<Calendar className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             <p className="text-[14px] font-semibold" style={{ ...font, color: c.text }}>{agency.apptDate}</p>
           </InfoCard>
-          <InfoCard title="Affiliations" icon={<Share2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
+          <InfoCard title="Affiliations" icon={<Network className="w-5 h-5" style={{ color: "#A855F7" }} />}>
             <div className="text-[12px] leading-relaxed" style={{ ...font, color: c.muted }}>
               {agency.affiliations.slice(0, 4).join(" | ")}
             </div>
@@ -603,11 +792,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         <div className="flex items-center gap-1 mb-5 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
           {detailTabs.map(([key, label, icon]) => {
             const active = detailTab === key;
-            const activeTextColor  = isDark ? "#fff"     : "#74C3B7";
-            const activeIconColor  = isDark ? "#A614C3"  : "#74C3B7";
-            const activeUnderline  = isDark
-              ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)"
-              : "#74C3B7";
+            const activeTextColor  = isDark ? "#fff"     : "#A614C3";
+            const activeIconColor  = "#A614C3";
+            const activeUnderline  = "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
             return (
               <button key={key} onClick={() => { setDetailTab(key); }}
                 className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
@@ -637,7 +824,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-x-12 gap-y-6">
               <LabelValue label="Agency Name" value={agency.name} />
               <LabelValue label="Agency Code" value={agency.code} />
-              <LabelValue label="Agency Type" value={<span style={{ color: "#14B8A6" }}>{agency.agencyType}</span>} />
+              <LabelValue label="Agency Type" value={<span style={{ color: c.text }}>{agency.agencyType}</span>} />
               <LabelValue label="Agency Address" value={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`} />
               <LabelValue label="Mailing Address" value="Same as Agency Address" />
               <div />
@@ -664,27 +851,27 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div />
               <div>
                 <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Agency Bill:</p>
-                <p className="text-[13px]" style={{ ...font, color: "#14B8A6" }}>{agency.agencyBill ? "Yes" : "No"}</p>
+                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.agencyBill ? "Yes" : "No"}</p>
               </div>
               <div>
                 <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Direct Bill:</p>
-                <p className="text-[13px]" style={{ ...font, color: "#14B8A6" }}>{agency.directBill ? "Yes" : "No"}</p>
+                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.directBill ? "Yes" : "No"}</p>
               </div>
               <div>
                 <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Premium Finance:</p>
-                <p className="text-[13px]" style={{ ...font, color: "#14B8A6" }}>{agency.premiumFin ? "Yes" : "No"}</p>
+                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.premiumFin ? "Yes" : "No"}</p>
               </div>
               <div>
                 <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Affiliations</p>
-                <div className="space-y-1">{agency.affiliations.map(a => <p key={a} className="text-[13px]" style={{ ...font, color: "#14B8A6" }}>{a}</p>)}</div>
+                <div className="space-y-1">{agency.affiliations.map(a => <p key={a} className="text-[13px]" style={{ ...font, color: c.text }}>{a}</p>)}</div>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Direct Appointments</p>
                   <span style={{ color: c.border }}>|</span>
-                  <p className="text-[13px] font-semibold" style={{ ...font, color: "#14B8A6" }}>Workers Compensation</p>
+                  <p className="text-[13px] font-semibold" style={{ ...font, color: "#A614C3" }}>Workers Compensation</p>
                 </div>
-                <div className="space-y-1">{agency.workersComp.map(w => <p key={w} className="text-[13px]" style={{ ...font, color: "#14B8A6" }}>{w}</p>)}</div>
+                <div className="space-y-1">{agency.workersComp.map(w => <p key={w} className="text-[13px]" style={{ ...font, color: c.text }}>{w}</p>)}</div>
               </div>
               <div />
             </div>
@@ -694,29 +881,40 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Edit form + footer ── */}
         {detailTab === "overview" && isEditing && (
-          <div className="flex-1 overflow-y-auto pb-6">
-          <div className="rounded-2xl p-8 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+          <>
+          {editExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setEditExpanded(false)} />}
+          <div className={editExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "flex-1 overflow-y-auto pb-6"}
+            style={editExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
+          <div className={editExpanded ? "p-8 mb-6" : "rounded-2xl p-8 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}` }}>
             {/* Card header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
-              <button onClick={() => setIsEditing(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: "#090D11" }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                <Pencil className="w-3.5 h-3.5" />Cancel Edit
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setEditExpanded(p => !p)} title={editExpanded ? "Collapse" : "Expand"}
+                  className="p-1.5 rounded-md transition-colors" style={{ color: editExpanded ? "#A855F7" : c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  {editExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button onClick={() => { setIsEditing(false); setEditExpanded(false); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <Pencil className="w-3.5 h-3.5" />Cancel Edit
+                </button>
+              </div>
             </div>
 
             {/* Row 1: Name | Code | Type */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Agency Name:</label>
-                <input value={eName} onChange={e => setEName(e.target.value)} style={{ ...inputStyle, maxWidth: 320 }} />
+                <input value={eName} onChange={e => setEName(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Agency Code:</label>
-                <div className="flex gap-2" style={{ maxWidth: 380 }}>
+                <div className="flex gap-2">
                   <input value={eCode} onChange={e => setECode(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                   <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
                     style={{ ...font, border: `1px solid #A855F7`, color: "#A855F7", background: "transparent" }}
@@ -831,10 +1029,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </div>
 
             {/* Status | Appt Date */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Status:</label>
-                <select value={eStatus} onChange={e => setEStatus(e.target.value)} style={{ ...selectStyle, maxWidth: 240 }}>
+                <select value={eStatus} onChange={e => setEStatus(e.target.value)} style={selectStyle}>
                   <option value="">- Select one</option>
                   <option value="Appointed">Appointed</option>
                   <option value="Unappointed">Un Appointed</option>
@@ -842,22 +1040,23 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Appt. Date</label>
-                <div className="relative" style={{ maxWidth: 260 }}>
+                <div className="relative">
                   <input value={eApptDate} onChange={e => setEApptDate(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
                 </div>
               </div>
+              <div />
             </div>
 
             {/* Agency Contact | Email */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Agency Contact:</label>
-                <input value={eContact} onChange={e => setEContact(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
+                <input value={eContact} onChange={e => setEContact(e.target.value)} style={inputStyle} />
               </div>
-              <div>
+              <div className="col-span-2">
                 <label style={labelStyle}>Email Address:</label>
-                <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={{ ...inputStyle, maxWidth: 360 }} type="email" />
+                <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={inputStyle} type="email" />
               </div>
             </div>
 
@@ -865,7 +1064,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Type of Business:</label>
-                <select value={eBizType} onChange={e => setEBizType(e.target.value)} style={{ ...selectStyle, maxWidth: 280 }}>
+                <select value={eBizType} onChange={e => setEBizType(e.target.value)} style={selectStyle}>
                   <option value="">-Business Type</option>
                   <option>Corporation</option>
                   <option>Joint Venture</option>
@@ -878,54 +1077,57 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Tax ID:</label>
-                <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={{ ...inputStyle, maxWidth: 240 }} />
+                <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Website Url:</label>
-                <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={{ ...inputStyle, maxWidth: 360 }} />
+                <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={inputStyle} />
               </div>
             </div>
 
             {/* Phone | Toll Free */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Phone Number:</label>
-                <input value={ePhone} onChange={e => setEPhone(e.target.value)} placeholder="(000) 000-0000" style={{ ...inputStyle, maxWidth: 240 }} />
+                <input value={ePhone} onChange={e => setEPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Toll Free Number:</label>
-                <input value={eTollFree} onChange={e => setETollFree(e.target.value)} placeholder="(000) 000-0000" style={{ ...inputStyle, maxWidth: 240 }} />
+                <input value={eTollFree} onChange={e => setETollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
               </div>
+              <div />
             </div>
 
             {/* License */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>License Number:</label>
-                <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
+                <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative" style={{ maxWidth: 200 }}>
+                <div className="relative">
                   <input value={eLicExp} onChange={e => setELicExp(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
                 </div>
               </div>
+              <div />
             </div>
 
             {/* E&O */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>E&O Policy #:</label>
-                <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} />
+                <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <div className="relative" style={{ maxWidth: 200 }}>
+                <div className="relative">
                   <input value={eEoExp} onChange={e => setEEoExp(e.target.value)} style={inputStyle} />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: c.muted }} />
                 </div>
               </div>
+              <div />
             </div>
 
             {/* Agency Bill | Direct Bill | Premium Finance */}
@@ -968,11 +1170,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <SectionDivider title="Affiliations" />
             <div className="grid grid-cols-4 gap-x-6 gap-y-3">
               {AFFILIATIONS.map(aff => (
-                <label key={aff} className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <div className="mt-0.5 flex-shrink-0">
+                <label key={aff} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                  <div className="flex-shrink-0">
                     <Checkbox checked={eAffil.has(aff)} onClick={() => toggleSet(eAffil, aff, setEAffil)} />
                   </div>
-                  <span className="text-[12px] leading-snug" style={{ ...font, color: c.text }}>{aff}</span>
+                  <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={aff}>{aff}</span>
                 </label>
               ))}
             </div>
@@ -982,9 +1184,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <p className="text-[12px] mb-3" style={{ ...font, color: c.muted }}>Workers Compensation</p>
             <div className="grid grid-cols-4 gap-x-6 gap-y-3">
               {WORKERS_COMP.map(w => (
-                <label key={w} className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <Checkbox checked={eWC.has(w)} onClick={() => toggleSet(eWC, w, setEWC)} />
-                  <span className="text-[12px]" style={{ ...font, color: c.text }}>{w}</span>
+                <label key={w} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                  <div className="flex-shrink-0">
+                    <Checkbox checked={eWC.has(w)} onClick={() => toggleSet(eWC, w, setEWC)} />
+                  </div>
+                  <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={w}>{w}</span>
                 </label>
               ))}
             </div>
@@ -1008,6 +1212,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </button>
           </div>
           </div>
+          </>
         )}
 
         {/* ── Notes tab ── */}
@@ -1056,18 +1261,33 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <div className="relative" onClick={e => e.stopPropagation()}>
                     <button onClick={() => { setNoteFilterOpen(p => !p); setNoteSortOpen(false); setNoteNewOpen(false); }}
                       className="p-1.5 rounded-md transition-all"
-                      style={{ color: noteFilterType !== "All" ? "#A855F7" : c.muted, background: noteFilterType !== "All" ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                      style={{ color: (noteFilterType !== "All" || visibilityFilter !== "All") ? "#A855F7" : c.muted, background: (noteFilterType !== "All" || visibilityFilter !== "All") ? "rgba(168,85,247,0.10)" : "transparent" }}>
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5L9.5 10v5l-3-1.5V10L1 4.5V3z"/></svg>
                     </button>
                     {noteFilterOpen && (
-                      <div className="absolute right-0 top-8 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <div className="absolute right-0 top-8 z-30 w-52 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                         <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Type</p>
                         {(["All",...NOTE_TYPES] as const).map(t => (
-                          <button key={t} onClick={() => { setNoteFilterType(t as typeof noteFilterType); setNoteFilterOpen(false); }}
+                          <button key={t} onClick={() => { setNoteFilterType(t as typeof noteFilterType); }}
                             className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                            style={{ fontFamily: FONT, color: noteFilterType === t ? "#A855F7" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                            style={{ fontFamily: FONT, color: noteFilterType === t ? "#A614C3" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
                             {t === "All" ? "All Types" : t}
-                            {noteFilterType === t && <span style={{ color: "#A855F7" }}>✓</span>}
+                            {noteFilterType === t && <span style={{ color: "#A614C3" }}>✓</span>}
+                          </button>
+                        ))}
+                        <div style={{ height:1, background:c.border, margin:"6px 0" }} />
+                        <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Visibility</p>
+                        {([
+                          ["All", null],
+                          ["Private", Lock],
+                          ["Shared", Users],
+                          ["Public", Globe],
+                        ] as const).map(([v, Icon]) => (
+                          <button key={v} onClick={() => { setVisibilityFilter(v as typeof visibilityFilter); }}
+                            className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                            style={{ fontFamily: FONT, color: visibilityFilter === v ? "#A614C3" : c.text, background: visibilityFilter === v ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                            <span className="flex items-center gap-2">{Icon && <Icon className="w-3 h-3" />}{v === "All" ? "All Visibility" : v}</span>
+                            {visibilityFilter === v && <span style={{ color: "#A614C3" }}>✓</span>}
                           </button>
                         ))}
                       </div>
@@ -1080,13 +1300,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2V4zm2 3.5h8V9H4V7.5zm2 3.5h4v1.5H6V11z"/></svg>
                     </button>
                     {noteSortOpen && (
-                      <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
+                      <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide px-3 pt-2 pb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
                         {([["desc","Newest first"],["asc","Oldest first"]] as const).map(([d, label]) => (
                           <button key={d} onClick={() => { setNoteSortDir(d); setNoteSortOpen(false); }}
-                            className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between"
-                            style={{ fontFamily: FONT, color: noteSortDir === d ? "#A855F7" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
-                            {label}{noteSortDir === d && <span style={{ color:"#A855F7" }}>✓</span>}
+                            className="w-full text-left px-3 py-2 text-[12px] flex items-center justify-between"
+                            style={{ fontFamily: FONT, color: noteSortDir === d ? "#A614C3" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                            {label}{noteSortDir === d && <span style={{ color:"#A614C3" }}>✓</span>}
                           </button>
                         ))}
                       </div>
@@ -1220,7 +1440,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             )}
                             <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                               className="p-0.5 rounded flex-shrink-0 transition-all"
-                              style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                              style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; (e.currentTarget as HTMLElement).style.color = "#F59E0B"; }}
                               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = isPinned ? "1" : "0.3"; (e.currentTarget as HTMLElement).style.color = isPinned ? "#F59E0B" : c.muted; }}>
                               <Pin className="w-3.5 h-3.5" />
@@ -1236,7 +1456,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             </button>
                           )}
                         </div>
-                        <p className="text-[12px] leading-relaxed mb-2" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                        <p className="text-[12px] leading-relaxed mb-2" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
                             style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
@@ -1280,9 +1500,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     )}
                                     <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                                       className="p-0.5 rounded flex-shrink-0 transition-all"
-                                      style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                                      style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="1"; (e.currentTarget as HTMLElement).style.color="#F59E0B"; }}
-                                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity=isPinned?"1":"0.3"; (e.currentTarget as HTMLElement).style.color=isPinned?"#F59E0B":c.muted; }}>
+                                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity=isPinned?"1":(isDark?"0.6":"0.3"); (e.currentTarget as HTMLElement).style.color=isPinned?"#F59E0B":c.muted; }}>
                                       <Pin className="w-2.5 h-2.5" />
                                     </button>
                                     <span className="text-[11px] font-semibold leading-snug truncate" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
@@ -1297,7 +1517,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 </div>
                                 {/* Content + author — hidden in compact mode */}
                                 {!selectedNote && <>
-                                  <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                                  <p className="text-[11px] leading-relaxed mb-2.5 line-clamp-3" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                                   <div className="flex items-center gap-1.5">
                                     <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
                                       style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
@@ -1335,7 +1555,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <thead>
                       <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                         {isSelectMode && <th className="pb-2 w-8" />}
-                        {["Title","Created","Created By","Type"].map(h => (
+                        {(!!selectedNote && !noteExpanded ? ["Title","Created"] : ["Title","Created","Created By","Type"]).map(h => (
                           <th key={h} className="text-[11px] font-semibold pb-2 pr-6" style={{ fontFamily: FONT, color: c.muted }}>{h}</th>
                         ))}
                         <th className="text-[11px] font-semibold pb-2 w-12" />
@@ -1363,26 +1583,26 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               <div className="flex items-center gap-1.5">
                                 <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; }); }}
                                   className="p-0.5 rounded flex-shrink-0 transition-all"
-                                  style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : 0.3 }}
+                                  style={{ color: isPinned ? "#F59E0B" : c.muted, opacity: isPinned ? 1 : (isDark ? 0.6 : 0.3) }}
                                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="1"; (e.currentTarget as HTMLElement).style.color="#F59E0B"; }}
-                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity=isPinned?"1":"0.3"; (e.currentTarget as HTMLElement).style.color=isPinned?"#F59E0B":c.muted; }}>
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity=isPinned?"1":(isDark?"0.6":"0.3"); (e.currentTarget as HTMLElement).style.color=isPinned?"#F59E0B":c.muted; }}>
                                   <Pin className="w-3 h-3" />
                                 </button>
                                 <div>
                                   <span className="text-[12px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{n.title}</span>
-                                  <p className="text-[11px] truncate max-w-[200px]" style={{ fontFamily: FONT, color: c.muted }}>{n.content}</p>
+                                  <p className="text-[11px] truncate max-w-[200px]" style={{ fontFamily: FONT, color: isDark ? "rgba(255,255,255,0.72)" : c.muted }}>{n.content}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="py-2.5 pr-6 text-[12px] whitespace-nowrap" style={{ fontFamily: FONT, color: c.muted }}>{fmtDate(n.timestamp)}</td>
-                            <td className="py-2.5 pr-6 whitespace-nowrap">
+                            {!(!!selectedNote && !noteExpanded) && <td className="py-2.5 pr-6 whitespace-nowrap">
                               <div className="flex items-center gap-1.5">
                                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
                                   style={{ background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.10)", color: "#A855F7" }}>{n.author.charAt(0)}</div>
                                 <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{n.author}</span>
                               </div>
-                            </td>
-                            <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>
+                            </td>}
+                            {!(!!selectedNote && !noteExpanded) && <td className="py-2.5 pr-6 whitespace-nowrap"><TypeBadge type={n.type} /></td>}
                             <td className="py-2.5">
                               {!isSelectMode && (
                                 <button onClick={e => { e.stopPropagation(); setDeleteNoteId(n.id); }} className="p-1 rounded" style={{ color: c.muted, opacity:0.5 }}
@@ -1571,23 +1791,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {/* Body */}
                       <div className="flex-1 overflow-y-auto py-6 relative" style={{ paddingLeft:28, paddingRight:28 }}>
                         {copyToast && <div className="absolute top-3 right-4 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
-                        {noteShareOpen && (
-                          <div className="mb-5 rounded-xl p-4" style={{ background: isDark ? "rgba(168,85,247,0.06)" : "rgba(92,46,212,0.03)", border: `1px solid ${isDark ? "rgba(168,85,247,0.20)" : "rgba(92,46,212,0.12)"}` }}>
-                            <p className="text-[12px] font-semibold mb-3" style={{ fontFamily: FONT, color: c.text }}>Share with teammate</p>
-                            <div className="flex flex-col gap-1.5">
-                              {["Mike Chen","Jane Smith","Sarah Johnson"].filter(a => a !== CURRENT_USER).map(agent => (
-                                <div key={agent} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fff", border: `1px solid ${c.border}` }}>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: btnGrad }}>{agent.charAt(0)}</div>
-                                    <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{agent}</span>
-                                  </div>
-                                  <button onClick={() => { setCopyToast(`Shared with ${agent.split(" ")[0]}!`); setTimeout(()=>setCopyToast(""),2500); setNoteShareOpen(false); }}
-                                    className="px-2.5 py-1 rounded-md text-[11px] font-medium" style={{ fontFamily: FONT, background: btnGrad, color:"#fff" }}>Share</button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {noteShareOpen && renderSharePanel()}
                         {noteLocked && isLockedByOther && (
                           <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
                             <div className="flex items-center gap-2">
@@ -1610,6 +1814,32 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             { icon: <Calendar className="w-3.5 h-3.5" />, label:"Created", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{fmtDate(selectedNote.timestamp)}</span> },
                             { icon: <UserCircle className="w-3.5 h-3.5" />, label:"Created By", value:<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background:isDark?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.10)", color:"#A855F7" }}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{selectedNote.author}</span></div> },
                             { icon: <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label:"Type", value:<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t => (<button key={t} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all" style={{ fontFamily:FONT, background:editNoteType===t?typeColor[t]?.bg:"transparent", color:editNoteType===t?typeColor[t]?.text:c.muted, border:`1px solid ${editNoteType===t?typeColor[t]?.text+"44":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>{t}</button>))}</div> },
+                            { icon: <Lock className="w-3.5 h-3.5" />, label:"Visibility", value:(
+  <div className="flex flex-col gap-2 min-w-0">
+    <div className="flex flex-wrap gap-1.5">
+      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+        <button key={v} title={tip} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteVisibility(v)}
+          className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
+          style={{ fontFamily:FONT, background:editNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>
+          <Ic className="w-3 h-3" />{v}
+        </button>
+      ))}
+    </div>
+    {editNoteVisibility === "Shared" && (
+      <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
+        <div className="flex -space-x-1">
+          {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
+            <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
+          ))}
+        </div>
+        <span>You + {TEAMMATES.length - 1} teammates</span>
+        <span>·</span>
+        <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }}
+          className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
+      </div>
+    )}
+  </div>
+) },
                             { icon: <Building2 className="w-3.5 h-3.5" />, label:"Agency", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agency.name}</span> },
                           ].map(({ icon, label, value }, idx, arr) => (
                             <div key={label} className="flex items-center px-4 py-2.5" style={{ borderBottom: idx<arr.length-1 ? `1px solid ${c.border}` : undefined }}>
@@ -1641,50 +1871,181 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             )}
 
             {/* Expanded overlay */}
-            {selectedNote && noteExpanded && (
+            {selectedNote && noteExpanded && (() => {
+              const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
+              return (
               <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width:"58vw" }}
                 onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); setNoteShareOpen(false); }}>
                 <div className="flex-1 cursor-pointer" onClick={() => setNoteExpanded(false)} style={{ background:"rgba(0,0,0,0.25)" }} />
                 <div className="flex flex-col h-full shadow-2xl" style={{ width:"100%", background:c.cardBg, borderLeft:`1px solid ${c.border}` }}>
+                  {/* Top bar */}
                   <div className="flex items-center justify-between px-6 py-3 flex-shrink-0" style={{ borderBottom:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"rgba(249,250,251,0.8)" }}>
-                    <div className="flex items-center gap-2">
-                      <StickyNote className="w-3.5 h-3.5" style={{ color:c.muted }} />
-                      <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>Notes</span>
-                      <ChevronRight className="w-3 h-3" style={{ color:c.muted }} />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <StickyNote className="w-3.5 h-3.5 flex-shrink-0" style={{ color:c.muted }} />
+                      <span className="text-[11px] flex-shrink-0" style={{ fontFamily:FONT, color:c.muted }}>Notes</span>
+                      <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color:c.muted }} />
                       <span className="text-[12px] font-semibold truncate max-w-[280px]" style={{ fontFamily:FONT, color:c.text }}>{selectedNote.title}</span>
-                      {noteLocked && <Lock className="w-3 h-3" style={{ color:"#A855F7" }} />}
-                      {pinnedIds.has(selectedNote.id) && <Pin className="w-3 h-3" style={{ color:"#F59E0B" }} />}
+                      {noteLocked && <Lock className="w-3 h-3 flex-shrink-0" style={{ color:"#A855F7" }} />}
+                      {pinnedIds.has(selectedNote.id) && <Pin className="w-3 h-3 flex-shrink-0" style={{ color:"#F59E0B" }} />}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button onClick={e=>{e.stopPropagation();setNoteShareOpen(p=>!p);}} className="p-1.5 rounded-md" style={{ color:noteShareOpen?"#A855F7":c.muted }}><Users className="w-3.5 h-3.5"/></button>
-                      <button onClick={e=>{e.stopPropagation();setPinnedIds(prev=>{const s=new Set(prev);s.has(selectedNote.id)?s.delete(selectedNote.id):s.add(selectedNote.id);return s;});}} className="p-1.5 rounded-md" style={{ color:pinnedIds.has(selectedNote.id)?"#F59E0B":c.muted }}><Pin className="w-3.5 h-3.5"/></button>
-                      <button onClick={e=>{e.stopPropagation();const isOther=noteLocked&&lockedBy!==CURRENT_USER;if(!isOther){setNoteLocked(p=>!p);if(!noteLocked)setLockedBy(CURRENT_USER);}}} className="p-1.5 rounded-md" style={{ color:noteLocked?"#A855F7":c.muted }}>{noteLocked?<Lock className="w-3.5 h-3.5"/>:<Unlock className="w-3.5 h-3.5"/>}</button>
-                      <button onClick={()=>setNoteExpanded(false)} className="p-1.5 rounded-md" style={{ color:"#A855F7" }}><Minimize2 className="w-3.5 h-3.5"/></button>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      <button onClick={e => { e.stopPropagation(); setNoteShareOpen(p => !p); setNoteMoreOpen(false); }}
+                        className="p-1.5 rounded-md transition-colors"
+                        style={{ color: noteShareOpen ? "#A855F7" : c.muted, background: noteShareOpen ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(selectedNote.id) ? s.delete(selectedNote.id) : s.add(selectedNote.id); return s; }); }}
+                        className="p-1.5 rounded-md transition-colors"
+                        style={{ color: pinnedIds.has(selectedNote.id) ? "#F59E0B" : c.muted, background: pinnedIds.has(selectedNote.id) ? "rgba(245,158,11,0.10)" : "transparent" }}>
+                        <Pin className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); if (noteLocked && isLockedByOther) return; setNoteLocked(p => !p); if (!noteLocked) setLockedBy(CURRENT_USER); }}
+                        className="p-1.5 rounded-md transition-colors"
+                        style={{ color: noteLocked ? "#A855F7" : c.muted, background: noteLocked ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                        {noteLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                      </button>
+                      <button onClick={() => setNoteExpanded(false)} className="p-1.5 rounded-md transition-colors" title="Collapse">
+                        <Minimize2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                      </button>
+                      <div className="relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => { setNoteMoreOpen(p => !p); setNoteShareOpen(false); }} className="p-1.5 rounded-md" style={{ color: c.muted }}>
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+                        {noteMoreOpen && (
+                          <div className="absolute right-0 top-9 z-50 w-52 rounded-xl shadow-2xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }} onClick={e => e.stopPropagation()}>
+                            {!showTrashed && <>
+                              <button onClick={() => { navigator.clipboard.writeText(`${editNoteTitle}\n\n${editNoteContent}`); setCopyToast("Copied!"); setTimeout(()=>setCopyToast(""),2000); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: c.text }}
+                                onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <Copy className="w-3.5 h-3.5" style={{ color: c.muted }} />Copy content
+                              </button>
+                              <button onClick={() => { setAgNotes(prev => [{ ...selectedNote, id: Date.now().toString(), title: `Copy of ${editNoteTitle}`, content: editNoteContent, timestamp: new Date().toISOString() }, ...prev]); setCopyToast("Duplicated!"); setTimeout(()=>setCopyToast(""),2000); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: c.text }}
+                                onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <CopyPlus className="w-3.5 h-3.5" style={{ color: c.muted }} />Duplicate
+                              </button>
+                              <div style={{ height:1, background:c.border, margin:"4px 0" }} />
+                              <button onClick={() => { setArchivedIds(prev => { const s = new Set(prev); s.has(selectedNote.id)?s.delete(selectedNote.id):s.add(selectedNote.id); return s; }); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#F59E0B" }}
+                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(245,158,11,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <Archive className="w-3.5 h-3.5" />{archivedIds.has(selectedNote.id) ? "Unarchive" : "Archive"}
+                              </button>
+                              <div style={{ height:1, background:c.border, margin:"4px 0" }} />
+                              <button onClick={() => { setTrashedIds(prev => { const s = new Set(prev); s.add(selectedNote.id); return s; }); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#EF4444" }}
+                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <Trash2 className="w-3.5 h-3.5" />Move to Trash
+                              </button>
+                            </>}
+                            {showTrashed && <>
+                              <button onClick={() => { setTrashedIds(prev => { const s = new Set(prev); s.delete(selectedNote.id); return s; }); setSelectedNote(null); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#10B981" }}
+                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(16,185,129,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <RefreshCw className="w-3.5 h-3.5" />Restore note
+                              </button>
+                              <button onClick={() => { setDeleteNoteId(selectedNote.id); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#EF4444" }}
+                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                <Trash2 className="w-3.5 h-3.5" />Delete permanently
+                              </button>
+                            </>}
+                            <div className="px-3 pt-1.5 pb-1" style={{ borderTop: `1px solid ${c.border}`, marginTop:4 }}>
+                              <p className="text-[10px]" style={{ fontFamily: FONT, color: c.muted }}>Last edited {fmtDate(selectedNote.timestamp)}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       {!noteLocked && !showTrashed && (
-                        <button onClick={saveNote} className="ml-1 px-3 py-1 rounded-lg text-[11px] font-semibold text-white" style={{ fontFamily:FONT, background:btnGrad }}
+                        <button onClick={saveNote} className="ml-1 px-3 py-1 rounded-lg text-[11px] font-semibold text-white transition-all"
+                          style={{ fontFamily: FONT, background: btnGrad }}
                           onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>Save</button>
                       )}
-                      <button onClick={()=>{setSelectedNote(null);setNoteExpanded(false);}} className="p-1.5 rounded-md" style={{ color:c.muted }}><X className="w-4 h-4"/></button>
+                      <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); setNoteShareOpen(false); }}
+                        className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                        onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
+                  {/* Body */}
                   <div className="flex-1 overflow-y-auto relative" style={{ paddingLeft:72, paddingRight:72, paddingTop:24, paddingBottom:24 }}>
                     {copyToast && <div className="absolute top-3 right-6 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background:btnGrad, fontFamily:FONT }}>{copyToast}</div>}
+                    {noteShareOpen && renderSharePanel()}
+                    {noteLocked && isLockedByOther && (
+                      <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" style={{ color:"#A855F7" }} />
+                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Locked by <strong>{lockedBy}</strong></span>
+                        </div>
+                        <button onClick={() => { setCopyToast(`Access requested from ${lockedBy.split(" ")[0]}`); setTimeout(()=>setCopyToast(""),3000); }}
+                          className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                          style={{ fontFamily: FONT, background:"rgba(168,85,247,0.12)", color:"#A855F7", border:"1px solid rgba(168,85,247,0.25)" }}>
+                          Request Access
+                        </button>
+                      </div>
+                    )}
                     <input value={editNoteTitle} onChange={e=>setEditNoteTitle(e.target.value)} readOnly={noteLocked||showTrashed}
                       className="w-full outline-none font-bold bg-transparent mb-5"
                       style={{ fontFamily:FONT, color:c.text, fontSize:26, border:"none", cursor:(noteLocked||showTrashed)?"default":"text" }} />
+                    {/* Properties */}
+                    <div className="mb-6 rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+                      {[
+                        { icon: <Calendar className="w-3.5 h-3.5" />, label:"Created", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{fmtDate(selectedNote.timestamp)}</span> },
+                        { icon: <UserCircle className="w-3.5 h-3.5" />, label:"Created By", value:<div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background:isDark?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.10)", color:"#A855F7" }}>{selectedNote.author.charAt(0)}</div><span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{selectedNote.author}</span></div> },
+                        { icon: <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8" r="2.5"/></svg>, label:"Type", value:<div className="flex flex-wrap gap-1.5">{NOTE_TYPES.map(t => (<button key={t} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteType(t)} className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all" style={{ fontFamily:FONT, background:editNoteType===t?typeColor[t]?.bg:"transparent", color:editNoteType===t?typeColor[t]?.text:c.muted, border:`1px solid ${editNoteType===t?typeColor[t]?.text+"44":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>{t}</button>))}</div> },
+                        { icon: <Lock className="w-3.5 h-3.5" />, label:"Visibility", value:(
+  <div className="flex flex-col gap-2 min-w-0">
+    <div className="flex flex-wrap gap-1.5">
+      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+        <button key={v} title={tip} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteVisibility(v)}
+          className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
+          style={{ fontFamily:FONT, background:editNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>
+          <Ic className="w-3 h-3" />{v}
+        </button>
+      ))}
+    </div>
+    {editNoteVisibility === "Shared" && (
+      <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
+        <div className="flex -space-x-1">
+          {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
+            <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
+          ))}
+        </div>
+        <span>You + {TEAMMATES.length - 1} teammates</span>
+        <span>·</span>
+        <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }}
+          className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
+      </div>
+    )}
+  </div>
+) },
+                        { icon: <Building2 className="w-3.5 h-3.5" />, label:"Agency", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agency.name}</span> },
+                      ].map(({ icon, label, value }, idx, arr) => (
+                        <div key={label} className="flex items-center px-4 py-2.5" style={{ borderBottom: idx<arr.length-1 ? `1px solid ${c.border}` : undefined }}>
+                          <div className="flex items-center gap-2 flex-shrink-0" style={{ width:130, color:c.muted }}>{icon}<span className="text-[12px]" style={{ fontFamily:FONT }}>{label}</span></div>
+                          {value}
+                        </div>
+                      ))}
+                    </div>
                     <div className="mb-4" style={{ height:1, background:c.border }} />
                     <textarea value={editNoteContent} onChange={e=>setEditNoteContent(e.target.value)} readOnly={noteLocked||showTrashed}
                       placeholder={(noteLocked||showTrashed)?"":"Start writing your note here…"}
                       className="w-full outline-none resize-none leading-relaxed bg-transparent" rows={22}
                       style={{ fontFamily:FONT, fontSize:13, color:c.text, border:"none", cursor:(noteLocked||showTrashed)?"default":"text" }} />
                   </div>
+                  {/* Footer */}
                   <div className="flex items-center justify-between px-6 py-2.5 flex-shrink-0" style={{ borderTop:`1px solid ${c.border}` }}>
-                    <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{editNoteContent.trim().split(/\s+/).filter(Boolean).length} words</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{editNoteContent.trim().split(/\s+/).filter(Boolean).length} words</span>
+                      {noteLocked && <span className="text-[11px] flex items-center gap-1.5" style={{ fontFamily:FONT, color:"#A855F7" }}><Lock className="w-3 h-3" />{lockedBy===CURRENT_USER ? "Locked by you · Read-only for others" : `Locked by ${lockedBy} · Read-only`}</span>}
+                      {pinnedIds.has(selectedNote.id) && <span className="text-[11px] flex items-center gap-1" style={{ fontFamily:FONT, color:"#F59E0B" }}><Pin className="w-3 h-3" />Pinned</span>}
+                    </div>
                     <span className="text-[11px]" style={{ fontFamily:FONT, color:c.muted }}>{fmtDate(selectedNote.timestamp)}</span>
                   </div>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
@@ -1709,29 +2070,29 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
               <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Created<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Policy Number */}
                 <button onClick={()=>{if(qpSortKey==="policyNumber")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("policyNumber");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Policy Number<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="policyNumber"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="policyNumber"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Policy Number<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="policyNumber"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="policyNumber"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Applicant */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?teal:c.muted}}>
-                    Applicant<ChevronDown className="w-3 h-3 ml-0.5" style={{color:applicantFilter.size>0?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
+                    Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":sub}/></svg></span>
                   </button>
                   {applicantOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setApplicantOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:"1.5px solid #A855F7"}}>
+                    <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`, left: -50}}>
                       <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
                           <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={applicantSearch} onChange={e=>setApplicantSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
@@ -1739,66 +2100,72 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                       <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniquePApplicants;setApplicantFilter(applicantFilter.size===all.length?new Set():new Set(all));}}>
-                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${applicantFilter.size===uniquePApplicants.length&&uniquePApplicants.length>0?"#14B8A6":c.borderStrong}`,background:applicantFilter.size===uniquePApplicants.length&&uniquePApplicants.length>0?"#14B8A6":c.cardBg}}>{applicantFilter.size===uniquePApplicants.length&&uniquePApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.size===uniquePApplicants.length&&uniquePApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                           Select All
                         </button>
                       </div>
                       <div className="max-h-[180px] overflow-y-auto py-1">
                         {uniquePApplicants.filter(a=>!applicantSearch||a.toLowerCase().includes(applicantSearch.toLowerCase())).map(applicant=>(
                           <button key={applicant} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSet(applicantFilter,applicant,setApplicantFilter)}>
-                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${applicantFilter.has(applicant)?"#14B8A6":c.borderStrong}`,background:applicantFilter.has(applicant)?"#14B8A6":c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                             {applicant}
                           </button>
                         ))}
                       </div>
-                      <div className="p-2" style={{borderTop:`1px solid ${c.border}`}}><button className="w-full text-center text-[12px] py-1.5 rounded-lg" style={{fontFamily:FONT,color:"#A855F7",background:"rgba(168,85,247,0.08)"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(168,85,247,0.14)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(168,85,247,0.08)"} onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}}>Reset Filter</button></div>
+                      <button onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
                     </div>
                   </>)}
                 </div>
                 {/* DBA */}
                 <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  DBA<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Effective */}
                 <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Effective<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* LOB */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?teal:c.muted}}>
-                    LOB<ChevronDown className="w-3 h-3 ml-0.5" style={{color:lobFilter!=="All LOBs"?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
+                    LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
                   </button>
                   {lobOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg py-1 min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
                       {ALL_LOBS.map(lob=>(
-                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors" style={{fontFamily:FONT,color:lobFilter===lob?teal:c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}>{lob}</button>
+                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
+                          <span>{lob}</span>
+                          {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </button>
                       ))}
                     </div>
                   </>)}
                 </div>
                 {/* Status */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?teal:c.muted}}>
-                    Status<ChevronDown className="w-3 h-3 ml-0.5" style={{color:statusFilter!=="All Statuses"?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
+                    Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
                   </button>
                   {statusOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setStatusOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg py-1 min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
                       {POLICY_STATUSES.map(status=>(
-                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors" style={{fontFamily:FONT,color:statusFilter===status?teal:c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}>{status}</button>
+                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:statusFilter===status?"#A614C3":c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
+                          <span>{status}</span>
+                          {statusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </button>
                       ))}
                     </div>
                   </>)}
                 </div>
                 {/* Producer */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?teal:c.muted}}>
-                    Producer<ChevronDown className="w-3 h-3 ml-0.5" style={{color:producerFilter.size>0?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
+                    Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":sub}/></svg></span>
                   </button>
                   {producerOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setProducerOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:"1.5px solid #A855F7"}}>
+                    <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`, left: -50}}>
                       <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
                           <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={producerSearch} onChange={e=>setProducerSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
@@ -1806,19 +2173,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                       <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniquePProducers;setProducerFilter(producerFilter.size===all.length?new Set():new Set(all));}}>
-                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${producerFilter.size===uniquePProducers.length&&uniquePProducers.length>0?"#14B8A6":c.borderStrong}`,background:producerFilter.size===uniquePProducers.length&&uniquePProducers.length>0?"#14B8A6":c.cardBg}}>{producerFilter.size===uniquePProducers.length&&uniquePProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.size===uniquePProducers.length&&uniquePProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                           Select All
                         </button>
                       </div>
                       <div className="max-h-[180px] overflow-y-auto py-1">
                         {uniquePProducers.filter(p=>!producerSearch||p.toLowerCase().includes(producerSearch.toLowerCase())).map(producer=>(
                           <button key={producer} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSet(producerFilter,producer,setProducerFilter)}>
-                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${producerFilter.has(producer)?"#14B8A6":c.borderStrong}`,background:producerFilter.has(producer)?"#14B8A6":c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                             {producer}
                           </button>
                         ))}
                       </div>
-                      <div className="p-2" style={{borderTop:`1px solid ${c.border}`}}><button className="w-full text-center text-[12px] py-1.5 rounded-lg" style={{fontFamily:FONT,color:"#A855F7",background:"rgba(168,85,247,0.08)"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(168,85,247,0.14)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(168,85,247,0.08)"} onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}}>Reset Filter</button></div>
+                      <button onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
                     </div>
                   </>)}
                 </div>
@@ -1833,7 +2200,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isRenewal?"rgba(116,195,183,0.08)":"transparent", borderLeft:isRenewal?"3px solid #74C3B7":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.08)":"transparent")}>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>
-                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:teal }}>{p.policyNumber}</div>
+                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{p.policyNumber}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba||"—"}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
@@ -1869,29 +2236,29 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
+                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
               <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Created<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Submission ID */}
                 <button onClick={()=>{if(qpSortKey==="quoteId")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("quoteId");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Submission ID<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="quoteId"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="quoteId"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Submission ID<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="quoteId"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="quoteId"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Applicant */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?teal:c.muted}}>
-                    Applicant<ChevronDown className="w-3 h-3 ml-0.5" style={{color:applicantFilter.size>0?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
+                    Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":sub}/></svg></span>
                   </button>
                   {applicantOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setApplicantOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:"1.5px solid #A855F7"}}>
+                    <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`, left: -50}}>
                       <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
                           <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={applicantSearch} onChange={e=>setApplicantSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
@@ -1899,66 +2266,72 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                       <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniqueQApplicants;setApplicantFilter(applicantFilter.size===all.length?new Set():new Set(all));}}>
-                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${applicantFilter.size===uniqueQApplicants.length&&uniqueQApplicants.length>0?"#14B8A6":c.borderStrong}`,background:applicantFilter.size===uniqueQApplicants.length&&uniqueQApplicants.length>0?"#14B8A6":c.cardBg}}>{applicantFilter.size===uniqueQApplicants.length&&uniqueQApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.size===uniqueQApplicants.length&&uniqueQApplicants.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                           Select All
                         </button>
                       </div>
                       <div className="max-h-[180px] overflow-y-auto py-1">
                         {uniqueQApplicants.filter(a=>!applicantSearch||a.toLowerCase().includes(applicantSearch.toLowerCase())).map(applicant=>(
                           <button key={applicant} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSet(applicantFilter,applicant,setApplicantFilter)}>
-                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${applicantFilter.has(applicant)?"#14B8A6":c.borderStrong}`,background:applicantFilter.has(applicant)?"#14B8A6":c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{applicantFilter.has(applicant)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                             {applicant}
                           </button>
                         ))}
                       </div>
-                      <div className="p-2" style={{borderTop:`1px solid ${c.border}`}}><button className="w-full text-center text-[12px] py-1.5 rounded-lg" style={{fontFamily:FONT,color:"#A855F7",background:"rgba(168,85,247,0.08)"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(168,85,247,0.14)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(168,85,247,0.08)"} onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}}>Reset Filter</button></div>
+                      <button onClick={()=>{setApplicantFilter(new Set());setApplicantSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
                     </div>
                   </>)}
                 </div>
                 {/* DBA */}
                 <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  DBA<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* Effective */}
                 <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
-                  Effective<span className="inline-flex ml-0.5"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub}/></svg></span>
+                  Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
                 {/* LOB */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?teal:c.muted}}>
-                    LOB<ChevronDown className="w-3 h-3 ml-0.5" style={{color:lobFilter!=="All LOBs"?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
+                    LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
                   </button>
                   {lobOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg py-1 min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
                       {ALL_LOBS.map(lob=>(
-                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors" style={{fontFamily:FONT,color:lobFilter===lob?teal:c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}>{lob}</button>
+                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
+                          <span>{lob}</span>
+                          {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </button>
                       ))}
                     </div>
                   </>)}
                 </div>
                 {/* Status */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?teal:c.muted}}>
-                    Status<ChevronDown className="w-3 h-3 ml-0.5" style={{color:statusFilter!=="All Statuses"?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
+                    Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
                   </button>
                   {statusOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setStatusOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg py-1 min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
+                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
                       {QUOTE_STATUSES.map(status=>(
-                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors" style={{fontFamily:FONT,color:statusFilter===status?teal:c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?(isDark?"rgba(20,184,166,0.1)":"rgba(20,184,166,0.06)"):"transparent"}>{status}</button>
+                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:statusFilter===status?"#A614C3":c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
+                          <span>{status}</span>
+                          {statusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </button>
                       ))}
                     </div>
                   </>)}
                 </div>
                 {/* Producer */}
                 <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?teal:c.muted}}>
-                    Producer<ChevronDown className="w-3 h-3 ml-0.5" style={{color:producerFilter.size>0?teal:sub}}/>
+                  <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
+                    Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":sub}/></svg></span>
                   </button>
                   {producerOpen&&(<>
                     <div className="fixed inset-0 z-10" onClick={()=>setProducerOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:"1.5px solid #A855F7"}}>
+                    <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]" style={{background:c.cardBg,border:`1px solid ${c.border}`, left: -50}}>
                       <div className="p-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{background:isDark?"rgba(255,255,255,0.05)":"#F9FAFB",border:`1px solid ${c.border}`}}>
                           <Search className="w-3.5 h-3.5 flex-shrink-0" style={{color:c.muted}}/><input value={producerSearch} onChange={e=>setProducerSearch(e.target.value)} placeholder="Search Agent" className="outline-none text-[12px] flex-1 bg-transparent" style={{fontFamily:FONT,color:c.text}}/>
@@ -1966,19 +2339,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                       <div className="px-3 py-2" style={{borderBottom:`1px solid ${c.border}`}}>
                         <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{fontFamily:FONT,color:c.text}} onClick={()=>{const all=uniqueQProducers;setProducerFilter(producerFilter.size===all.length?new Set():new Set(all));}}>
-                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${producerFilter.size===uniqueQProducers.length&&uniqueQProducers.length>0?"#14B8A6":c.borderStrong}`,background:producerFilter.size===uniqueQProducers.length&&uniqueQProducers.length>0?"#14B8A6":c.cardBg}}>{producerFilter.size===uniqueQProducers.length&&uniqueQProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.size===uniqueQProducers.length&&uniqueQProducers.length>0&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                           Select All
                         </button>
                       </div>
                       <div className="max-h-[180px] overflow-y-auto py-1">
                         {uniqueQProducers.filter(p=>!producerSearch||p.toLowerCase().includes(producerSearch.toLowerCase())).map(producer=>(
                           <button key={producer} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors" style={{fontFamily:FONT,color:c.text}} onMouseEnter={e=>e.currentTarget.style.background=c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>toggleSet(producerFilter,producer,setProducerFilter)}>
-                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${producerFilter.has(producer)?"#14B8A6":c.borderStrong}`,background:producerFilter.has(producer)?"#14B8A6":c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{border:`1.5px solid ${c.borderStrong}`,background:c.cardBg}}>{producerFilter.has(producer)&&<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
                             {producer}
                           </button>
                         ))}
                       </div>
-                      <div className="p-2" style={{borderTop:`1px solid ${c.border}`}}><button className="w-full text-center text-[12px] py-1.5 rounded-lg" style={{fontFamily:FONT,color:"#A855F7",background:"rgba(168,85,247,0.08)"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(168,85,247,0.14)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(168,85,247,0.08)"} onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}}>Reset Filter</button></div>
+                      <button onClick={()=>{setProducerFilter(new Set());setProducerSearch("");}} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{fontFamily:FONT,color:"#A614C3",borderTop:`1px solid ${c.border}`}} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-3.5 h-3.5"/>Reset Filter</button>
                     </div>
                   </>)}
                 </div>
@@ -1993,7 +2366,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isIncomplete?"rgba(245,158,11,0.06)":"transparent", borderLeft:isIncomplete?"3px solid #F59E0B":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.06)":"transparent")}>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>
-                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color:teal }}>{q.quoteId}</div>
+                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{q.quoteId}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba||"—"}</div>
                       <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate?new Date(q.effectiveDate).toLocaleDateString():"—"}</div>
@@ -2010,7 +2383,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Users tab ── */}
         {detailTab === "users" && (
-          <div className="flex flex-col flex-1 min-h-0" onClick={() => setUserMenuId(null)}>
+          <div className="flex flex-col flex-1 min-h-0" onClick={() => { setUserMenuId(null); setJobTitleOpen(false); }}>
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-stretch overflow-hidden transition-all"
@@ -2031,11 +2404,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </button>
               <button className="flex items-center gap-[10px] text-[12px] font-semibold transition-all flex-shrink-0"
                 style={{ fontFamily:FONT, height:37, padding:"9px 16px", borderRadius:"5.58px",
-                  border:"1.04px solid #E5E7EB",
-                  background:"linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF",
-                  color:"#1F2937", boxSizing:"border-box" as const }}
-                onMouseEnter={e=>(e.currentTarget.style.background="linear-gradient(180deg, rgba(255,255,255,0.15) -0.44%, rgba(192,192,192,0.15) 49.45%, rgba(172,172,172,0.15) 99.33%), #F9FAFB")}
-                onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}
+                  border: isDark ? "1.04px solid rgba(255,255,255,0.15)" : "1.04px solid #E5E7EB",
+                  background: isDark
+                    ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF",
+                  color: c.text, boxSizing:"border-box" as const }}
+                onMouseEnter={e=>(e.currentTarget.style.background = isDark
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.18) -0.44%, rgba(192,192,192,0.18) 49.45%, rgba(172,172,172,0.18) 99.33%)"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.15) -0.44%, rgba(192,192,192,0.15) 49.45%, rgba(172,172,172,0.15) 99.33%), #F9FAFB")}
+                onMouseLeave={e=>(e.currentTarget.style.background = isDark
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}
                 onClick={e=>{e.stopPropagation();setImportUsersOpen(true);}}>
                 <Upload className="w-3.5 h-3.5" style={{ color: teal }} />Import Users
               </button>
@@ -2051,20 +2430,63 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ border:`1px solid ${c.border}` }}>
               {/* Header */}
               <div className="flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#FAFAFA", borderBottom:`1px solid ${c.border}` }}>
-                <div className="grid items-center px-6" style={{ gridTemplateColumns:"1.5fr 0.5fr 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:44 }}>
+                <div className="grid items-center px-6" style={{ gridTemplateColumns:"150px 290px 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:44 }}>
                   {[
-                    { label:"NAME", sort:true },
-                    { label:"ADMIN" },
-                    { label:"JOB TITLE", sort:true },
-                    { label:"EMAIL" },
-                    { label:"PHONE" },
-                    { label:"EXT" },
-                    { label:"ACTION" },
-                  ].map(({ label, sort }) => (
-                    <div key={label} className="flex items-center justify-start gap-1 select-none" style={{ cursor: sort ? "pointer" : "default" }}>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{label}</span>
-                      {sort && <span className="inline-flex opacity-60"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={sub}/></svg></span>}
-                    </div>
+                    { label:"NAME", sort:true, filter:false },
+                    { label:"ADMIN", sort:false, filter:false },
+                    { label:"JOB TITLE", sort:false, filter:true },
+                    { label:"EMAIL", sort:false, filter:false },
+                    { label:"PHONE", sort:false, filter:false },
+                    { label:"EXT", sort:false, filter:false },
+                    { label:"ACTION", sort:false, filter:false },
+                  ].map(({ label, sort, filter }) => (
+                    filter ? (
+                      <div key={label} className="relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setJobTitleOpen(p => !p)}
+                          className="flex items-center gap-1 select-none cursor-pointer"
+                          style={{ color: jobTitleFilter.size > 0 ? "#A614C3" : c.muted }}>
+                          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily:FONT }}>{label}</span>
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        {jobTitleOpen && (
+                          <div className="absolute left-0 top-8 z-30 w-[240px] rounded-xl shadow-xl overflow-hidden"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                            <div className="p-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                                <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                                <input placeholder="Search Title" value={jobTitleSearch} onChange={e => setJobTitleSearch(e.target.value)}
+                                  className="flex-1 outline-none text-[12px] bg-transparent" style={{ fontFamily: FONT, color: c.text }} />
+                              </div>
+                            </div>
+                            <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                              {JOB_TITLES.filter(t => !jobTitleSearch || t.toLowerCase().includes(jobTitleSearch.toLowerCase())).map(t => {
+                                const checked = jobTitleFilter.has(t);
+                                return (
+                                  <label key={t} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                    <Checkbox checked={checked} onClick={() => { setJobTitleFilter(prev => { const s = new Set(prev); checked ? s.delete(t) : s.add(t); return s; }); }} />
+                                    <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{t}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <button onClick={() => { setJobTitleFilter(new Set()); setJobTitleSearch(""); }}
+                              className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+                              style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div key={label} className={`flex items-center gap-1 select-none ${label === "ADMIN" ? "justify-center" : "justify-start"}`} style={{ cursor: sort ? "pointer" : "default" }}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{label}</span>
+                        {sort && <span className="inline-flex opacity-60"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={sub}/></svg></span>}
+                      </div>
+                    )
                   ))}
                 </div>
               </div>
@@ -2078,7 +2500,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   return (
                     <div key={u.id}
                       className="grid items-center px-6 cursor-pointer transition-colors relative"
-                      style={{ gridTemplateColumns:"1.5fr 0.5fr 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:60,
+                      style={{ gridTemplateColumns:"150px 290px 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:60,
                         borderBottom: i !== arr.length-1 ? `1px solid ${c.border}` : "none" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                       onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
@@ -2094,7 +2516,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
 
                       {/* Admin */}
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         {u.isAdmin
                           ? <UserCog className="w-[18px] h-[18px]" style={{ color:teal }}/>
                           : <Users   className="w-[18px] h-[18px]" style={{ color:c.muted }}/>
@@ -2171,36 +2593,48 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <button onClick={e=>{e.stopPropagation();onClick();}}
             className="w-full px-3.5 py-2.5 rounded-xl text-[13px] flex items-center justify-between transition-colors"
             style={{ ...inputStyle, color: label ? c.text : c.muted, boxSizing:"border-box" as const,
-              border: open ? `1.5px solid ${teal}` : fieldBorder }}>
+              border: fieldBorder }}>
             <span>{label}</span>
             <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color:c.muted }} />
           </button>
         );
 
-        const DropList = ({ items, selected, onSelect }: { items:string[]; selected:string; onSelect:(v:string)=>void }) => (
+        const DropList = ({ items, selected, onSelect, disabledReasons }: { items:string[]; selected:string; onSelect:(v:string)=>void; disabledReasons?: Record<string,string> }) => (
           <div className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-y-auto z-20"
             style={{ background:dropdownBg, boxShadow:"0 8px 24px rgba(0,0,0,0.18)", border:`1px solid ${c.border}`, maxHeight:200 }}>
-            {items.map(item => (
-              <button key={item} onClick={e=>{e.stopPropagation();onSelect(item);}}
-                className="w-full text-left px-4 py-2.5 text-[13px] transition-colors"
-                style={{ fontFamily:FONT, color:c.text, background:selected===item?(isDark?"rgba(255,255,255,0.08)":"#F9FAFB"):"transparent" }}
-                onMouseEnter={e=>(e.currentTarget.style.background=isDark?"rgba(255,255,255,0.08)":"#F9FAFB")}
-                onMouseLeave={e=>(e.currentTarget.style.background=selected===item?(isDark?"rgba(255,255,255,0.08)":"#F9FAFB"):"transparent")}>
-                {item}
-              </button>
-            ))}
+            {items.map(item => {
+              const disabledReason = disabledReasons?.[item];
+              const disabled = !!disabledReason;
+              return (
+                <button key={item} onClick={e=>{e.stopPropagation(); if (!disabled) onSelect(item);}}
+                  title={disabledReason}
+                  disabled={disabled}
+                  className="w-full text-left px-4 py-2.5 text-[13px] transition-colors"
+                  style={{ fontFamily:FONT, color: disabled ? c.muted : c.text, background:selected===item?(isDark?"rgba(255,255,255,0.08)":"#F9FAFB"):"transparent", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1 }}
+                  onMouseEnter={e=>{ if (!disabled) e.currentTarget.style.background=isDark?"rgba(255,255,255,0.08)":"#F9FAFB"; }}
+                  onMouseLeave={e=>(e.currentTarget.style.background=selected===item?(isDark?"rgba(255,255,255,0.08)":"#F9FAFB"):"transparent")}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{item}</span>
+                    {disabledReason && <span className="text-[10px] italic flex-shrink-0" style={{ color: c.muted }}>{disabledReason}</span>}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         );
+
+        const hasPrincipal = agencyUsers.some(u => u.jobTitle === "Principal");
+        const jobTitleDisabled: Record<string,string> = hasPrincipal ? { "Principal": "Only 1 allowed" } : {};
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background:"rgba(0,0,0,0.45)" }}
             onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
-            <div className="rounded-2xl w-[560px] max-w-[95vw] max-h-[92vh] flex flex-col"
+            <div className="rounded-2xl w-[620px] max-w-[95vw] max-h-[92vh] flex flex-col"
               style={{ background:isDark?"#1E2240":"#fff", boxShadow:"0 20px 60px rgba(0,0,0,0.25)" }}
               onClick={e=>{ e.stopPropagation(); closeAll(); }}>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-8 pt-7 pb-6 flex-shrink-0">
+              <div className="flex items-center justify-between px-8 pt-7 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
                 <h2 className="text-[20px] font-semibold" style={{ fontFamily:FONT, color:c.text }}>Add User</h2>
                 <button onClick={()=>{ setAddUserOpen(false); closeAll(); }}
                   className="p-1.5 rounded-lg transition-colors" style={{ color:c.muted }}
@@ -2211,7 +2645,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
 
               {/* Scrollable body */}
-              <div className="px-8 overflow-y-auto flex-1 space-y-4 pb-2">
+              <div className="px-8 pt-5 overflow-y-auto flex-1 space-y-4 pb-2">
 
                 {/* Row: First Name, Last Name, Admin toggle */}
                 <div className="flex gap-3 items-end">
@@ -2223,11 +2657,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <label className="block text-[13px] font-medium mb-1.5" style={labelStyle}>Last Name</label>
                     <TextInput value={auLastName} onChange={setAuLastName} placeholder="Last name" />
                   </div>
-                  <div className="flex items-center gap-2.5 pb-2.5 flex-shrink-0">
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl flex-shrink-0 self-end"
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#F8FAFC" }}>
                     <span className="text-[13px] font-medium" style={{ fontFamily:FONT, color:c.text }}>Admin</span>
                     <button onClick={e=>{e.stopPropagation();setAuIsAdmin(!auIsAdmin);}}
                       className="w-11 h-6 rounded-full relative transition-all flex-shrink-0"
-                      style={{ background:auIsAdmin?"#4ECDC4":"#D1D5DB" }}>
+                      style={{ background: auIsAdmin ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : "#D1D5DB" }}>
                       <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
                         style={{ left:auIsAdmin?"22px":"2px" }} />
                     </button>
@@ -2237,17 +2672,41 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 {/* Admin Level — only enabled when admin toggle is on */}
                 <div style={{ opacity: auIsAdmin ? 1 : 0.4, transition:"opacity 0.2s", pointerEvents: auIsAdmin ? "auto" : "none" }}>
                   <Field label="Admin Level">
-                    <div className="relative">
-                      <select value={auAdminLevel} onChange={e=>setAuAdminLevel(e.target.value)}
-                        disabled={!auIsAdmin}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-[13px] outline-none appearance-none"
-                        style={{ ...inputStyle, color:auAdminLevel?c.text:c.muted, cursor: auIsAdmin ? "pointer" : "not-allowed" }}>
-                        <option value="">Select Level...</option>
-                        <option value="Level 1">Level 1</option>
-                        <option value="Level 2">Level 2</option>
-                        <option value="Level 3">Level 3</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color:c.muted }} />
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      {(() => {
+                        const levels: [string, React.ComponentType<{className?:string;style?:React.CSSProperties}>][] = [
+                          ["Read-Only Admin", Eye as never],
+                          ["Agency Support Admin", Headphones as never],
+                          ["Super Admin", Crown as never],
+                        ];
+                        const currentIcon = levels.find(([n])=>n===auAdminLevel)?.[1];
+                        const CI = currentIcon;
+                        return (<>
+                          <button type="button" onClick={() => setAuAdminLevelOpen(p=>!p)}
+                            disabled={!auIsAdmin}
+                            className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[13px] outline-none"
+                            style={{ ...inputStyle, color:auAdminLevel?c.text:c.muted, cursor: auIsAdmin ? "pointer" : "not-allowed", textAlign: "left" }}>
+                            {CI && <CI className="w-4 h-4" style={{ color: c.muted }} />}
+                            <span className="flex-1">{auAdminLevel || "Select Level..."}</span>
+                            <ChevronDown className="w-4 h-4" style={{ color:c.muted }} />
+                          </button>
+                          {auAdminLevelOpen && (
+                            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 rounded-xl shadow-xl py-2"
+                              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                              {levels.map(([name, Ic]) => (
+                                <button key={name} type="button" onClick={() => { setAuAdminLevel(name); setAuAdminLevelOpen(false); }}
+                                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] transition-colors"
+                                  style={{ fontFamily: FONT, color: c.text, background: auAdminLevel === name ? (isDark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)") : "transparent" }}
+                                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                  onMouseLeave={e => (e.currentTarget.style.background = auAdminLevel === name ? (isDark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)") : "transparent")}>
+                                  <Ic className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+                                  <span>{name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>);
+                      })()}
                     </div>
                   </Field>
                 </div>
@@ -2257,7 +2716,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <div className="flex-1 relative">
                     <label className="block text-[13px] font-medium mb-1.5" style={labelStyle}>Job Title</label>
                     <DropTrigger label={auJobTitle} open={auJobOpen} onClick={()=>{ setAuJobOpen(!auJobOpen); setAuStatusOpen(false); setAuStateOpen(false); }} />
-                    {auJobOpen && <DropList items={JOB_TITLES} selected={auJobTitle} onSelect={v=>{setAuJobTitle(v);setAuJobOpen(false);}} />}
+                    {auJobOpen && <DropList items={JOB_TITLES} selected={auJobTitle} onSelect={v=>{setAuJobTitle(v);setAuJobOpen(false);}} disabledReasons={jobTitleDisabled} />}
                   </div>
                   <div className="flex-1 relative">
                     <label className="block text-[13px] font-medium mb-1.5" style={labelStyle}>Status</label>
@@ -2338,17 +2797,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               {/* Footer */}
               <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
                 <button
-                  className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors"
-                  style={{ fontFamily:FONT, background:"transparent", border:`1px solid ${isDark?"rgba(255,255,255,0.2)":"#E5E7EB"}`, color:"#090D11" }}
+                  className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color:"#090D11", background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
-                  onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
+                  onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))")}
                   onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
                   Cancel Changes
                 </button>
                 <button
                   className="text-[13px] font-semibold text-white transition-all"
-                  style={{ fontFamily:FONT, background:"linear-gradient(135deg,#4ECDC4 0%,#2D9B8A 100%)", padding:"10px 32px", borderRadius:"5.58px" }}
-                  onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.08)")}
+                  style={{ fontFamily:FONT, background:btnGrad, padding:"10px 32px", borderRadius:"8px" }}
+                  onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")}
                   onMouseLeave={e=>(e.currentTarget.style.filter="none")}
                   onClick={()=>{ setAddUserOpen(false); closeAll(); }}>
                   Save
@@ -2359,6 +2818,141 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         );
       })()}
+
+      {/* ── Edit Agency Contact Modal (admin) ── */}
+      {contactCardEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setContactCardEditing(false)}>
+          <div className="rounded-2xl w-[440px] max-w-[95vw] overflow-hidden"
+            style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <h3 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Edit Agency Contact</h3>
+              <button onClick={() => setContactCardEditing(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Contact Name</label>
+                <input value={eContact} onChange={e => setEContact(e.target.value)} placeholder="Full name"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Phone</label>
+                <input value={eContactPhone} onChange={e => setEContactPhone(e.target.value)} placeholder="(000) 000-0000"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Email</label>
+                <input value={eEmail} onChange={e => setEEmail(e.target.value)} placeholder="email@example.com"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
+                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setContactCardEditing(false)}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                Cancel
+              </button>
+              <button onClick={() => setContactCardEditing(false)}
+                className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ fontFamily: FONT, background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contact Request Modal (non-admin) ── */}
+      {contactRequestOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => { setContactRequestOpen(false); setContactRequestSent(false); }}>
+          <div className="rounded-2xl w-[460px] max-w-[95vw] overflow-hidden"
+            style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(168,85,247,0.10)" }}>
+                  <Lock className="w-4 h-4" style={{ color: "#A855F7" }} />
+                </div>
+                <h2 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Request Contact Update</h2>
+              </div>
+              <button onClick={() => { setContactRequestOpen(false); setContactRequestSent(false); }}
+                className="p-1.5 rounded-lg transition-colors" style={{ color: c.muted }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5">
+              {contactRequestSent ? (
+                <div className="flex flex-col items-center text-center py-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "rgba(115,201,183,0.15)" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="#73C9B7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <p className="text-[14px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.text }}>Request submitted</p>
+                  <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>An admin will review and approve your change.</p>
+                </div>
+              ) : (<>
+                <p className="text-[12px] mb-4 leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}>
+                  You don't have permission to edit the agency contact. Submit the new contact info below and an admin will review.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Contact Name</label>
+                    <input value={requestedName} onChange={e => setRequestedName(e.target.value)} placeholder="Full name"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Phone</label>
+                    <input value={requestedPhone} onChange={e => setRequestedPhone(e.target.value)} placeholder="(000) 000-0000"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Email</label>
+                    <input value={requestedEmail} onChange={e => setRequestedEmail(e.target.value)} placeholder="email@example.com"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                </div>
+              </>)}
+            </div>
+            {!contactRequestSent && (
+              <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setContactRequestOpen(false)}
+                  className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: "#090D11", background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                  Cancel
+                </button>
+                <button onClick={() => { setContactRequestSent(true); setTimeout(() => { setContactRequestOpen(false); setContactRequestSent(false); }, 1800); }}
+                  className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ fontFamily: FONT, background: btnGrad }}
+                  onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                  onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                  Submit Request
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Import Users Modal ── */}
       {importUsersOpen && (
@@ -2379,7 +2973,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="rounded-xl p-5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.03)":"#F9FAFB" }}>
                 <p className="text-[14px] font-bold mb-2" style={{ fontFamily:FONT, color:c.text }}>CSV File Format</p>
                 <p className="text-[13px] mb-2" style={{ fontFamily:FONT, color:c.muted }}>Please upload a CSV file with the following columns (header row required):</p>
-                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:teal, background: isDark ? "rgba(115,201,183,0.10)" : "rgba(115,201,183,0.12)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
+                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:"#A614C3", background: isDark ? "rgba(168,85,247,0.10)" : "rgba(168,85,247,0.08)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>Example: John Doe, Admin, Manager, john@example.com, 555-1234, 123</p>
               </div>
 
@@ -2387,8 +2981,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <a href="data:text/csv;charset=utf-8,Name%2CRole%2CJob%20Title%2CEmail%2CPhone%2CExt%0AJohn%20Doe%2CAdmin%2CManager%2Cjohn%40example.com%2C555-1234%2C123"
                 download="users_template.csv"
                 className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[13px] font-semibold transition-all"
-                style={{ fontFamily:FONT, border:`1.5px solid ${teal}`, color:teal, background:"transparent", textDecoration:"none" }}
-                onMouseEnter={e=>(e.currentTarget.style.background="rgba(115,201,183,0.08)")}
+                style={{ fontFamily:FONT, border:`1.5px solid rgba(168,85,247,0.35)`, color:"#A614C3", background:"transparent", textDecoration:"none" }}
+                onMouseEnter={e=>(e.currentTarget.style.background="rgba(168,85,247,0.06)")}
                 onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                 <FileText className="w-4 h-4"/>Download Template CSV
               </a>
@@ -2396,28 +2990,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               {/* Upload area — gray dashed, white bg */}
               <div className="rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-all"
                 style={{ border:`1.5px dashed ${isDark?"rgba(255,255,255,0.2)":"#D1D5DB"}`, background:isDark?"rgba(255,255,255,0.02)":"#fff" }}
-                onMouseEnter={e=>{ e.currentTarget.style.borderColor = teal; e.currentTarget.style.background = "rgba(115,201,183,0.04)"; }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = "rgba(168,85,247,0.04)"; }}
                 onMouseLeave={e=>{ e.currentTarget.style.borderColor = isDark?"rgba(255,255,255,0.2)":"#D1D5DB"; e.currentTarget.style.background = isDark?"rgba(255,255,255,0.02)":"#fff"; }}>
-                <svg className="mb-3" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={teal} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="mb-3" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                 </svg>
                 <p className="text-[14px] font-semibold mb-1" style={{ fontFamily:FONT, color:c.text }}>Click to upload or drag and drop</p>
                 <p className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>CSV files only</p>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-end px-8 py-5" style={{ borderTop:`1px solid ${c.border}` }}>
-              <button onClick={()=>setImportUsersOpen(false)}
-                className="flex items-center justify-center gap-2 text-[13px] font-semibold transition-all"
-                style={{ fontFamily:FONT, height:37, padding:"9px 24px", borderRadius:"5.58px",
-                  border:"1.04px solid #E5E7EB",
-                  background:"linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF",
-                  color:c.text, boxSizing:"border-box" as const }}
-                onMouseEnter={e=>(e.currentTarget.style.background="linear-gradient(180deg, rgba(255,255,255,0.15) -0.44%, rgba(192,192,192,0.15) 49.45%, rgba(172,172,172,0.15) 99.33%), #F9FAFB")}
-                onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}>
-                Close
-              </button>
             </div>
           </div>
         </div>
@@ -3061,7 +3641,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         <div className="flex flex-1 max-w-[360px] transition-all"
           style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search agencies..."
+            placeholder="Search agencies or users..."
             className="flex-1 outline-none"
             style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
           <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
@@ -3089,7 +3669,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* Starred agencies strip */}
-      {starred.length > 0 && filterStatus !== "Inactive" && (
+      {starred.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
@@ -3099,10 +3679,11 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           </div>
           <div className="flex gap-3 flex-wrap">
             {starred.map(a => (
-              <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all"
+              <div key={a.id} onClick={() => setSelectedAgency(getDetail(a))}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, minWidth: 180 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? "rgba(168,85,247,0.30)" : "rgba(92,46,212,0.25)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; }}>
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}>
                 <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{a.name}</p>
@@ -3116,35 +3697,35 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
       {/* Tabs */}
       <div className="flex items-center gap-0 mb-0 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-        {([["agencies", "Agencies", Building2], ["users", "All Users", Users]] as [TabKey, string, (p:{className?:string})=>React.ReactElement][]).map(([key, label, Icon]) => {
+        {([["agencies", "Agencies", Building2], ["users", "All Users", Users]] as [TabKey, string, React.ComponentType<{className?:string;style?:React.CSSProperties}>][]).map(([key, label, Icon]) => {
           const active = tab === key;
           return (
             <button key={key} onClick={() => setTab(key)}
               className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-normal relative transition-colors"
-              style={{ fontFamily: FONT, color: active ? (isDark ? "#fff" : "#74C3B7") : c.muted, letterSpacing: "0.01em" }}>
-              <Icon className="w-[15px] h-[15px]" style={{ color: active ? (isDark ? "#A614C3" : "#74C3B7") : undefined }} />
+              style={{ fontFamily: FONT, color: active ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}>
+              <Icon className="w-[15px] h-[15px]" style={{ color: active ? "#A614C3" : undefined }} />
               {label}
-              {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: isDark ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" : "#74C3B7" }} />}
+              {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
             </button>
           );
         })}
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto mt-0">
-        <table className="w-full text-left border-collapse">
+      <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }}>
+        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${c.border}` }}>
               {([
-                ["name",       "Agency Name"],
-                ["code",       "Agency Code"],
-                ["location",   "Location"],
-                ["totalUsers", "Total User"],
-                ["status",     "Status"],
-              ] as [SortKey, string][]).map(([key, label]) => (
+                ["name",       "Agency Name", "26%"],
+                ["code",       "Agency Code", "16%"],
+                ["location",   "Location",    "22%"],
+                ["totalUsers", "Total User",  "14%"],
+                ["status",     "Status",      "14%"],
+              ] as [SortKey, string, string][]).map(([key, label, w]) => (
                 <th key={key} onClick={() => handleSort(key)}
-                  className="text-[11px] font-semibold py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
-                  style={{ fontFamily: FONT, color: sortKey === key ? "#A855F7" : c.muted }}>
+                  className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
+                  style={{ fontFamily: FONT, color: c.muted, width: w, paddingLeft: key === "status" ? 20 : undefined }}>
                   {label}<SortIcon col={key} />
                 </th>
               ))}
@@ -3159,23 +3740,19 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 {/* Agency Name */}
                 <td className="py-3 pr-6">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-5">
                     <button onClick={e => { e.stopPropagation(); toggleStar(a.id); setSelectedAgency(null); }}
                       className="flex-shrink-0 transition-all"
                       onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.15)")}
                       onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
                       <Star className="w-4 h-4" style={{ color: "#F59E0B", fill: stars.has(a.id) ? "#F59E0B" : "none" }} />
                     </button>
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: isDark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.08)", border: `1px solid rgba(168,85,247,0.18)` }}>
-                      <Building2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
-                    </div>
                     <span className="text-[13px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.text }}>{a.name}</span>
                   </div>
                 </td>
                 {/* Agency Code */}
                 <td className="py-3 pr-6">
-                  <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: "#14B8A6" }}>{a.code}</span>
+                  <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>
                 </td>
                 {/* Location */}
                 <td className="py-3 pr-6 whitespace-nowrap">
@@ -3192,7 +3769,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   </div>
                 </td>
                 {/* Status */}
-                <td className="py-3"><StatusBadge status={a.status} /></td>
+                <td className="py-3" style={{ paddingLeft: 20 }}><StatusBadge status={a.status} /></td>
               </tr>
             ))}
             {paginated.length === 0 && (
@@ -3244,8 +3821,8 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-semibold"
-            style={{ fontFamily: FONT, background: c.teal, color: "#fff" }}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-bold text-white"
+            style={{ fontFamily: FONT, background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
             {page}
           </button>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}

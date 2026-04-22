@@ -59,7 +59,9 @@
       "Bash(npx -y figma-developer-mcp --help)",
       "Bash(npx --cache /tmp/npm-cache -y figma-developer-mcp --help)",
       "Bash(python3 -c ' *)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}.keys\\(\\)\\)\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}.keys\\(\\)\\)\\)\\)\")",
+      "Bash(awk 'NR==2285 {print length\\($0\\), $0}' /Users/lucasye/Norbielink/src/components/Clients.tsx)",
+      "Bash(awk 'NR==2285' /Users/lucasye/Norbielink/src/components/Clients.tsx)"
     ]
   }
 }
