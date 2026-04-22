@@ -4131,7 +4131,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               ] as [SortKey, string, string][]).map(([key, label, w]) => (
                 <th key={key} onClick={() => handleSort(key)}
                   className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
-                  style={{ fontFamily: FONT, color: c.muted, width: w, paddingLeft: key === "status" ? 20 : undefined }}>
+                  style={{ fontFamily: FONT, color: c.muted, width: w, paddingLeft: key === "name" ? 52 : key === "status" ? 20 : undefined }}>
                   {label}<SortIcon col={key} />
                 </th>
               ))}
@@ -4146,7 +4146,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 {/* Agency Name */}
                 <td className="py-3 pr-6">
-                  <div className="flex items-center gap-5">
+                  <div className="flex items-center gap-9">
                     <button onClick={e => { e.stopPropagation(); toggleStar(a.id); setSelectedAgency(null); }}
                       className="flex-shrink-0 transition-all"
                       onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.15)")}
