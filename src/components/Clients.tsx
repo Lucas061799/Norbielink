@@ -501,7 +501,7 @@ function AddClientModal({ isOpen, onClose, isDark }: { isOpen: boolean; onClose:
         <div className="flex items-center justify-between px-7 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${border}`, background: cardBg, borderRadius: "0 0 16px 16px" }}>
           <button onClick={onClose}
             className="px-5 py-[8px] rounded-lg text-[12px] font-normal transition-colors"
-            style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+            style={{ fontFamily: FONT, border: `1px solid ${border}`, color: text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
             Cancel
           </button>
           <button className="px-5 py-[8px] rounded-lg text-[12px] font-semibold text-white"

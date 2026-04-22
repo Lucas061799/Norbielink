@@ -24,7 +24,7 @@ function DatePicker({ value, onChange, inputStyle, c, btnGrad, font }: {
   value: string;
   onChange: (v: string) => void;
   inputStyle: React.CSSProperties;
-  c: { text: string; muted: string; cardBg: string; border: string; borderStrong: string; hoverBg: string };
+  c: Record<string, string>;
   btnGrad: string;
   font: React.CSSProperties;
 }) {
