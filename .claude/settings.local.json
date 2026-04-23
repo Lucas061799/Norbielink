@@ -61,7 +61,11 @@
       "Bash(python3 -c ' *)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}.keys\\(\\)\\)\\)\\)\")",
       "Bash(awk 'NR==2285 {print length\\($0\\), $0}' /Users/lucasye/Norbielink/src/components/Clients.tsx)",
-      "Bash(awk 'NR==2285' /Users/lucasye/Norbielink/src/components/Clients.tsx)"
+      "Bash(awk 'NR==2285' /Users/lucasye/Norbielink/src/components/Clients.tsx)",
+      "Bash(vercel ls *)",
+      "Bash(vercel inspect *)",
+      "Bash(wait)",
+      "Bash(grep -iA 5 \"Aliases\")"
     ]
   }
 }
