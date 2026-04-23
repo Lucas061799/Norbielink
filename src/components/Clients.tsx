@@ -690,7 +690,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   /* Section title */
   const sectionTitle = (
-    <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+    <div className="flex flex-col justify-center flex-shrink-0 mb-12"
       style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
       <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Clients</h1>
     </div>
@@ -1027,7 +1027,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               style={{ background: btnGrad, fontFamily: FONT, transition: "filter 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
               onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-              <Search className="w-3.5 h-3.5" />Submit
+              <Search className="w-3.5 h-3.5" />Search
             </button>
           </div>
           <button onClick={() => setModalOpen(true)}
@@ -1146,7 +1146,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
       {/* Pagination — sticky at bottom */}
       <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
-        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-24px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-48px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
         <div className="flex-1 flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           Show
@@ -1934,12 +1934,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
               <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
                 style={{ fontFamily: FONT, background: btnGrad }}>
-                <Search className="w-3.5 h-3.5" />Submit
+                <Search className="w-3.5 h-3.5" />Search
               </button>
-            </div>
-            <div className="flex items-center gap-1.5 text-[12px] font-semibold whitespace-nowrap"
-              style={{ fontFamily: FONT, padding: "6px 14px", borderRadius: 9999, border: "1.5px solid #A855F7", color: "#A855F7", background: "transparent" }}>
-              <RefreshCw className="w-3 h-3" />Auto-synced from policies
             </div>
           </div>
           <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
@@ -1987,7 +1983,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
               <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
                 style={{ fontFamily: FONT, background: btnGrad }}>
-                <Search className="w-3.5 h-3.5" />Submit
+                <Search className="w-3.5 h-3.5" />Search
               </button>
             </div>
             <button className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"

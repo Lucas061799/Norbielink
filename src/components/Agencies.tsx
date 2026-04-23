@@ -376,7 +376,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
   const [contactCardEditing, setContactCardEditing] = useState(false);
-  const currentUserIsAdmin = true; // toggle to test — non-admin users see permission popup
+  const currentUserIsAdmin = false; // toggle to test — non-admin users see permission popup
   const [contactRequestOpen, setContactRequestOpen] = useState(false);
   const [requestedName, setRequestedName] = useState("");
   const [requestedPhone, setRequestedPhone] = useState("");
@@ -874,7 +874,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
       {/* Section title — same as list view */}
-      <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+      <div className="flex flex-col justify-center flex-shrink-0 mb-12"
         style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
         <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
       </div>
@@ -4001,7 +4001,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
   /* Section title — same full-width divider style as Clients */
   const sectionTitle = (
-    <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+    <div className="flex flex-col justify-center flex-shrink-0 mb-12"
       style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
       <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
     </div>
@@ -4191,7 +4191,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
       {/* Pagination */}
       <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
-        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-24px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-48px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
         <div className="flex-1 flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
           <span>Show</span>

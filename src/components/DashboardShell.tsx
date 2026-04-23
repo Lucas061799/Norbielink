@@ -5,6 +5,9 @@ import Sidenav from "@/components/Sidenav";
 import TopBar from "@/components/TopBar";
 import Clients from "@/components/Clients";
 import Agencies from "@/components/Agencies";
+import Quotes from "@/components/Quotes";
+import Policies from "@/components/Policies";
+import Endorsements from "@/components/Endorsements";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -21,20 +24,28 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         return <Clients isDark={darkMode} />;
       case "Agencies":
         return <Agencies isDark={darkMode} />;
-      default:
+      case "Quotes":
+        return <Quotes isDark={darkMode} />;
+      case "Policies":
+        return <Policies isDark={darkMode} />;
+      case "Endorsements":
+        return <Endorsements isDark={darkMode} />;
+      default: {
+        const title = pageTitle;
         return (
           <>
-            {pageTitle && (
-              <div className="flex flex-col justify-center flex-shrink-0 mb-5"
+            {title && (
+              <div className="flex flex-col justify-center flex-shrink-0 mb-12"
                 style={{ height: 71, borderBottom: `0.87px solid ${darkMode ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
                 <h1 className="text-[22px] font-normal" style={{ color: darkMode ? "#F9FAFB" : "#1F2937" }}>
-                  {pageTitle}
+                  {title}
                 </h1>
               </div>
             )}
             {children}
           </>
         );
+      }
     }
   };
 
@@ -50,10 +61,10 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         onActiveChange={setActivePage}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar isDark={darkMode} />
+        <TopBar isDark={darkMode} activePage={activePage} />
         <main
           className="flex-1 overflow-hidden transition-colors duration-300 px-12"
-          style={{ background: darkMode ? "#0F1120" : "#ffffff", paddingTop: (activePage === "Clients" || activePage === "Agencies") ? 0 : 24, paddingBottom: 24, display: (activePage === "Clients" || activePage === "Agencies") ? "flex" : "block", flexDirection: "column" as const, overflowY: (activePage === "Clients" || activePage === "Agencies") ? "hidden" : "auto", height: (activePage === "Clients" || activePage === "Agencies") ? "100%" : "auto" }}
+          style={(() => { const fullHeightPages = ["Clients", "Agencies", "Quotes", "Policies", "Endorsements"]; const isFullHeight = fullHeightPages.includes(activePage); return { background: darkMode ? "#0F1120" : "#ffffff", paddingTop: isFullHeight ? 0 : 24, paddingBottom: isFullHeight ? 48 : 24, display: isFullHeight ? "flex" : "block", flexDirection: "column" as const, overflowY: isFullHeight ? "hidden" : "auto", height: isFullHeight ? "100%" : "auto" }; })()}
         >
           {renderPage()}
         </main>
