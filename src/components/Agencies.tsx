@@ -1072,7 +1072,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div className="px-6 pb-4 flex flex-col gap-3">
                 {candidates.length === 0 ? (
-                  <div className="px-3 py-4 rounded-lg text-[12px]" style={{ background: c.mutedBg, border: `1px dashed ${c.border}`, color: c.muted, fontFamily: FONT }}>
+                  <div className="px-3 py-4 rounded-lg text-[12px]" style={{ background: c.hoverBg, border: `1px dashed ${c.border}`, color: c.muted, fontFamily: FONT }}>
                     No other active users in this agency. Add or reactivate a user before continuing.
                   </div>
                 ) : (
@@ -2014,8 +2014,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               }
               return [{ id: `d${Date.now()}`, category: cat, name: fileName, date: today }, ...prev];
             });
-            if (cat === "w9") setW9TriggerDismissed(true);
-            if (cat === "license") setLicenseTriggerDismissed(true);
             showToast({ title: "Document uploaded", description: `${fileName} added to ${cat === "bor" ? "Broker of Record" : cat === "w9" ? "W-9" : cat === "license" ? "License" : "Agreements"}.` });
           };
           const archiveDoc = (id: string) => {
@@ -2061,7 +2059,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Current</span>
                           )}
                           {d.archived && (
-                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.mutedBg, letterSpacing: "0.04em" }}>Archived</span>
+                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>Archived</span>
                           )}
                         </div>
                         <div className="text-[11px]" style={{ ...font, color: c.muted }}>{d.date}</div>
@@ -2180,7 +2178,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <FileCheck className="w-4 h-4" style={{ color: "#A855F7" }} />
                     <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>E&amp;O Certificate</span>
                   </div>
-                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.mutedBg, letterSpacing: "0.04em" }}>
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>
                     <Lock className="w-3 h-3" />Read-only
                   </span>
                 </div>
@@ -5904,18 +5902,18 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 </div>
                 {!data || previewRows.length === 0 ? (
                   <div className="py-8 text-center text-[13px] rounded-xl"
-                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.mutedBg }}>
+                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.hoverBg }}>
                     No rows match your current filters.
                   </div>
                 ) : data.headers.length === 0 ? (
                   <div className="py-8 text-center text-[13px] rounded-xl"
-                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.mutedBg }}>
+                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.hoverBg }}>
                     No columns selected.
                   </div>
                 ) : (
                   <div className="overflow-auto rounded-xl" style={{ border: `1px solid ${c.border}`, maxHeight: 200 }}>
                     <table className="text-left border-collapse" style={{ minWidth: "100%" }}>
-                      <thead className="sticky top-0" style={{ background: c.mutedBg, zIndex: 1 }}>
+                      <thead className="sticky top-0" style={{ background: c.hoverBg, zIndex: 1 }}>
                         <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                           {data.headers.map(h => (
                             <th key={h} className="text-[11px] font-bold uppercase tracking-wider py-2.5 px-4 whitespace-nowrap"
