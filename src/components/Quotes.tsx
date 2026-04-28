@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, LayoutGrid, Download, MessageSquare, MessageCircle, Mail, Phone, Printer, Minus, Maximize2, FileText, FolderOpen, Eye, X } from "lucide-react";
+import { Search, Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, Download, MessageSquare, MessageCircle, Mail, Phone, Printer, Minus, Maximize2, FileText, FolderOpen, Eye, X } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
@@ -65,6 +65,20 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
   const [producerOpen, setProducerOpen] = useState(false);
   const [producerSearch, setProducerSearch] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
+  const COLUMNS: Array<{ key: string; label: string; width: string }> = [
+    { key: "created",      label: "Created",       width: "1fr"    },
+    { key: "submissionId", label: "Submission ID", width: "1.4fr"  },
+    { key: "applicant",    label: "Applicant",     width: "1.15fr" },
+    { key: "dba",          label: "DBA",           width: "1.6fr"  },
+    { key: "effective",    label: "Effective",     width: "1.05fr" },
+    { key: "lob",          label: "LOB",           width: "1.15fr" },
+    { key: "status",       label: "Status",        width: "1.2fr"  },
+    { key: "producer",     label: "Producer",      width: "1.15fr" },
+  ];
+  const visibleCols = COLUMNS.filter(c => !hiddenCols.has(c.key));
+  const gridTemplate = visibleCols.map(c => c.width).join(" ");
 
   // Detail view state
   const [view, setView] = useState<"list" | "detail">("list");
@@ -91,7 +105,7 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
     ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)"
     : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
 
-  const closeAllDropdowns = () => { setApplicantOpen(false); setLobOpen(false); setStatusOpen(false); setProducerOpen(false); setHelpOpen(false); };
+  const closeAllDropdowns = () => { setApplicantOpen(false); setLobOpen(false); setStatusOpen(false); setProducerOpen(false); setHelpOpen(false); setViewOpen(false); };
   const toggleSet = (set: Set<string>, v: string, setter: (s: Set<string>) => void) => { const n = new Set(set); n.has(v) ? n.delete(v) : n.add(v); setter(n); };
 
   const uniqueApplicants = Array.from(new Set(mockQuotes.map(q => q.applicant))).sort();
@@ -240,7 +254,7 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
                   {actionOpen && (
                     <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg shadow-lg overflow-hidden"
                       style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                      {["Renew Quote", "Request Changes", "Download Documents", "Cancel Quote"].map(a => (
+                      {["Reassign Producer", "Edit/Issue"].map(a => (
                         <button key={a} onClick={() => { setActionValue(a); setActionOpen(false); }}
                           className="w-full text-left px-3 py-2 text-[13px] transition-colors"
                           style={{ fontFamily: FONT, color: c.text }}
@@ -285,7 +299,9 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               ]).map(({ k, label, Icon, iconSize }) => (
                 <button key={k} onClick={() => setDetailTab(k)}
                   className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
-                  style={{ fontFamily: FONT, color: detailTab === k ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}>
+                  style={{ fontFamily: FONT, color: detailTab === k ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}
+                  onMouseEnter={e => { if (detailTab !== k) e.currentTarget.style.color = c.text; }}
+                  onMouseLeave={e => { if (detailTab !== k) e.currentTarget.style.color = c.muted; }}>
                   <Icon className={iconSize} style={{ color: detailTab === k ? "#A614C3" : undefined }} />
                   {label}
                   {detailTab === k && <div className="absolute bottom-[-1px] left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
@@ -492,14 +508,53 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
           </div>
         </div>
         <div className="flex items-center gap-1 ml-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10 }}>
-          <button title="Refresh" className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
+          <button title="Reset filters" onClick={() => { setSearch(""); setSortKey("createdDate"); setSortDir("desc"); setPage(1); setLobFilter("All LOBs"); setStatusFilter("All Statuses"); setApplicantFilter(new Set()); setApplicantSearch(""); setProducerFilter(new Set()); setProducerSearch(""); setHiddenCols(new Set()); closeAllDropdowns(); }}
+            className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <RefreshCw className="w-4 h-4" />
           </button>
-          <button title="View" className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <LayoutGrid className="w-4 h-4" />
-          </button>
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <button title="View columns" onClick={() => { closeAllDropdowns(); setViewOpen(o => !o); }}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: "#A614C3", background: viewOpen ? c.hoverBg : "transparent" }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : "transparent")}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg>
+            </button>
+            {viewOpen && (
+              <div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden"
+                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold"
+                  style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>
+                  Show Columns
+                </div>
+                <div className="py-1.5 max-h-[280px] overflow-y-auto">
+                  {COLUMNS.map(col => {
+                    const visible = !hiddenCols.has(col.key);
+                    return (
+                      <label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        onClick={() => setHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                          style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                          {visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                        <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <button onClick={() => setHiddenCols(new Set())}
+                  className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <RefreshCw className="w-3.5 h-3.5" />Show All
+                </button>
+              </div>
+            )}
+          </div>
           <button title="Export" className="p-2 rounded-lg transition-colors" style={{ color: "#A614C3" }}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <Download className="w-4 h-4" />
@@ -517,20 +572,25 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
 
       {/* Table — grid layout matching Clients quotes */}
       <div className="rounded-xl flex flex-col flex-1 min-h-0" style={{ background: c.cardBg, border: `1px solid ${c.border}`, marginBottom: 48 }}>
-        <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns: "1fr 1.4fr 1.15fr 1.6fr 1.05fr 1.15fr 1.2fr 1.15fr", borderBottom: `1px solid ${c.border}`, background: c.mutedBg }}>
+        <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns: gridTemplate, borderBottom: `1px solid ${c.border}`, background: c.mutedBg }}>
           {/* Created */}
+          {!hiddenCols.has("created") && (
           <button onClick={e => { e.stopPropagation(); toggleSort("createdDate"); }}
             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left"
             style={{ fontFamily: FONT, color: c.muted }}>
             Created<SortArrows col="createdDate" />
           </button>
+          )}
           {/* Submission ID */}
+          {!hiddenCols.has("submissionId") && (
           <button onClick={e => { e.stopPropagation(); toggleSort("submissionId"); }}
             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left"
             style={{ fontFamily: FONT, color: c.muted }}>
             Submission ID<SortArrows col="submissionId" />
           </button>
+          )}
           {/* Applicant filter */}
+          {!hiddenCols.has("applicant") && (
           <div className="relative" onClick={e => e.stopPropagation()}>
             <button onClick={() => { closeAllDropdowns(); setApplicantOpen(o => !o); }}
               className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
@@ -585,19 +645,25 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               </div>
             )}
           </div>
+          )}
           {/* DBA */}
+          {!hiddenCols.has("dba") && (
           <button onClick={e => { e.stopPropagation(); toggleSort("dba"); }}
             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left pl-[5px]"
             style={{ fontFamily: FONT, color: c.muted }}>
             DBA<SortArrows col="dba" />
           </button>
+          )}
           {/* Effective */}
+          {!hiddenCols.has("effective") && (
           <button onClick={e => { e.stopPropagation(); toggleSort("effectiveDate"); }}
             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left pl-[5px]"
             style={{ fontFamily: FONT, color: c.muted }}>
             Effective<SortArrows col="effectiveDate" />
           </button>
+          )}
           {/* LOB filter */}
+          {!hiddenCols.has("lob") && (
           <div className="relative pl-[15px]" onClick={e => e.stopPropagation()}>
             <button onClick={() => { closeAllDropdowns(); setLobOpen(o => !o); }}
               className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
@@ -620,7 +686,9 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               </div>
             )}
           </div>
+          )}
           {/* Status filter */}
+          {!hiddenCols.has("status") && (
           <div className="relative pl-[25px]" onClick={e => e.stopPropagation()}>
             <button onClick={() => { closeAllDropdowns(); setStatusOpen(o => !o); }}
               className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
@@ -643,7 +711,9 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               </div>
             )}
           </div>
+          )}
           {/* Producer filter */}
+          {!hiddenCols.has("producer") && (
           <div className="relative pl-[25px]" onClick={e => e.stopPropagation()}>
             <button onClick={() => { closeAllDropdowns(); setProducerOpen(o => !o); }}
               className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
@@ -698,6 +768,7 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               </div>
             )}
           </div>
+          )}
         </div>
         {/* Rows */}
         <div className="overflow-y-auto">
@@ -707,18 +778,18 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
             </div>
           ) : pageItems.map((q, i, arr) => (
             <div key={q.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
-              style={{ gridTemplateColumns: "1fr 1.4fr 1.15fr 1.6fr 1.05fr 1.15fr 1.2fr 1.15fr", borderBottom: i !== arr.length - 1 ? `1px solid ${c.border}` : "none" }}
+              style={{ gridTemplateColumns: gridTemplate, borderBottom: i !== arr.length - 1 ? `1px solid ${c.border}` : "none" }}
               onClick={() => { setSelected(q); setView("detail"); setDetailTab("uw"); setExpandedComments(new Set()); setActionValue(""); }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{q.created}</div>
-              <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: c.linkColor }}>{q.submissionId}</div>
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{q.applicant}</div>
-              <div className="text-[12px] pl-[5px]" style={{ fontFamily: FONT, color: c.text }}>{q.dba}</div>
-              <div className="text-[12px] pl-[5px]" style={{ fontFamily: FONT, color: c.text }}>{q.effective}</div>
-              <div className="text-[12px] pl-[15px]" style={{ fontFamily: FONT, color: c.text }}>{q.lob}</div>
-              <div className="text-[12px] pl-[25px]" style={{ fontFamily: FONT, color: c.text }}>{q.status}</div>
-              <div className="text-[12px] pl-[25px]" style={{ fontFamily: FONT, color: c.text }}>{q.producer}</div>
+              {!hiddenCols.has("created")      && <div className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{q.created}</div>}
+              {!hiddenCols.has("submissionId") && <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: c.linkColor }}>{q.submissionId}</div>}
+              {!hiddenCols.has("applicant")    && <div className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{q.applicant}</div>}
+              {!hiddenCols.has("dba")          && <div className="text-[12px] pl-[5px]" style={{ fontFamily: FONT, color: c.text }}>{q.dba}</div>}
+              {!hiddenCols.has("effective")    && <div className="text-[12px] pl-[5px]" style={{ fontFamily: FONT, color: c.text }}>{q.effective}</div>}
+              {!hiddenCols.has("lob")          && <div className="text-[12px] pl-[15px]" style={{ fontFamily: FONT, color: c.text }}>{q.lob}</div>}
+              {!hiddenCols.has("status")       && <div className="text-[12px] pl-[25px]" style={{ fontFamily: FONT, color: c.text }}>{q.status}</div>}
+              {!hiddenCols.has("producer")     && <div className="text-[12px] pl-[25px]" style={{ fontFamily: FONT, color: c.text }}>{q.producer}</div>}
             </div>
           ))}
         </div>

@@ -18,3 +18,44 @@ body {
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Thin scrollbar: 1px track line + slightly thicker rounded thumb */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track:vertical {
+  background: linear-gradient(
+    90deg,
+    transparent calc(50% - 0.5px),
+    rgba(0, 0, 0, 0.10) calc(50% - 0.5px),
+    rgba(0, 0, 0, 0.10) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+*::-webkit-scrollbar-track:horizontal {
+  background: linear-gradient(
+    0deg,
+    transparent calc(50% - 0.5px),
+    rgba(0, 0, 0, 0.10) calc(50% - 0.5px),
+    rgba(0, 0, 0, 0.10) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 30px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.42);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}

@@ -6,9 +6,9 @@ import {
   ChevronsUpDown, Building2, ChevronLeft, ChevronRight, X,
   Calendar, RefreshCw, FileText, Edit2, Network, User,
   FileText as QuoteIcon, Shield,
-  StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2,
+  StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Link as LinkIcon, Globe, Eye, Headphones, Crown, Mail, Phone, Bell,
+  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -197,27 +197,29 @@ interface Agency {
   totalUsers: number;
   status: "Appointed" | "Unappointed";
   isStarred: boolean;
+  affiliations: string[];
+  lastLogin: string;
 }
 
 type FilterStatus = "All" | "Starred" | "Appointed" | "Unappointed";
-type SortKey = "name" | "code" | "location" | "totalUsers" | "status" | null;
+type SortKey = "name" | "code" | "location" | "totalUsers" | "lastLogin" | "status" | null;
 type SortDir = "asc" | "desc";
-type TabKey = "agencies" | "users";
+type TabKey = "agencies" | "users" | "affiliations";
 
 /* ─── Mock Data ─────────────────────────────────────────────────────────── */
 const mockAgencies: Agency[] = [
-  { id: "1", name: "Acme Insurance Agency", code: "ACME01", city: "Des Moines", state: "IA", totalUsers: 7,  status: "Appointed",   isStarred: true  },
-  { id: "2", name: "Summit Solutions",      code: "SUMIT22", city: "Chicago",    state: "IL", totalUsers: 3,  status: "Appointed",   isStarred: true  },
-  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "",           state: "",   totalUsers: 1,  status: "Unappointed", isStarred: true  },
-  { id: "4", name: "Lakefront Coverage",    code: "LAKE04",  city: "Denver",     state: "CO", totalUsers: 10, status: "Appointed",   isStarred: false },
-  { id: "5", name: "Ridgeline Insurance",   code: "RIDG05",  city: "Des Moines", state: "IA", totalUsers: 23, status: "Appointed",   isStarred: false },
-  { id: "6", name: "Harbor Risk Group",     code: "HARB06",  city: "New York",   state: "NY", totalUsers: 5,  status: "Unappointed", isStarred: false },
-  { id: "7", name: "Midland Shield Co.",    code: "MIDL07",  city: "Des Moines", state: "IA", totalUsers: 3,  status: "Unappointed", isStarred: false },
-  { id: "8", name: "Coastal Guard LLC",     code: "COAS08",  city: "New York",   state: "NY", totalUsers: 6,  status: "Unappointed", isStarred: false },
-  { id: "9", name: "Apex Risk Partners",    code: "APEX09",  city: "Austin",     state: "TX", totalUsers: 12, status: "Appointed",   isStarred: false },
-  { id: "10", name: "Keystone Group",       code: "KEYS10",  city: "Philadelphia", state: "PA", totalUsers: 8, status: "Appointed",  isStarred: false },
-  { id: "11", name: "BlueSky Brokers",      code: "BLUE11",  city: "Seattle",    state: "WA", totalUsers: 4,  status: "Unappointed", isStarred: false },
-  { id: "12", name: "Ironclad Insurance",   code: "IRON12",  city: "Dallas",     state: "TX", totalUsers: 15, status: "Appointed",   isStarred: false },
+  { id: "1", name: "Acme Insurance Agency", code: "ACME01", city: "Des Moines", state: "IA", totalUsers: 7,  status: "Appointed",   isStarred: true,  affiliations: ["AAA/ACG (AC364)", "Acrisure"], lastLogin: "04/24/2026" },
+  { id: "2", name: "Summit Solutions",      code: "SUMIT22", city: "Chicago",    state: "IL", totalUsers: 3,  status: "Appointed",   isStarred: true,  affiliations: ["Acrisure", "Acceptance"], lastLogin: "04/22/2026" },
+  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "",           state: "",   totalUsers: 1,  status: "Unappointed", isStarred: true,  affiliations: ["SIAA"], lastLogin: "03/18/2026" },
+  { id: "4", name: "Lakefront Coverage",    code: "LAKE04",  city: "Denver",     state: "CO", totalUsers: 10, status: "Appointed",   isStarred: false, affiliations: ["Farmers", "HUB International Limited", "SIAA"], lastLogin: "04/23/2026" },
+  { id: "5", name: "Ridgeline Insurance",   code: "RIDG05",  city: "Des Moines", state: "IA", totalUsers: 23, status: "Appointed",   isStarred: false, affiliations: ["AAA/ACG (AC364)", "ASNOA (AL335)", "Acrisure"], lastLogin: "04/24/2026" },
+  { id: "6", name: "Harbor Risk Group",     code: "HARB06",  city: "New York",   state: "NY", totalUsers: 5,  status: "Unappointed", isStarred: false, affiliations: ["IronPeak", "ISU"], lastLogin: "02/05/2026" },
+  { id: "7", name: "Midland Shield Co.",    code: "MIDL07",  city: "Des Moines", state: "IA", totalUsers: 3,  status: "Unappointed", isStarred: false, affiliations: ["Premier Group (PR196)"], lastLogin: "01/12/2026" },
+  { id: "8", name: "Coastal Guard LLC",     code: "COAS08",  city: "New York",   state: "NY", totalUsers: 6,  status: "Unappointed", isStarred: false, affiliations: ["SIAA", "Smart Choice"], lastLogin: "12/02/2025" },
+  { id: "9", name: "Apex Risk Partners",    code: "APEX09",  city: "Austin",     state: "TX", totalUsers: 12, status: "Appointed",   isStarred: false, affiliations: ["Foundation Risk Partners", "Renaissance Alliance", "PIIB"], lastLogin: "04/20/2026" },
+  { id: "10", name: "Keystone Group",       code: "KEYS10",  city: "Philadelphia", state: "PA", totalUsers: 8, status: "Appointed",  isStarred: false, affiliations: ["United Agencies"], lastLogin: "04/18/2026" },
+  { id: "11", name: "BlueSky Brokers",      code: "BLUE11",  city: "Seattle",    state: "WA", totalUsers: 4,  status: "Unappointed", isStarred: false, affiliations: ["Insurance Alliance Network", "Join the Brokers"], lastLogin: "03/30/2026" },
+  { id: "12", name: "Ironclad Insurance",   code: "IRON12",  city: "Dallas",     state: "TX", totalUsers: 15, status: "Appointed",   isStarred: false, affiliations: ["LTA Marketing Group (LT006)", "Pacific Crest (PA004)", "TWFG (TW037)"], lastLogin: "04/24/2026" },
 ];
 
 /* ─── Extended mock detail data ─────────────────────────────────────────── */
@@ -248,7 +250,7 @@ interface AgencyDetail extends Agency {
 
 const mockDetails: Record<string, Partial<AgencyDetail>> = {
   "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badge: "Strategic Partner" },
-  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "BTIS"], workersComp: ["CNA"], badge: "" },
+  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badge: "" },
   "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badge: "" },
 };
 
@@ -315,14 +317,14 @@ interface AgencyNote {
   id: string; title: string; content: string; author: string;
   timestamp: string; agencyId: string;
   type: "General" | "Policy" | "Follow-up" | "Meeting" | "Task";
-  visibility?: "Private" | "Shared" | "Public";
+  visibility?: "Private" | "Shared";
 }
 const mockAgencyNotes: AgencyNote[] = [
   { id:"an1", title:"Initial Appointment Call",   content:"Spoke with Jason Smith about getting appointed. They handle primarily commercial lines in the Midwest. Sent onboarding packet.",       author:"Sarah Johnson", timestamp:"2026-03-01T10:00:00", agencyId:"1", type:"Meeting",   visibility:"Shared"  },
-  { id:"an2", title:"E&O Verification",           content:"Confirmed E&O policy is current. Expires 03/24/2026. Requested updated cert for file.",                                              author:"Jane Smith",    timestamp:"2026-03-10T14:30:00", agencyId:"1", type:"Policy",    visibility:"Public"  },
+  { id:"an2", title:"E&O Verification",           content:"Confirmed E&O policy is current. Expires 03/24/2026. Requested updated cert for file.",                                              author:"Jane Smith",    timestamp:"2026-03-10T14:30:00", agencyId:"1", type:"Policy",    visibility:"Shared"  },
   { id:"an3", title:"Follow up on license renewal", content:"License renewal reminder sent. LC-88210 expires soon. Jason confirmed they are in process.",                                      author:"Sarah Johnson", timestamp:"2026-03-20T09:00:00", agencyId:"1", type:"Follow-up", visibility:"Private" },
   { id:"an4", title:"Portal access set up",       content:"Created login credentials for the agency portal. Sent welcome email with training links.",                                          author:"Mike Chen",     timestamp:"2026-04-01T11:15:00", agencyId:"1", type:"General",   visibility:"Shared"  },
-  { id:"an5", title:"Q1 Performance Review",      content:"Agency submitted 12 quotes in Q1. Conversion rate 41%. Strong performance in Workers Comp and GL lines. Recommended for Pro tier.", author:"Jane Smith",    timestamp:"2026-04-10T16:00:00", agencyId:"1", type:"Meeting",   visibility:"Public"  },
+  { id:"an5", title:"Q1 Performance Review",      content:"Agency submitted 12 quotes in Q1. Conversion rate 41%. Strong performance in Workers Comp and GL lines. Recommended for Pro tier.", author:"Jane Smith",    timestamp:"2026-04-10T16:00:00", agencyId:"1", type:"Meeting",   visibility:"Shared"  },
 ];
 
 /* ─── Quote / Policy filter constants ───────────────────────────────────── */
@@ -351,19 +353,82 @@ interface AgencyUser {
   jobTitle: string; email: string; phone: string; ext: string; agencyId: string;
 }
 const mockAgencyUsers: AgencyUser[] = [
-  { id:"u1", name:"Jason Smith",    isAdmin:true,  jobTitle:"Principal",      email:"jason@acmeins.com",       phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u3", name:"Tom Garfield",   isAdmin:true,  jobTitle:"Producer",        email:"tom.g@acmeins.com",       phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u4", name:"Amy Chen",       isAdmin:true,  jobTitle:"Producer",        email:"amy.chen@acmeins.com",    phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u5", name:"Brian Nguyen",   isAdmin:true,  jobTitle:"Producer",        email:"b.nguyen@acmeins.com",    phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u6", name:"Sandra Park",    isAdmin:true,  jobTitle:"Producer",        email:"s.park@acmeins.com",      phone:"(888) 888-8888", ext:"125", agencyId:"1" },
-  { id:"u8", name:"Maria Chen",     isAdmin:true,  jobTitle:"Principal",       email:"m.chen@summitsol.com",    phone:"(312) 555-0190", ext:"",    agencyId:"2" },
-  { id:"u9", name:"Tom Harris",     isAdmin:false, jobTitle:"Producer",        email:"tom@summitsol.com",       phone:"(312) 555-0191", ext:"201", agencyId:"2" },
+  // Acme Insurance Agency (1)
+  { id:"u1",  name:"Jason Smith",      isAdmin:true,  jobTitle:"Principal",       email:"jason@acmeins.com",        phone:"(888) 888-8888", ext:"125", agencyId:"1" },
+  { id:"u3",  name:"Tom Garfield",     isAdmin:true,  jobTitle:"Producer",        email:"tom.g@acmeins.com",        phone:"(888) 888-8888", ext:"126", agencyId:"1" },
+  { id:"u4",  name:"Amy Chen",         isAdmin:true,  jobTitle:"Producer",        email:"amy.chen@acmeins.com",     phone:"(888) 888-8888", ext:"127", agencyId:"1" },
+  { id:"u5",  name:"Brian Nguyen",     isAdmin:false, jobTitle:"Producer",        email:"b.nguyen@acmeins.com",     phone:"(888) 888-8888", ext:"128", agencyId:"1" },
+  { id:"u6",  name:"Sandra Park",      isAdmin:false, jobTitle:"Producer",        email:"s.park@acmeins.com",       phone:"(888) 888-8888", ext:"129", agencyId:"1" },
+  { id:"u7",  name:"Lisa Wong",        isAdmin:false, jobTitle:"CSR",             email:"l.wong@acmeins.com",       phone:"(888) 888-8888", ext:"130", agencyId:"1" },
+  { id:"u10", name:"Diane Kim",        isAdmin:false, jobTitle:"Accounting",      email:"d.kim@acmeins.com",        phone:"(888) 888-8888", ext:"131", agencyId:"1" },
+
+  // Summit Solutions (2)
+  { id:"u8",  name:"Maria Chen",       isAdmin:true,  jobTitle:"Principal",       email:"m.chen@summitsol.com",     phone:"(312) 555-0190", ext:"",    agencyId:"2" },
+  { id:"u9",  name:"Tom Harris",       isAdmin:false, jobTitle:"Producer",        email:"tom@summitsol.com",        phone:"(312) 555-0191", ext:"201", agencyId:"2" },
+  { id:"u11", name:"Rachel Brooks",    isAdmin:false, jobTitle:"Account Manager", email:"r.brooks@summitsol.com",   phone:"(312) 555-0192", ext:"202", agencyId:"2" },
+
+  // Pioneer Brokers (3)
+  { id:"u12", name:"Tom Lawson",       isAdmin:true,  jobTitle:"Principal",       email:"t.lawson@pioneerbrok.com", phone:"(515) 555-3300", ext:"",    agencyId:"3" },
+
+  // Lakefront Coverage (4)
+  { id:"u13", name:"Karen Wells",      isAdmin:true,  jobTitle:"Principal",       email:"k.wells@lakefrontcov.com", phone:"(303) 555-1010", ext:"",    agencyId:"4" },
+  { id:"u14", name:"Michael Foster",   isAdmin:true,  jobTitle:"Producer",        email:"m.foster@lakefrontcov.com",phone:"(303) 555-1011", ext:"110", agencyId:"4" },
+  { id:"u15", name:"Jenna Patel",      isAdmin:false, jobTitle:"Producer",        email:"j.patel@lakefrontcov.com", phone:"(303) 555-1012", ext:"111", agencyId:"4" },
+  { id:"u16", name:"David Cho",        isAdmin:false, jobTitle:"Account Manager", email:"d.cho@lakefrontcov.com",   phone:"(303) 555-1013", ext:"112", agencyId:"4" },
+  { id:"u17", name:"Erin Stewart",     isAdmin:false, jobTitle:"CSR",             email:"e.stewart@lakefrontcov.com",phone:"(303) 555-1014", ext:"113", agencyId:"4" },
+  { id:"u18", name:"Paul Ramirez",     isAdmin:false, jobTitle:"Producer",        email:"p.ramirez@lakefrontcov.com",phone:"(303) 555-1015", ext:"114", agencyId:"4" },
+  { id:"u19", name:"Olivia Bennett",   isAdmin:false, jobTitle:"Accounting",      email:"o.bennett@lakefrontcov.com",phone:"(303) 555-1016", ext:"115", agencyId:"4" },
+
+  // Ridgeline Insurance (5)
+  { id:"u20", name:"Marcus Reed",      isAdmin:true,  jobTitle:"Principal",       email:"m.reed@ridgelineins.com",  phone:"(515) 555-2020", ext:"",    agencyId:"5" },
+  { id:"u21", name:"Hannah Lee",       isAdmin:true,  jobTitle:"Producer",        email:"h.lee@ridgelineins.com",   phone:"(515) 555-2021", ext:"210", agencyId:"5" },
+  { id:"u22", name:"Trevor Howard",    isAdmin:false, jobTitle:"Producer",        email:"t.howard@ridgelineins.com",phone:"(515) 555-2022", ext:"211", agencyId:"5" },
+  { id:"u23", name:"Sophie Martin",    isAdmin:false, jobTitle:"Account Manager", email:"s.martin@ridgelineins.com",phone:"(515) 555-2023", ext:"212", agencyId:"5" },
+  { id:"u24", name:"Caleb Hughes",     isAdmin:false, jobTitle:"CSR",             email:"c.hughes@ridgelineins.com",phone:"(515) 555-2024", ext:"213", agencyId:"5" },
+  { id:"u25", name:"Nicole Avery",     isAdmin:false, jobTitle:"Accounting",      email:"n.avery@ridgelineins.com", phone:"(515) 555-2025", ext:"214", agencyId:"5" },
+
+  // Harbor Risk Group (6)
+  { id:"u26", name:"Frank DeLuca",     isAdmin:true,  jobTitle:"Principal",       email:"f.deluca@harborrisk.com",  phone:"(212) 555-6060", ext:"",    agencyId:"6" },
+  { id:"u27", name:"Megan O'Brien",    isAdmin:false, jobTitle:"Producer",        email:"m.obrien@harborrisk.com",  phone:"(212) 555-6061", ext:"310", agencyId:"6" },
+  { id:"u28", name:"Ethan Park",       isAdmin:false, jobTitle:"Account Manager", email:"e.park@harborrisk.com",    phone:"(212) 555-6062", ext:"311", agencyId:"6" },
+
+  // Midland Shield Co. (7)
+  { id:"u29", name:"Greg Sullivan",    isAdmin:true,  jobTitle:"Principal",       email:"g.sullivan@midlandshield.com",phone:"(515) 555-7070", ext:"",    agencyId:"7" },
+  { id:"u30", name:"Aiden Cole",       isAdmin:false, jobTitle:"Producer",        email:"a.cole@midlandshield.com", phone:"(515) 555-7071", ext:"410", agencyId:"7" },
+
+  // Coastal Guard LLC (8)
+  { id:"u31", name:"Priya Shah",       isAdmin:true,  jobTitle:"Principal",       email:"p.shah@coastalguard.com",  phone:"(212) 555-8080", ext:"",    agencyId:"8" },
+  { id:"u32", name:"Jordan Blake",     isAdmin:false, jobTitle:"Producer",        email:"j.blake@coastalguard.com", phone:"(212) 555-8081", ext:"510", agencyId:"8" },
+  { id:"u33", name:"Megan Russo",      isAdmin:false, jobTitle:"CSR",             email:"m.russo@coastalguard.com", phone:"(212) 555-8082", ext:"511", agencyId:"8" },
+
+  // Apex Risk Partners (9)
+  { id:"u34", name:"Diana Cole",       isAdmin:true,  jobTitle:"Principal",       email:"d.cole@apexrisk.com",      phone:"(512) 555-9090", ext:"",    agencyId:"9" },
+  { id:"u35", name:"Ryan Walsh",       isAdmin:true,  jobTitle:"Producer",        email:"r.walsh@apexrisk.com",     phone:"(512) 555-9091", ext:"610", agencyId:"9" },
+  { id:"u36", name:"Lauren Kim",       isAdmin:false, jobTitle:"Producer",        email:"l.kim@apexrisk.com",       phone:"(512) 555-9092", ext:"611", agencyId:"9" },
+  { id:"u37", name:"Henry Tan",        isAdmin:false, jobTitle:"Account Manager", email:"h.tan@apexrisk.com",       phone:"(512) 555-9093", ext:"612", agencyId:"9" },
+  { id:"u38", name:"Beth Carlson",     isAdmin:false, jobTitle:"Accounting",      email:"b.carlson@apexrisk.com",   phone:"(512) 555-9094", ext:"613", agencyId:"9" },
+
+  // Keystone Group (10)
+  { id:"u39", name:"Marvin Lopez",     isAdmin:true,  jobTitle:"Principal",       email:"m.lopez@keystonegrp.com",  phone:"(215) 555-1010", ext:"",    agencyId:"10" },
+  { id:"u40", name:"Kayla Bryant",     isAdmin:false, jobTitle:"Producer",        email:"k.bryant@keystonegrp.com", phone:"(215) 555-1011", ext:"710", agencyId:"10" },
+  { id:"u41", name:"Sean Murphy",      isAdmin:false, jobTitle:"CSR",             email:"s.murphy@keystonegrp.com", phone:"(215) 555-1012", ext:"711", agencyId:"10" },
+
+  // BlueSky Brokers (11)
+  { id:"u42", name:"Anna Rivera",      isAdmin:true,  jobTitle:"Principal",       email:"a.rivera@blueskybrok.com", phone:"(206) 555-1100", ext:"",    agencyId:"11" },
+  { id:"u43", name:"Devin Yamamoto",   isAdmin:false, jobTitle:"Producer",        email:"d.yamamoto@blueskybrok.com",phone:"(206) 555-1101", ext:"810", agencyId:"11" },
+
+  // Ironclad Insurance (12)
+  { id:"u44", name:"Bruno Mancini",    isAdmin:true,  jobTitle:"Principal",       email:"b.mancini@ironcladins.com",phone:"(214) 555-1200", ext:"",    agencyId:"12" },
+  { id:"u45", name:"Vera Holmes",      isAdmin:true,  jobTitle:"Producer",        email:"v.holmes@ironcladins.com", phone:"(214) 555-1201", ext:"910", agencyId:"12" },
+  { id:"u46", name:"Carlos Mendez",    isAdmin:false, jobTitle:"Account Manager", email:"c.mendez@ironcladins.com", phone:"(214) 555-1202", ext:"911", agencyId:"12" },
+  { id:"u47", name:"Holly Park",       isAdmin:false, jobTitle:"Producer",        email:"h.park@ironcladins.com",   phone:"(214) 555-1203", ext:"912", agencyId:"12" },
+  { id:"u48", name:"Trevor Knox",      isAdmin:false, jobTitle:"CSR",             email:"t.knox@ironcladins.com",   phone:"(214) 555-1204", ext:"913", agencyId:"12" },
 ];
 
 /* ─── Agency Detail View ─────────────────────────────────────────────────── */
-type DetailTab = "overview" | "quotes" | "policies" | "users" | "notes";
+type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes";
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar }: {
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -371,12 +436,24 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   btnGrad: string;
   stars: Set<string>;
   onToggleStar: (id: string) => void;
+  inactiveUserIds: Set<string>;
+  setInactiveUserIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  removedUserIds: Set<string>;
+  setRemovedUserIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  bookRolled: Map<string, { targetCode: string; date: string }>;
+  setBookRolled: React.Dispatch<React.SetStateAction<Map<string, { targetCode: string; date: string }>>>;
+  allAgencies: Agency[];
 }) {
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
   const [contactCardEditing, setContactCardEditing] = useState(false);
-  const currentUserIsAdmin = false; // toggle to test — non-admin users see permission popup
+  const [contactMode, setContactMode] = useState<"edit"|"reassign"|"new">("edit");
+  const [reassignSelection, setReassignSelection] = useState<string>("");
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
+  const [newContactEmail, setNewContactEmail] = useState("");
+  const currentUserIsAdmin = true; // toggle to false to hide admin-only actions (Deactivate, Reactivate, Remove)
   const [contactRequestOpen, setContactRequestOpen] = useState(false);
   const [requestedName, setRequestedName] = useState("");
   const [requestedPhone, setRequestedPhone] = useState("");
@@ -419,6 +496,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [ePremFin,    setEPremFin]    = useState(agency.premiumFin);
   const [eAffil,      setEAffil]      = useState<Set<string>>(new Set(agency.affiliations));
   const [eWC,         setEWC]         = useState<Set<string>>(new Set(agency.workersComp));
+  const [eStatusOpen, setEStatusOpen] = useState(false);
+  const [eBizTypeOpen, setEBizTypeOpen] = useState(false);
+  const [eReason, setEReason] = useState("");
+  const [eReasonOpen, setEReasonOpen] = useState(false);
+  const E_REASON_OPTIONS = ["Closed", "Sold", "Credit Hold", "Missing Info", "Terminated"];
+
+  const formatPhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 10);
+    if (digits.length === 0) return "";
+    if (digits.length <= 3) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
 
   /* ── extra colours ── */
   const teal    = "#73C9B7";
@@ -439,6 +529,20 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [producerSearch,  setProducerSearch]  = useState("");
   const [qpSortKey,       setQpSortKey]       = useState<string|null>(null);
   const [qpSortDir,       setQpSortDir]       = useState<"asc"|"desc">("asc");
+  const [qpViewOpen,      setQpViewOpen]      = useState(false);
+  const [qpHiddenCols,    setQpHiddenCols]    = useState<Set<string>>(new Set());
+  const QP_COLUMNS: Array<{ key: string; label: string; width: string }> = [
+    { key: "created",      label: "Created",       width: "1.1fr" },
+    { key: "policyNumber", label: "Policy Number", width: "1.6fr" },
+    { key: "applicant",    label: "Applicant",     width: "1.2fr" },
+    { key: "dba",          label: "DBA",           width: "1fr"   },
+    { key: "effective",    label: "Effective",     width: "1.1fr" },
+    { key: "lob",          label: "LOB",           width: "1.1fr" },
+    { key: "status",       label: "Status",        width: "1.2fr" },
+    { key: "producer",     label: "Producer",      width: "1.2fr" },
+  ];
+  const qpVisibleCols = QP_COLUMNS.filter(c => !qpHiddenCols.has(c.key));
+  const qpGridTemplate = qpVisibleCols.map(c => c.width).join(" ");
 
   const closeAllDropdowns = () => { setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); };
 
@@ -495,7 +599,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [editNoteContent,setEditNoteContent]= useState("");
   const [editNoteType,   setEditNoteType]   = useState<AgencyNote["type"]>("General");
   const [editNoteVisibility, setEditNoteVisibility] = useState<NonNullable<AgencyNote["visibility"]>>("Shared");
-  const [visibilityFilter, setVisibilityFilter] = useState<"All"|"Private"|"Shared"|"Public">("All");
+  const [visibilityFilter, setVisibilityFilter] = useState<"All"|"Private"|"Shared">("All");
   const [noteExpanded,   setNoteExpanded]   = useState(false);
   const [noteLocked,     setNoteLocked]     = useState(false);
   const [lockedBy,       setLockedBy]       = useState("Sarah Johnson");
@@ -505,17 +609,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [showArchived,   setShowArchived]   = useState(false);
   const [showTrashed,    setShowTrashed]    = useState(false);
   const [noteMoreOpen,   setNoteMoreOpen]   = useState(false);
-  const [noteShareOpen,  setNoteShareOpen]  = useState(false);
-  const [inviteEmail,    setInviteEmail]    = useState("");
-  const [shareAccess,    setShareAccess]    = useState<Record<string,string>>({ "Jane Smith": "edit", "Mike Chen": "view", "Sarah Johnson": "view", "Tom Harris": "view" });
-  const [noteOwner,      setNoteOwner]      = useState("Sarah Johnson");
-  const [shareMenuFor,   setShareMenuFor]   = useState<string|null>(null);
-  const [removedShares,  setRemovedShares]  = useState<Set<string>>(new Set());
-  const [removeConfirm,  setRemoveConfirm]  = useState<string|null>(null);
-  const [pendingRequests, setPendingRequests] = useState<{name:string; email:string; access:"view"|"edit"}[]>([
-    { name: "Lokesh", email: "lokesh.gorijavolu@amyntagroup.com", access: "edit" },
-  ]);
-  const [extraMembers,   setExtraMembers]   = useState<{name:string; email:string}[]>([]);
   const [copyToast,      setCopyToast]      = useState("");
   const [isSelectMode,   setIsSelectMode]   = useState(false);
   const [selectedNoteIds,setSelectedNoteIds]= useState<Set<string>>(new Set());
@@ -533,6 +626,55 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [jobTitleOpen,    setJobTitleOpen]    = useState(false);
   const [jobTitleSearch,  setJobTitleSearch]  = useState("");
   const [userMenuId,      setUserMenuId]      = useState<string|null>(null);
+  // inactiveUserIds and removedUserIds are now lifted to the parent Agencies component
+  // so the All Users tab in the main view can also respect deactivation/removal state.
+  const [usersView,       setUsersView]       = useState<"active"|"inactive">("active");
+  type ToastData = { title: string; description?: string; action?: { label: string; onClick: () => void } };
+  const [userToast,       setUserToast]       = useState<ToastData | null>(null);
+  const showToast = (t: ToastData, ms = 4000) => { setUserToast(t); setTimeout(() => setUserToast(null), ms); };
+  const [removeUserConfirm, setRemoveUserConfirm] = useState<{id: string; name: string} | null>(null);
+  // When deactivating/removing a Principal or Agency Contact, force the user to pick a replacement first.
+  const [roleReassign, setRoleReassign] = useState<{
+    userId: string;
+    userName: string;
+    action: "deactivate" | "remove";
+    needsPrincipal: boolean;
+    needsContact: boolean;
+  } | null>(null);
+  const [reassignPrincipalId, setReassignPrincipalId] = useState("");
+  const [reassignContactId, setReassignContactId] = useState("");
+  // Optional overrides applied after a reassign — used to reflect the new Principal / Contact in the UI.
+  const [principalOverride, setPrincipalOverride] = useState<{ oldId: string; newId: string } | null>(null);
+  const [agencyContactOverride, setAgencyContactOverride] = useState<string | null>(null);
+  // Track users granted admin permissions via the Principal-reassign flow (Principal implies admin).
+  const [adminGrantOverrides, setAdminGrantOverrides] = useState<Set<string>>(new Set());
+  // ── Documents tab state (demo only — files are mock entries; uploads add rows but don't store anything). ──
+  type AgencyDocCategory = "bor" | "w9" | "license" | "agreement";
+  type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean };
+  const [agencyDocs, setAgencyDocs] = useState<AgencyDoc[]>([
+    { id: "d1", category: "bor",       name: "BOR Request - 2025.pdf",      date: "Mar 15, 2025" },
+    { id: "d2", category: "bor",       name: "BOR Letter Signed.pdf",       date: "Mar 20, 2025" },
+    { id: "d3", category: "w9",        name: "W9-2025.pdf",                  date: "Feb 1, 2025" },
+    { id: "d4", category: "w9",        name: "W9-2024.pdf",                  date: "Feb 1, 2024",  archived: true },
+    { id: "d5", category: "license",   name: `${agency.state || "NY"}-License.pdf`, date: "Jan 10, 2025" },
+    { id: "d6", category: "agreement", name: "Appointment Letter.pdf",      date: agency.apptDate || "Mar 24, 2026" },
+    { id: "d7", category: "agreement", name: "Producer Agreement.pdf",      date: agency.apptDate || "Mar 24, 2026" },
+  ]);
+  const [imageRightSyncMins, setImageRightSyncMins] = useState(5);
+  // After saving Agency Info edits, prompt the user to upload fresh docs if W-9/license-relevant fields drifted.
+  const [docUpdateModal, setDocUpdateModal] = useState<{ w9: boolean; license: boolean } | null>(null);
+
+  // Book Roll modal — admin sells the entire policy book to another agency.
+  const [bookRollOpen, setBookRollOpen] = useState(false);
+  const [bookRollTargetId, setBookRollTargetId] = useState("");
+  const [bookRollDate, setBookRollDate] = useState(() => {
+    const d = new Date();
+    return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+  });
+  const [bookRollConfirmText, setBookRollConfirmText] = useState("");
+  // "Assign Principal" modal — fired when an agency has no Principal at all.
+  const [assignPrincipalOpen, setAssignPrincipalOpen] = useState(false);
+  const [assignPrincipalChoice, setAssignPrincipalChoice] = useState("");
   /* add-user form fields */
   const [auFirstName,  setAuFirstName]  = useState("");
   const [auLastName,   setAuLastName]   = useState("");
@@ -554,17 +696,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [auStateOpen,  setAuStateOpen]  = useState(false);
   const [auZip,        setAuZip]        = useState("");
   const JOB_TITLES   = ["Principal","Producer","CSR","Accounting","Account Manager"];
-  const USER_STATUSES = ["Active","Inactive","Pending"];
+  const USER_STATUSES = ["Active","Inactive"];
   const US_STATES    = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
   const agencyUsers = mockAgencyUsers
     .filter(u => u.agencyId === agency.id)
+    .filter(u => !removedUserIds.has(u.id))
+    .filter(u => usersView === "active" ? !inactiveUserIds.has(u.id) : inactiveUserIds.has(u.id))
     .filter(u => !userSearch || u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
     .filter(u => jobTitleFilter.size === 0 || jobTitleFilter.has(u.jobTitle))
     .sort((a, b) => {
-      if (a.jobTitle === "Principal" && b.jobTitle !== "Principal") return -1;
-      if (b.jobTitle === "Principal" && a.jobTitle !== "Principal") return 1;
+      // Pin the effective Principal to the top so role-transferred users surface immediately.
+      const aJob = principalOverride && a.id === principalOverride.newId ? "Principal"
+        : principalOverride && a.id === principalOverride.oldId && a.jobTitle === "Principal" ? "Producer"
+        : a.jobTitle;
+      const bJob = principalOverride && b.id === principalOverride.newId ? "Principal"
+        : principalOverride && b.id === principalOverride.oldId && b.jobTitle === "Principal" ? "Producer"
+        : b.jobTitle;
+      if (aJob === "Principal" && bJob !== "Principal") return -1;
+      if (bJob === "Principal" && aJob !== "Principal") return 1;
       return 0;
     });
+  const inactiveCount = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && inactiveUserIds.has(u.id)).length;
+  const activeCount = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && !inactiveUserIds.has(u.id)).length;
 
   const fmtDate = (ts: string) => {
     const d = new Date(ts);
@@ -573,206 +726,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   };
   const openNote = (n: AgencyNote) => { setSelectedNote(n); setEditNoteTitle(n.title); setEditNoteContent(n.content); setEditNoteType(n.type); setEditNoteVisibility(n.visibility || "Shared"); };
   const saveNote = () => { if (!selectedNote) return; setAgNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: editNoteTitle, content: editNoteContent, type: editNoteType, visibility: editNoteVisibility } : n)); setSelectedNote(s => s ? { ...s, title: editNoteTitle, content: editNoteContent, type: editNoteType, visibility: editNoteVisibility } : s); };
-
-  const TEAMMATES = [
-    { name: CURRENT_USER, email: "sarah.johnson@btis.com" },
-    { name: "Mike Chen",  email: "mike.chen@btis.com" },
-    { name: "Jane Smith", email: "jane.smith@btis.com" },
-    { name: "Tom Harris", email: "tom.harris@btis.com" },
-    { name: "Amy Lee",    email: "amy.lee@btis.com" },
-  ];
-  const initials = (n: string) => { const parts = n.trim().split(/\s+/); return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : n.slice(0, 2).toUpperCase(); };
-  const avatarStyle: React.CSSProperties = { background: isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.12)" };
-  const avatarTextStyle: React.CSSProperties = { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
-  const renderSharePanel = () => (
-    <div className="fixed inset-0 z-[55] flex items-center justify-center p-6"
-      onClick={() => setNoteShareOpen(false)}
-      style={{ background: "rgba(0,0,0,0.45)" }}>
-      <div id="note-share-panel" className="relative w-[480px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
-        onClick={e => e.stopPropagation()}
-        style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxHeight: "min(640px, 85vh)" }}>
-      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-        <span className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>Share note</span>
-        <div className="flex items-center gap-3">
-          <button onClick={() => { navigator.clipboard.writeText(window.location.href); setCopyToast("Link copied!"); setTimeout(()=>setCopyToast(""),2000); }}
-            className="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
-            style={{ fontFamily: FONT, color: "#A855F7" }}>
-            <LinkIcon className="w-3 h-3" />Copy link
-          </button>
-          <button onClick={() => setNoteShareOpen(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      {/* Pending requests */}
-      {pendingRequests.length > 0 && (
-        <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-          {pendingRequests.map(req => (
-            <div key={req.email} className="flex items-center gap-3">
-              <div className="relative flex-shrink-0">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={avatarStyle}><span style={avatarTextStyle}>{initials(req.name)}</span></div>
-                <div className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444", border: `2px solid ${c.cardBg}` }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}><strong>{req.name}</strong> wants to {req.access}</p>
-                <p className="text-[11px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{req.email}</p>
-              </div>
-              <button onClick={() => { setPendingRequests(prev => prev.filter(p => p.email !== req.email)); setCopyToast(`Denied ${req.name}`); setTimeout(()=>setCopyToast(""),2000); }}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB" }}>Deny</button>
-              <button onClick={() => {
-                setExtraMembers(prev => [...prev, { name: req.name, email: req.email }]);
-                setShareAccess(prev => ({ ...prev, [req.name]: req.access }));
-                setPendingRequests(prev => prev.filter(p => p.email !== req.email));
-                setCopyToast(`${req.name} joined the note`); setTimeout(()=>setCopyToast(""),2000);
-              }}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all"
-                style={{ fontFamily: FONT, background: btnGrad }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>Approve</button>
-            </div>
-          ))}
-        </div>
-      )}
-      {/* Visibility selector */}
-      <div className="px-4 pt-3 pb-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Visibility</p>
-        <div className="flex gap-1.5">
-          {([["Private",Lock,"Only you"],["Shared",Users,"Specific teammates"],["Public",Globe,"Everyone in team"]] as const).map(([v,Ic,desc]) => {
-            const active = editNoteVisibility === v;
-            return (
-            <button key={v} onClick={() => setEditNoteVisibility(v)}
-              className="flex-1 flex flex-col items-start gap-1 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"
-              style={{ fontFamily:FONT, background:active?"rgba(168,85,247,0.10)":"transparent", color:c.text, border:`1px solid ${active?"rgba(168,85,247,0.35)":c.border}` }}>
-              <span className="flex items-center gap-1.5 font-semibold">
-                <Ic className="w-3 h-3" style={{ color: active ? "#A614C3" : c.text }} />
-                {active
-                  ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{v}</span>
-                  : <span>{v}</span>}
-              </span>
-              <span className="text-[10px] font-normal" style={{ color: c.muted }}>{desc}</span>
-            </button>
-          ); })}
-        </div>
-      </div>
-      <div className="flex items-center gap-2 px-3 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-        <input placeholder="Add email to invite" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-          className="flex-1 outline-none px-3 py-2 text-[12px] rounded-lg"
-          style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}`, color: c.text }} />
-        <button onClick={() => { if (inviteEmail.trim()) { setCopyToast(`Invited ${inviteEmail.trim()}`); setTimeout(()=>setCopyToast(""),2000); setInviteEmail(""); } }}
-          disabled={!inviteEmail.trim()}
-          className="px-3 py-2 rounded-lg text-[11px] font-semibold transition-all"
-          style={{ fontFamily: FONT, background: inviteEmail.trim() ? btnGrad : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), color: inviteEmail.trim() ? "#fff" : c.muted, cursor: inviteEmail.trim() ? "pointer" : "not-allowed" }}>
-          Invite
-        </button>
-      </div>
-      <div className="px-4 pt-3 pb-1 flex-shrink-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted }}>Who has access</p>
-      </div>
-      <div className="flex-1 overflow-y-auto pb-2 min-h-0">
-        {[...TEAMMATES, ...extraMembers].filter(a => !removedShares.has(a.name)).map(a => {
-          const isOwner = a.name === noteOwner;
-          const isYou = a.name === CURRENT_USER;
-          const access = shareAccess[a.name] || "view";
-          const accessLabel = isOwner ? "Owner" : access === "edit" ? "can edit" : "can view";
-          return (
-            <div key={a.name} className="flex items-center justify-between px-4 py-2 transition-colors"
-              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={avatarStyle}>
-                  <span style={avatarTextStyle}>{initials(a.name)}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>
-                    {a.name}{isYou && <span className="ml-1 font-normal" style={{ color: c.muted }}>(You)</span>}
-                  </p>
-                  <p className="text-[10px] truncate" style={{ fontFamily: FONT, color: c.muted }}>{a.email}</p>
-                </div>
-              </div>
-              {isOwner ? (
-                <span className="text-[11px] font-medium flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Owner</span>
-              ) : (
-                <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
-                  <button onClick={e => { e.stopPropagation(); setShareMenuFor(p => p === a.name ? null : a.name); }}
-                    className="flex items-center gap-1 text-[11px] font-medium pl-2 pr-1 py-1 rounded-md transition-colors"
-                    style={{ fontFamily: FONT, background: "transparent", color: c.text }}
-                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                    {accessLabel}
-                    <ChevronDown className="w-3 h-3" style={{ color: c.muted }} />
-                  </button>
-                  {shareMenuFor === a.name && (
-                    <div className="absolute right-0 top-8 z-50 w-36 rounded-xl shadow-2xl py-1.5"
-                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-                      onClick={e => e.stopPropagation()}>
-                      <button onClick={() => { setNoteOwner(a.name); setShareAccess(prev => ({ ...prev, [noteOwner]: "edit" })); setShareMenuFor(null); }}
-                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                        style={{ fontFamily: FONT, color: c.text }}
-                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        Owner
-                      </button>
-                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "edit" })); setShareMenuFor(null); }}
-                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                        style={{ fontFamily: FONT, color: c.text }}
-                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        can edit{access === "edit" && <span style={{ color: "#A855F7" }}>✓</span>}
-                      </button>
-                      <button onClick={() => { setShareAccess(prev => ({ ...prev, [a.name]: "view" })); setShareMenuFor(null); }}
-                        className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                        style={{ fontFamily: FONT, color: c.text }}
-                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        can view{access === "view" && <span style={{ color: "#A855F7" }}>✓</span>}
-                      </button>
-                      <div style={{ height: 1, background: c.border, margin: "4px 0" }} />
-                      <button onClick={() => { setRemoveConfirm(a.name); setShareMenuFor(null); }}
-                        className="w-full text-left px-3 py-1.5 text-[12px] transition-colors"
-                        style={{ fontFamily: FONT, color: "#EF4444" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {removeConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={e => { e.stopPropagation(); setRemoveConfirm(null); }}>
-          <div className="rounded-2xl p-6 w-[380px] shadow-2xl" style={{ background: c.cardBg }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-start gap-4 mb-5">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)" }}>
-                <X className="w-6 h-6" style={{ color: "#EF4444" }} />
-              </div>
-              <div>
-                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Remove access?</h3>
-                <p className="text-[12px] leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}><strong style={{ color: c.text }}>{removeConfirm}</strong> will no longer have access to this note.</p>
-              </div>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setRemoveConfirm(null)} className="px-4 py-2 rounded-lg text-[12px] font-medium transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>Cancel</button>
-              <button onClick={() => { setRemovedShares(prev => { const s = new Set(prev); s.add(removeConfirm!); return s; }); setRemoveConfirm(null); }}
-                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
-                style={{ fontFamily: FONT, background: "#EF4444" }}>Remove</button>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
-    </div>
-  );
 
   const TypeBadge = ({ type }: { type: string }) => (
     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap"
@@ -846,11 +799,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   );
 
   const detailTabs: [DetailTab, string, React.ReactElement][] = [
-    ["overview",  "Overview",  <Building2 className="w-[15px] h-[15px]" />],
-    ["quotes",    "Quotes",    <QuoteIcon className="w-[15px] h-[15px]" />],
-    ["policies",  "Policies",  <Shield    className="w-[15px] h-[15px]" />],
-    ["users",     "Users",     <Users     className="w-[15px] h-[15px]" />],
-    ["notes",     "Notes",     <FileText  className="w-[15px] h-[15px]" />],
+    ["overview",  "Overview",  <Building2  className="w-[15px] h-[15px]" />],
+    ["quotes",    "Quotes",    <QuoteIcon  className="w-[15px] h-[15px]" />],
+    ["policies",  "Policies",  <Shield     className="w-[15px] h-[15px]" />],
+    ["users",     "Users",     <Users      className="w-[15px] h-[15px]" />],
+    ["documents", "Documents", <FolderOpen className="w-[15px] h-[15px]" />],
+    ["notes",     "Notes",     <FileText   className="w-[15px] h-[15px]" />],
   ];
 
   /* ── helpers ── */
@@ -873,6 +827,421 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
+      {userToast && (
+        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-8"
+          style={{ background: isDark ? "#1E2240" : "#fff", border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 16px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: 360, maxWidth: 460, fontFamily: FONT }}>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold truncate" style={{ color: c.text }}>{userToast.title}</div>
+            {userToast.description && (
+              <div className="text-[12px] mt-0.5" style={{ color: c.muted }}>{userToast.description}</div>
+            )}
+          </div>
+          {userToast.action && (
+            <button onClick={() => { userToast.action!.onClick(); setUserToast(null); }}
+              className="flex-shrink-0 text-[12px] font-semibold transition-all"
+              style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
+              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
+              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+              {userToast.action.label}
+            </button>
+          )}
+        </div>
+      )}
+      {bookRollOpen && (() => {
+        // Admin-only flow. Excludes the source agency itself from the target picker.
+        const targetCandidates = allAgencies.filter(a => a.id !== agency.id);
+        const target = targetCandidates.find(a => a.id === bookRollTargetId);
+        const policyCount = rawPolicies.length;
+        const canConfirm = !!target && bookRollConfirmText.trim().toUpperCase() === agency.code.toUpperCase();
+        const proceed = () => {
+          if (!canConfirm || !target) return;
+          // 1. Track the book-roll mapping (source → target).
+          setBookRolled(prev => { const m = new Map(prev); m.set(agency.id, { targetCode: target.code, date: bookRollDate }); return m; });
+          // 2. Auto-add a system note in the source agency's Notes tab.
+          const noteContent = `Book of business rolled from ${agency.name} (${agency.code}) to ${target.name} (${target.code}) on ${bookRollDate}. ${policyCount} ${policyCount === 1 ? "policy" : "policies"} reassigned.`;
+          const newNote: AgencyNote = {
+            id: `br-${Date.now()}`,
+            title: `Book Roll → ${target.code}`,
+            content: noteContent,
+            author: "System",
+            timestamp: new Date().toISOString(),
+            agencyId: agency.id,
+            type: "General",
+            visibility: "Shared",
+          };
+          setAgNotes(prev => [newNote, ...prev]);
+          // 3. Update agency status to Unappointed with reason "Sold".
+          setEStatus("Unappointed");
+          setEReason("Sold");
+          // 4. Toast.
+          showToast({ title: "Book rolled", description: `${policyCount} ${policyCount === 1 ? "policy" : "policies"} transferred to ${target.name}. Agency unappointed.` }, 5000);
+          setBookRollOpen(false);
+        };
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setBookRollOpen(false)}>
+            <div className="rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(540px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
+              onClick={e => e.stopPropagation()}>
+              <div className="px-6 pt-5 pb-4">
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Book Roll</h3>
+                <p className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>
+                  Transfer <strong style={{ color: c.text }}>{agency.name}</strong>&apos;s entire policy book to another agency. This action <strong style={{ color: "#EF4444" }}>cannot be undone</strong>.
+                </p>
+              </div>
+              <div className="px-6 pb-4 flex flex-col gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Target Agency</label>
+                  <select value={bookRollTargetId} onChange={e => setBookRollTargetId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                    <option value="">Select an agency…</option>
+                    {targetCandidates.map(a => (
+                      <option key={a.id} value={a.id}>{a.name} · {a.code}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Effective Date</label>
+                  <input value={bookRollDate} onChange={e => setBookRollDate(e.target.value)}
+                    placeholder="MM/DD/YYYY"
+                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
+                </div>
+                <div className="px-3 py-2.5 rounded-lg text-[12px] flex items-start gap-2"
+                  style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.08) 63.88%)", border: "1px solid rgba(166,20,195,0.18)", color: c.text, fontFamily: FONT }}>
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#A614C3" }} />
+                  <div>
+                    <strong>{policyCount}</strong> {policyCount === 1 ? "policy" : "policies"} will be transferred. {agency.name} will be unappointed (reason: Sold).
+                    Quotes, clients, and users stay with the source agency.
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Type <span style={{ color: "#A614C3" }}>{agency.code}</span> to confirm</label>
+                  <input value={bookRollConfirmText} onChange={e => setBookRollConfirmText(e.target.value)}
+                    placeholder={agency.code}
+                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
+                </div>
+              </div>
+              <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setBookRollOpen(false)}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                  Cancel
+                </button>
+                <button onClick={proceed} disabled={!canConfirm}
+                  className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ fontFamily: FONT, background: btnGrad, opacity: canConfirm ? 1 : 0.5, cursor: canConfirm ? "pointer" : "not-allowed", boxShadow: canConfirm ? "0 4px 14px rgba(166,20,195,0.25)" : "none" }}>
+                  Confirm Book Roll
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {assignPrincipalOpen && (() => {
+        // Standalone assign — used when agency has no Principal at all (after deactivations/removals).
+        const candidates = mockAgencyUsers.filter(u =>
+          u.agencyId === agency.id
+          && !removedUserIds.has(u.id)
+          && !inactiveUserIds.has(u.id)
+        );
+        const picked = candidates.find(u => u.id === assignPrincipalChoice);
+        const willGrantAdmin = picked && !picked.isAdmin && !adminGrantOverrides.has(picked.id);
+        const proceed = () => {
+          if (!picked) return;
+          setPrincipalOverride({ oldId: "", newId: picked.id });
+          showToast({ title: "Principal assigned", description: `${picked.name} is now the Principal.` });
+          if (willGrantAdmin) {
+            setAdminGrantOverrides(prev => { const s = new Set(prev); s.add(picked.id); return s; });
+            showToast({ title: "Admin permissions granted", description: `${picked.name} was granted admin access (required for Principal).` });
+          }
+          setAssignPrincipalOpen(false);
+        };
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setAssignPrincipalOpen(false)}>
+            <div className="rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
+              onClick={e => e.stopPropagation()}>
+              <div className="px-6 pt-5 pb-4">
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Assign Principal</h3>
+                <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
+                  This agency has no Principal. Choose one from the active users below.
+                </p>
+              </div>
+              <div className="px-6 pb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Principal</label>
+                <select value={assignPrincipalChoice} onChange={e => setAssignPrincipalChoice(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                  style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                  <option value="">Select a user…</option>
+                  {candidates.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}{!u.isAdmin && !adminGrantOverrides.has(u.id) ? " · (no admin yet)" : ""}</option>
+                  ))}
+                </select>
+                {willGrantAdmin && (
+                  <div className="mt-2 px-3 py-2 rounded-lg text-[12px] flex items-start gap-2"
+                    style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.10) 63.88%)", border: "1px solid rgba(166,20,195,0.22)", color: "#5C2ED4", fontFamily: FONT }}>
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#A614C3" }} />
+                    <span>{picked!.name} doesn&apos;t have admin yet. Promoting them to Principal will also grant admin permissions.</span>
+                  </div>
+                )}
+              </div>
+              <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setAssignPrincipalOpen(false)}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                  Cancel
+                </button>
+                <button onClick={proceed} disabled={!picked}
+                  className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ fontFamily: FONT, background: btnGrad, opacity: picked ? 1 : 0.5, cursor: picked ? "pointer" : "not-allowed" }}>
+                  Assign Principal
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {roleReassign && (() => {
+        // Eligible replacements: active, non-removed, not the user being deactivated/removed.
+        const candidates = mockAgencyUsers.filter(u =>
+          u.agencyId === agency.id
+          && u.id !== roleReassign.userId
+          && !removedUserIds.has(u.id)
+          && !inactiveUserIds.has(u.id)
+        );
+        const canConfirm =
+          (!roleReassign.needsPrincipal || !!reassignPrincipalId)
+          && (!roleReassign.needsContact || !!reassignContactId);
+        const proceed = () => {
+          if (!canConfirm) return;
+          if (roleReassign.needsPrincipal) {
+            const newPrin = candidates.find(u => u.id === reassignPrincipalId);
+            if (newPrin) {
+              setPrincipalOverride({ oldId: roleReassign.userId, newId: newPrin.id });
+              showToast({ title: "Principal role transferred", description: `${newPrin.name} is now the Principal.` });
+              // Principal implies admin — auto-grant admin permissions to a non-admin pick.
+              if (!newPrin.isAdmin && !adminGrantOverrides.has(newPrin.id)) {
+                setAdminGrantOverrides(prev => { const s = new Set(prev); s.add(newPrin.id); return s; });
+                showToast({ title: "Admin permissions granted", description: `${newPrin.name} was granted admin access (required for Principal).` });
+              }
+            }
+          }
+          if (roleReassign.needsContact) {
+            const newCon = candidates.find(u => u.id === reassignContactId);
+            if (newCon) {
+              setAgencyContactOverride(newCon.name);
+              setEContact(newCon.name);
+              if (newCon.email) setEEmail(newCon.email);
+              if (newCon.phone) setEContactPhone(newCon.phone);
+              showToast({ title: "Agency Contact updated", description: `${newCon.name} is now the Agency Contact.` });
+            }
+          }
+          if (roleReassign.action === "deactivate") {
+            const id = roleReassign.userId;
+            const name = roleReassign.userName;
+            setInactiveUserIds(prev => { const s = new Set(prev); s.add(id); return s; });
+            showToast({
+              title: "User deactivated",
+              description: `${name} moved to Inactive Users.`,
+              action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(id); return s; }) },
+            });
+          } else if (roleReassign.action === "remove") {
+            setRemoveUserConfirm({ id: roleReassign.userId, name: roleReassign.userName });
+          }
+          setRoleReassign(null);
+        };
+        const rolesText = [roleReassign.needsPrincipal && "Principal", roleReassign.needsContact && "Agency Contact"].filter(Boolean).join(" and ");
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setRoleReassign(null)}>
+            <div className="rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
+              onClick={e => e.stopPropagation()}>
+              <div className="px-6 pt-5 pb-4">
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Reassign {rolesText} first</h3>
+                <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
+                  <strong style={{ color: c.text }}>{roleReassign.userName}</strong> is the {rolesText}. Choose {roleReassign.needsPrincipal && roleReassign.needsContact ? "replacements" : "a replacement"} before {roleReassign.action === "deactivate" ? "deactivating" : "removing"} them.
+                </p>
+              </div>
+              <div className="px-6 pb-4 flex flex-col gap-3">
+                {candidates.length === 0 ? (
+                  <div className="px-3 py-4 rounded-lg text-[12px]" style={{ background: c.mutedBg, border: `1px dashed ${c.border}`, color: c.muted, fontFamily: FONT }}>
+                    No other active users in this agency. Add or reactivate a user before continuing.
+                  </div>
+                ) : (
+                  <>
+                    {roleReassign.needsPrincipal && (() => {
+                      const picked = candidates.find(u => u.id === reassignPrincipalId);
+                      const willGrantAdmin = picked && !picked.isAdmin && !adminGrantOverrides.has(picked.id);
+                      return (
+                        <div>
+                          <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Principal</label>
+                          <select value={reassignPrincipalId} onChange={e => setReassignPrincipalId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                            style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                            <option value="">Select a user…</option>
+                            {candidates.map(u => (
+                              <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}{!u.isAdmin && !adminGrantOverrides.has(u.id) ? " · (no admin yet)" : ""}</option>
+                            ))}
+                          </select>
+                          {willGrantAdmin && (
+                            <div className="mt-2 px-3 py-2 rounded-lg text-[12px] flex items-start gap-2"
+                              style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.20)", color: "#92400E", fontFamily: FONT }}>
+                              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                              <span>{picked!.name} doesn&apos;t have admin yet. Promoting them to Principal will also grant admin permissions.</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {roleReassign.needsContact && (
+                      <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Agency Contact</label>
+                        <select value={reassignContactId} onChange={e => setReassignContactId(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                          style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                          <option value="">Select a user…</option>
+                          {candidates.map(u => (
+                            <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setRoleReassign(null)}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                  Cancel
+                </button>
+                <button onClick={proceed} disabled={!canConfirm || candidates.length === 0}
+                  className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ fontFamily: FONT, background: btnGrad, opacity: canConfirm && candidates.length > 0 ? 1 : 0.5, cursor: canConfirm && candidates.length > 0 ? "pointer" : "not-allowed" }}>
+                  Reassign & {roleReassign.action === "deactivate" ? "Deactivate" : "Continue"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {docUpdateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setDocUpdateModal(null)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[460px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "linear-gradient(88.54deg, rgba(92,46,212,0.12) 0.1%, rgba(166,20,195,0.12) 63.88%)" }}>
+                <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+                  <defs>
+                    <linearGradient id="doc-modal-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#5C2ED4" />
+                      <stop offset="100%" stopColor="#A614C3" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="8" cy="8" r="7" stroke="url(#doc-modal-grad)" strokeWidth="1.5" />
+                  <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#doc-modal-grad)" />
+                  <circle cx="8" cy="11.5" r="0.9" fill="url(#doc-modal-grad)" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[16px] font-bold mb-1.5" style={{ color: c.text }}>Documents need an update</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  Agency information was changed. Per compliance, please upload an updated copy of the affected document{docUpdateModal.w9 && docUpdateModal.license ? "s" : ""}.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-lg p-3 mb-5"
+              style={{ background: "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", border: "1px solid rgba(166,20,195,0.18)" }}>
+              <ul className="text-[12px] space-y-1.5" style={{ color: c.text }}>
+                {docUpdateModal.w9 && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: btnGrad }} />
+                    <span>New <strong>W-9</strong> required</span>
+                    <span className="ml-auto text-[11px]" style={{ color: c.muted }}>name · entity · address · TIN</span>
+                  </li>
+                )}
+                {docUpdateModal.license && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: btnGrad }} />
+                    <span>New <strong>License copy</strong> required</span>
+                    <span className="ml-auto text-[11px]" style={{ color: c.muted }}>license number changed</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDocUpdateModal(null)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                Later
+              </button>
+              <button onClick={() => { setDetailTab("documents"); setDocUpdateModal(null); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Go to Documents
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {removeUserConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setRemoveUserConfirm(null)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)" }}>
+                <Trash2 className="w-6 h-6" style={{ color: "#EF4444" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Remove {removeUserConfirm.name}?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  This action <strong style={{ color: c.text }}>cannot be undone</strong>. The user will be permanently removed from this agency. If you just want to suspend access, choose <strong style={{ color: c.text }}>Deactivate</strong> instead.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setRemoveUserConfirm(null)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                  const removedId = removeUserConfirm.id;
+                  const removedName = removeUserConfirm.name;
+                  setRemovedUserIds(prev => { const s = new Set(prev); s.add(removedId); return s; });
+                  showToast({
+                    title: "User removed",
+                    description: `${removedName} was removed from this agency.`,
+                  }, 3000);
+                  setRemoveUserConfirm(null);
+                }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ background: "#EF4444" }}>
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Section title — same as list view */}
       <div className="flex flex-col justify-center flex-shrink-0 mb-12"
         style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
@@ -992,6 +1361,37 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Plus className="w-3.5 h-3.5" />Add Phone
               </button>
             )}
+            {/* Admin-only: Book Roll — sells this agency's entire policy book to another agency. */}
+            {currentUserIsAdmin && !bookRolled.has(agency.id) && (
+              <button onClick={() => { setBookRollTargetId(""); setBookRollConfirmText(""); setBookRollOpen(true); }}
+                title="Sell this agency's policy book to another agency"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
+                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                <Archive className="w-3.5 h-3.5" />Book Roll
+              </button>
+            )}
+            {bookRolled.has(agency.id) && (
+              <span className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold"
+                style={{ ...font, backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.10) 63.88%)", border: "1px solid rgba(166,20,195,0.22)" }}>
+                {/* Gradient-stroked archive icon */}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <defs>
+                    <linearGradient id={`soldArchiveGrad-${agency.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#5C2ED4" />
+                      <stop offset="100%" stopColor="#A614C3" />
+                    </linearGradient>
+                  </defs>
+                  <g stroke={`url(#soldArchiveGrad-${agency.id})`}>
+                    <rect width="20" height="5" x="2" y="3" rx="1" />
+                    <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                    <path d="M10 12h4" />
+                  </g>
+                </svg>
+                <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Sold to {bookRolled.get(agency.id)!.targetCode}</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -1028,14 +1428,27 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eEmail}</p>
           </div>
           <InfoCard title="Agency Status" icon={<Building2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
-            {agency.status === "Appointed" ? <AppointedBadge /> : <UnapptBadge />}
+            {bookRolled.has(agency.id) || eStatus === "Unappointed" ? <UnapptBadge /> : <AppointedBadge />}
           </InfoCard>
-          <InfoCard title="Appointed Date" icon={<Calendar className="w-5 h-5" style={{ color: "#A855F7" }} />}>
-            <p className="text-[14px] font-semibold" style={{ ...font, color: c.text }}>{agency.apptDate}</p>
-          </InfoCard>
+          {/* Appointed Date card swaps to "Sold Date" when the agency has been book-rolled. */}
+          {bookRolled.has(agency.id) ? (
+            <InfoCard title="Sold Date" icon={<Archive className="w-5 h-5" style={{ color: "#A855F7" }} />}>
+              <p className="text-[14px] font-semibold" style={{ ...font, color: c.text }}>{bookRolled.get(agency.id)!.date}</p>
+              <p className="text-[11px] mt-1" style={{ ...font, color: c.muted }}>Originally appointed {agency.apptDate}</p>
+            </InfoCard>
+          ) : (
+            <InfoCard title="Appointed Date" icon={<Calendar className="w-5 h-5" style={{ color: "#A855F7" }} />}>
+              <p className="text-[14px] font-semibold" style={{ ...font, color: c.text }}>{agency.apptDate}</p>
+            </InfoCard>
+          )}
           <InfoCard title="Affiliations" icon={<Network className="w-5 h-5" style={{ color: "#A855F7" }} />}>
-            <div className="text-[12px] leading-relaxed" style={{ ...font, color: c.muted }}>
-              {agency.affiliations.slice(0, 4).join(" | ")}
+            <div className="space-y-1" style={{ paddingRight: 40 }}>
+              {agency.affiliations.slice(0, 5).map(a => (
+                <p key={a} className="text-[12px] leading-snug" style={{ ...font, color: c.text }}>{a}</p>
+              ))}
+              {agency.affiliations.length > 5 && (
+                <p className="text-[11px] leading-snug" style={{ ...font, color: c.muted }}>+{agency.affiliations.length - 5} more</p>
+              )}
             </div>
           </InfoCard>
         </div>
@@ -1050,7 +1463,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             return (
               <button key={key} onClick={() => { setDetailTab(key); }}
                 className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
-                style={{ ...font, color: active ? activeTextColor : c.muted, letterSpacing: "0.01em" }}>
+                style={{ ...font, color: active ? activeTextColor : c.muted, letterSpacing: "0.01em" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
                 <span style={{ color: active ? activeIconColor : undefined }}>{icon}</span>
                 {label}
                 {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: activeUnderline }} />}
@@ -1082,10 +1497,20 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div />
               <div>
                 <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Status:</p>
-                {agency.status === "Appointed" ? <AppointedBadge /> : <UnapptBadge />}
+                {bookRolled.has(agency.id) || eStatus === "Unappointed"
+                  ? <UnapptBadge />
+                  : <AppointedBadge />}
               </div>
-              <LabelValue label="Appt. Date" value={agency.apptDate} />
-              <div />
+              {/* When sold or unappointed, swap Appt. Date → Reason. Book-rolled agencies always show "Sold". */}
+              {bookRolled.has(agency.id) || eStatus === "Unappointed" ? (() => {
+                const reasonText = bookRolled.has(agency.id) ? "Sold" : (eReason || "—");
+                return <LabelValue label="Reason" value={<span style={{ color: "#A614C3", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{reasonText}</span>} />;
+              })() : (
+                <LabelValue label="Appt. Date" value={agency.apptDate} />
+              )}
+              {bookRolled.has(agency.id)
+                ? <LabelValue label="Sold To" value={<span style={{ color: "#A614C3", fontWeight: 600 }}>{bookRolled.get(agency.id)!.targetCode}</span>} />
+                : <div />}
               <LabelValue label="Agency Contact" value={agency.contact} />
               <LabelValue label="Email Address"  value={agency.contactEmail} />
               <div />
@@ -1144,7 +1569,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           {editExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setEditExpanded(false)} />}
           <div className={editExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "flex-1 overflow-y-auto pb-6"}
             style={editExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
-          <div className={editExpanded ? "p-8 mb-6" : "rounded-2xl p-8 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}` }}>
+          <div className={editExpanded ? "p-8 mb-6" : "rounded-2xl p-8 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
             {/* Card header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
@@ -1218,7 +1643,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="mb-4">
               <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:</label>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-3 gap-6">
                   <select value={eCountry} onChange={e => setECountry(e.target.value)} style={selectStyle}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
                   </select>
@@ -1233,16 +1658,21 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       if (a.country) setECountry(a.country);
                     }}
                     placeholder="Street address"
-                    inputStyle={inputStyle}
+                    containerStyle={{ width: "100%" }}
+                    inputStyle={{ ...inputStyle, width: "100%" }}
                     dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
                   />
+                  <div />
                 </div>
                 <div className="grid grid-cols-3 gap-6">
                   <input value={eCity} onChange={e => setECity(e.target.value)} placeholder="City" style={inputStyle} />
-                  <select value={eState} onChange={e => setEState(e.target.value)} style={selectStyle}>
-                    {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                  <input value={eZip} onChange={e => setEZip(e.target.value)} placeholder="ZIP" style={inputStyle} />
+                  <div className="flex gap-4">
+                    <select value={eState} onChange={e => setEState(e.target.value)} style={{ ...selectStyle, flex: 1 }}>
+                      {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
+                    </select>
+                    <input value={eZip} onChange={e => setEZip(e.target.value)} placeholder="ZIP" style={{ ...inputStyle, flex: 1 }} />
+                  </div>
+                  <div />
                 </div>
               </div>
             </div>
@@ -1255,7 +1685,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
               </div>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-3 gap-6">
                   <select value={eSameAddr ? eCountry : eMCountry} onChange={e => setEMCountry(e.target.value)}
                     style={{ ...selectStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
                     <option>United States of America</option><option>Canada</option><option>Mexico</option>
@@ -1271,21 +1701,25 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       if (a.country) setEMCountry(a.country);
                     }}
                     placeholder="Street address"
-                    containerStyle={{ opacity: eSameAddr ? 0.5 : 1 }}
-                    inputStyle={inputStyle}
+                    containerStyle={{ width: "100%", opacity: eSameAddr ? 0.5 : 1 }}
+                    inputStyle={{ ...inputStyle, width: "100%" }}
                     disabled={eSameAddr}
                     dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
                   />
+                  <div />
                 </div>
                 <div className="grid grid-cols-3 gap-6">
                   <input value={eSameAddr ? eCity : eMCity} onChange={e => setEMCity(e.target.value)}
                     placeholder="City" style={{ ...inputStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
-                  <select value={eSameAddr ? eState : eMState} onChange={e => setEMState(e.target.value)}
-                    style={{ ...selectStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
-                    {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                  <input value={eSameAddr ? eZip : eMZip} onChange={e => setEMZip(e.target.value)}
-                    placeholder="ZIP" style={{ ...inputStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
+                  <div className="flex gap-4">
+                    <select value={eSameAddr ? eState : eMState} onChange={e => setEMState(e.target.value)}
+                      style={{ ...selectStyle, flex: 1, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
+                      {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
+                    </select>
+                    <input value={eSameAddr ? eZip : eMZip} onChange={e => setEMZip(e.target.value)}
+                      placeholder="ZIP" style={{ ...inputStyle, flex: 1, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
+                  </div>
+                  <div />
                 </div>
               </div>
             </div>
@@ -1294,16 +1728,69 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Status:</label>
-                <select value={eStatus} onChange={e => setEStatus(e.target.value)} style={selectStyle}>
-                  <option value="">- Select one</option>
-                  <option value="Appointed">Appointed</option>
-                  <option value="Unappointed">Un Appointed</option>
-                </select>
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button type="button" onClick={() => { setEStatusOpen(o => !o); setEBizTypeOpen(false); }}
+                    className="w-full flex items-center justify-between outline-none"
+                    style={{ ...inputStyle, cursor: "pointer" }}>
+                    <span style={{ color: eStatus ? c.text : c.muted }}>{eStatus || "- Select one"}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eStatusOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                  </button>
+                  {eStatusOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                      {["Appointed", "Unappointed"].map(opt => {
+                        const active = eStatus === opt;
+                        return (
+                          <button key={opt} type="button" onClick={() => { setEStatus(opt); setEStatusOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                            style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                            <span>{opt}</span>
+                            {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <label style={labelStyle}>Appt. Date</label>
-                <DatePicker value={eApptDate} onChange={setEApptDate} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
-              </div>
+              {eStatus === "Unappointed" ? (
+                <div>
+                  <label style={labelStyle}>Reason:</label>
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <button type="button" onClick={() => { setEReasonOpen(o => !o); setEStatusOpen(false); setEBizTypeOpen(false); }}
+                      className="w-full flex items-center justify-between outline-none"
+                      style={{ ...inputStyle, cursor: "pointer" }}>
+                      <span style={{ color: eReason ? c.text : c.muted }}>{eReason || "Select reason"}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eReasonOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                    </button>
+                    {eReasonOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                        style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                        {E_REASON_OPTIONS.map(opt => {
+                          const active = eReason === opt;
+                          return (
+                            <button key={opt} type="button" onClick={() => { setEReason(opt); setEReasonOpen(false); }}
+                              className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                              style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                              onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                              onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                              <span>{opt}</span>
+                              {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label style={labelStyle}>Appt. Date</label>
+                  <DatePicker value={eApptDate} onChange={setEApptDate} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
+                </div>
+              )}
               <div />
             </div>
 
@@ -1323,16 +1810,32 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Type of Business:</label>
-                <select value={eBizType} onChange={e => setEBizType(e.target.value)} style={selectStyle}>
-                  <option value="">-Business Type</option>
-                  <option>Corporation</option>
-                  <option>Joint Venture</option>
-                  <option>Limited Liability Company</option>
-                  <option>Limited Partnership</option>
-                  <option>Partnership</option>
-                  <option>Sole Proprietorship or individual</option>
-                  <option>Sole Proprietorship</option>
-                </select>
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button type="button" onClick={() => { setEBizTypeOpen(o => !o); setEStatusOpen(false); }}
+                    className="w-full flex items-center justify-between outline-none"
+                    style={{ ...inputStyle, cursor: "pointer" }}>
+                    <span style={{ color: eBizType && eBizType !== "-Business Type" ? c.text : c.muted }}>{eBizType && eBizType !== "-Business Type" ? eBizType : "-Business Type"}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eBizTypeOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                  </button>
+                  {eBizTypeOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                      {["Corporation","Joint Venture","Limited Liability Company","Limited Partnership","Partnership","Sole Proprietorship or individual","Sole Proprietorship"].map(opt => {
+                        const active = eBizType === opt;
+                        return (
+                          <button key={opt} type="button" onClick={() => { setEBizType(opt); setEBizTypeOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                            style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                            <span>{opt}</span>
+                            {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Tax ID:</label>
@@ -1348,11 +1851,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Phone Number:</label>
-                <input value={ePhone} onChange={e => setEPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+                <input value={ePhone} onChange={e => setEPhone(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />
               </div>
               <div>
                 <label style={labelStyle}>Toll Free Number:</label>
-                <input value={eTollFree} onChange={e => setETollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+                <input value={eTollFree} onChange={e => setETollFree(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />
               </div>
               <div />
             </div>
@@ -1397,8 +1900,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       const active = val === bool;
                       return (
                         <button key={opt} onClick={() => set(bool)}
-                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex-1 justify-center"
-                          style={{ ...font, boxSizing: "border-box",
+                          className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                          style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
                             border: "1.65px solid transparent",
                             backgroundImage: active
                               ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
@@ -1457,7 +1960,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               Cancel
             </button>
-            <button onClick={() => setIsEditing(false)}
+            <button onClick={() => {
+                const w9Changed = (
+                  eName !== agency.name
+                  || eType !== agency.agencyType
+                  || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
+                  || eTaxId !== agency.taxId
+                );
+                const licChanged = eLicNo !== agency.licenseNo;
+                setIsEditing(false);
+                if (w9Changed || licChanged) setDocUpdateModal({ w9: w9Changed, license: licChanged });
+              }}
               className="text-[13px] font-semibold text-white transition-all"
               style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
               onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
@@ -1469,6 +1982,235 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
           </>
         )}
+
+        {/* ── Documents tab ── */}
+        {detailTab === "documents" && (() => {
+          // Smart triggers — fire when source-of-truth fields drift from current agency baseline.
+          const w9Drift = (
+            eName !== agency.name
+            || eType !== agency.agencyType
+            || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
+            || eTaxId !== agency.taxId
+          );
+          const licenseDrift = eLicNo !== agency.licenseNo;
+          const docsByCat = (cat: AgencyDocCategory) => agencyDocs.filter(d => d.category === cat);
+          // Mock E&O record — read-only per agreement clause.
+          const eoExpiry = agency.eoExp || "Mar 1, 2027";
+          const isAdmin = currentUserIsAdmin;
+          const handleUpload = (cat: AgencyDocCategory) => {
+            // Demo: add a mock row for the new upload. Old W-9 auto-archives.
+            const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            const fileName = cat === "bor" ? `BOR-${Date.now()}.pdf`
+              : cat === "w9" ? `W9-${new Date().getFullYear()}.pdf`
+              : cat === "license" ? `${agency.state || "NY"}-License-Updated.pdf`
+              : `Agreement-${Date.now()}.pdf`;
+            setAgencyDocs(prev => {
+              if (cat === "w9") {
+                // Archive previous current W-9, add new one as current.
+                return [
+                  { id: `d${Date.now()}`, category: "w9", name: fileName, date: today },
+                  ...prev.map(d => d.category === "w9" && !d.archived ? { ...d, archived: true } : d),
+                ];
+              }
+              return [{ id: `d${Date.now()}`, category: cat, name: fileName, date: today }, ...prev];
+            });
+            if (cat === "w9") setW9TriggerDismissed(true);
+            if (cat === "license") setLicenseTriggerDismissed(true);
+            showToast({ title: "Document uploaded", description: `${fileName} added to ${cat === "bor" ? "Broker of Record" : cat === "w9" ? "W-9" : cat === "license" ? "License" : "Agreements"}.` });
+          };
+          const archiveDoc = (id: string) => {
+            setAgencyDocs(prev => prev.map(d => d.id === id ? { ...d, archived: true } : d));
+          };
+          const removeDoc = (id: string) => {
+            setAgencyDocs(prev => prev.filter(d => d.id !== id));
+          };
+
+          // Reusable section component
+          const Section = ({ category, title, count, hint }: { category: AgencyDocCategory; title: string; count: string; hint?: string }) => (
+            <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4" style={{ color: "#A855F7" }} />
+                  <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>{title}</span>
+                  <span className="text-[12px]" style={{ ...font, color: c.muted }}>({count})</span>
+                </div>
+                {isAdmin && (
+                  <button onClick={() => handleUpload(category)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors"
+                    style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.20)" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.14)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}>
+                    <Upload className="w-3 h-3" />Upload
+                  </button>
+                )}
+              </div>
+              {docsByCat(category).length === 0 ? (
+                <div className="px-5 py-6 text-center text-[12px]" style={{ ...font, color: c.muted }}>
+                  No documents yet. {isAdmin && "Click Upload to add one."}
+                </div>
+              ) : (
+                <div>
+                  {docsByCat(category).map((d, idx, arr) => (
+                    <div key={d.id} className="flex items-center gap-3 px-5 py-2.5"
+                      style={{ borderBottom: idx !== arr.length - 1 ? `1px solid ${c.border}` : "none" }}>
+                      <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>{d.name}</span>
+                          {category === "w9" && !d.archived && (
+                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Current</span>
+                          )}
+                          {d.archived && (
+                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.mutedBg, letterSpacing: "0.04em" }}>Archived</span>
+                          )}
+                        </div>
+                        <div className="text-[11px]" style={{ ...font, color: c.muted }}>{d.date}</div>
+                      </div>
+                      <button title="View" className="p-1.5 rounded transition-colors"
+                        style={{ color: c.muted }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button title="Download" className="p-1.5 rounded transition-colors"
+                        style={{ color: c.muted }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                      {isAdmin && !d.archived && category === "w9" && (
+                        <button title="Archive" onClick={() => archiveDoc(d.id)}
+                          className="p-1.5 rounded transition-colors"
+                          style={{ color: c.muted }}
+                          onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                          <Archive className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {isAdmin && (d.archived || category !== "w9") && (
+                        <button title="Delete" onClick={() => removeDoc(d.id)}
+                          className="p-1.5 rounded transition-colors"
+                          style={{ color: c.muted }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#EF4444"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {hint && (
+                <div className="px-5 py-2.5 text-[11px] flex items-start gap-1.5" style={{ ...font, color: c.muted, borderTop: `1px solid ${c.border}` }}>
+                  <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  <span>{hint}</span>
+                </div>
+              )}
+            </div>
+          );
+
+          return (
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-4">
+              {/* ImageRight sync strip */}
+              <div className="flex items-center gap-2 px-5 py-2 mb-4 rounded-lg text-[12px] flex-shrink-0"
+                style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <RefreshCw className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                <span>Synced from <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
+                <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
+                  className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Sync now
+                </button>
+              </div>
+
+              {/* Trigger banners */}
+              {w9Drift && (
+                <div className="flex items-center gap-2 px-5 py-2.5 mb-3 rounded-lg text-[12px] flex-shrink-0"
+                  style={{ ...font, color: c.text, background: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%)", border: "1px solid rgba(166,20,195,0.20)" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                    <defs>
+                      <linearGradient id="w9-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#5C2ED4" />
+                        <stop offset="100%" stopColor="#A614C3" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="8" cy="8" r="7" stroke="url(#w9-alert-grad)" strokeWidth="1.5" />
+                    <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#w9-alert-grad)" />
+                    <circle cx="8" cy="11.5" r="0.9" fill="url(#w9-alert-grad)" />
+                  </svg>
+                  <span>Agency information changed — please upload an updated <strong>W-9</strong>.</span>
+                  <button onClick={() => handleUpload("w9")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                    style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Upload W-9
+                  </button>
+                </div>
+              )}
+              {licenseDrift && (
+                <div className="flex items-center gap-2 px-5 py-2.5 mb-3 rounded-lg text-[12px] flex-shrink-0"
+                  style={{ ...font, color: c.text, background: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%)", border: "1px solid rgba(166,20,195,0.20)" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                    <defs>
+                      <linearGradient id="lic-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#5C2ED4" />
+                        <stop offset="100%" stopColor="#A614C3" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="8" cy="8" r="7" stroke="url(#lic-alert-grad)" strokeWidth="1.5" />
+                    <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#lic-alert-grad)" />
+                    <circle cx="8" cy="11.5" r="0.9" fill="url(#lic-alert-grad)" />
+                  </svg>
+                  <span>License number changed — please upload the updated <strong>license copy</strong>.</span>
+                  <button onClick={() => handleUpload("license")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                    style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Upload License
+                  </button>
+                </div>
+              )}
+
+              {/* Sections */}
+              <Section category="bor"       title="Broker of Record" count={String(docsByCat("bor").length)} />
+              <Section category="w9"        title="W-9"              count={`${docsByCat("w9").filter(d => !d.archived).length} current · ${docsByCat("w9").filter(d => d.archived).length} archived`} hint="Required when name, entity type, address, or TIN changes." />
+              <Section category="license"   title="License"          count={String(docsByCat("license").length)} hint="Required when license number changes." />
+              <Section category="agreement" title="Agreements"       count={String(docsByCat("agreement").length)} />
+
+              {/* E&O (read-only) */}
+              <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-4 h-4" style={{ color: "#A855F7" }} />
+                    <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>E&amp;O Certificate</span>
+                  </div>
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.mutedBg, letterSpacing: "0.04em" }}>
+                    <Lock className="w-3 h-3" />Read-only
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 px-5 py-2.5">
+                  <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px]" style={{ ...font, color: c.text }}>EO-Certificate.pdf</div>
+                    <div className="text-[11px]" style={{ ...font, color: c.muted }}>Expires {eoExpiry}</div>
+                  </div>
+                  <button title="View" className="p-1.5 rounded transition-colors"
+                    style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button title="Download" className="p-1.5 rounded transition-colors"
+                    style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="px-5 py-2.5 text-[11px] flex items-start gap-1.5" style={{ ...font, color: c.muted, borderTop: `1px solid ${c.border}` }}>
+                  <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  <span>E&amp;O must remain active per agreement clause — contact compliance to update.</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Notes tab ── */}
         {detailTab === "notes" && (
@@ -1527,7 +2269,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
                             style={{ fontFamily: FONT, color: noteFilterType === t ? "#A614C3" : c.text, background: noteFilterType === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
                             {t === "All" ? "All Types" : t}
-                            {noteFilterType === t && <span style={{ color: "#A614C3" }}>✓</span>}
+                            {noteFilterType === t && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                         ))}
                         <div style={{ height:1, background:c.border, margin:"6px 0" }} />
@@ -1536,13 +2278,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           ["All", null],
                           ["Private", Lock],
                           ["Shared", Users],
-                          ["Public", Globe],
                         ] as const).map(([v, Icon]) => (
                           <button key={v} onClick={() => { setVisibilityFilter(v as typeof visibilityFilter); }}
                             className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
                             style={{ fontFamily: FONT, color: visibilityFilter === v ? "#A614C3" : c.text, background: visibilityFilter === v ? "rgba(168,85,247,0.08)" : "transparent" }}>
                             <span className="flex items-center gap-2">{Icon && <Icon className="w-3 h-3" />}{v === "All" ? "All Visibility" : v}</span>
-                            {visibilityFilter === v && <span style={{ color: "#A614C3" }}>✓</span>}
+                            {visibilityFilter === v && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                         ))}
                       </div>
@@ -1561,7 +2302,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           <button key={d} onClick={() => { setNoteSortDir(d); setNoteSortOpen(false); }}
                             className="w-full text-left px-3 py-2 text-[12px] flex items-center justify-between"
                             style={{ fontFamily: FONT, color: noteSortDir === d ? "#A614C3" : c.text, background: noteSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
-                            {label}{noteSortDir === d && <span style={{ color:"#A614C3" }}>✓</span>}
+                            <span>{label}</span>{noteSortDir === d && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                         ))}
                       </div>
@@ -1947,7 +2688,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             {selectedNote && !noteExpanded && (
               <div className="flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden transition-all"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
-                onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); setNoteShareOpen(false); }}>
+                onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); }}>
                 {(() => {
                   const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
                   return (
@@ -1964,11 +2705,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           {pinnedIds.has(selectedNote.id) && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "#F59E0B" }} />}
                         </div>
                         <div className="flex items-center gap-0.5 flex-shrink-0">
-                          <button onClick={e => { e.stopPropagation(); setNoteShareOpen(p => !p); setNoteMoreOpen(false); }}
-                            className="p-1.5 rounded-md transition-colors"
-                            style={{ color: noteShareOpen ? "#A855F7" : c.muted, background: noteShareOpen ? "rgba(168,85,247,0.10)" : "transparent" }}>
-                            <Users className="w-3.5 h-3.5" />
-                          </button>
                           <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(selectedNote.id) ? s.delete(selectedNote.id) : s.add(selectedNote.id); return s; }); }}
                             className="p-1.5 rounded-md transition-colors"
                             style={{ color: pinnedIds.has(selectedNote.id) ? "#F59E0B" : c.muted, background: pinnedIds.has(selectedNote.id) ? "rgba(245,158,11,0.10)" : "transparent" }}>
@@ -1983,7 +2719,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             <Maximize2 className="w-3.5 h-3.5" style={{ color: c.muted }} />
                           </button>
                           <div className="relative" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => { setNoteMoreOpen(p => !p); setNoteShareOpen(false); }} className="p-1.5 rounded-md" style={{ color: c.muted }}>
+                            <button onClick={() => { setNoteMoreOpen(p => !p); }} className="p-1.5 rounded-md" style={{ color: c.muted }}>
                               <MoreVertical className="w-3.5 h-3.5" />
                             </button>
                             {noteMoreOpen && (
@@ -2035,7 +2771,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               style={{ fontFamily: FONT, background: btnGrad }}
                               onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>Save</button>
                           )}
-                          <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); setNoteShareOpen(false); }}
+                          <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
                             className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
                             onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                             <X className="w-4 h-4" />
@@ -2046,18 +2782,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {/* Body */}
                       <div className="flex-1 overflow-y-auto py-6 relative" style={{ paddingLeft:28, paddingRight:28 }}>
                         {copyToast && <div className="absolute top-3 right-4 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background: btnGrad, fontFamily: FONT }}>{copyToast}</div>}
-                        {noteShareOpen && renderSharePanel()}
                         {noteLocked && isLockedByOther && (
                           <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
                             <div className="flex items-center gap-2">
                               <Lock className="w-4 h-4" style={{ color:"#A855F7" }} />
                               <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Locked by <strong>{lockedBy}</strong></span>
                             </div>
-                            <button onClick={() => { setCopyToast(`Access requested from ${lockedBy.split(" ")[0]}`); setTimeout(()=>setCopyToast(""),3000); }}
-                              className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                              style={{ fontFamily: FONT, background:"rgba(168,85,247,0.12)", color:"#A855F7", border:"1px solid rgba(168,85,247,0.25)" }}>
-                              Request Access
-                            </button>
                           </div>
                         )}
                         <input value={editNoteTitle} onChange={e => setEditNoteTitle(e.target.value)} readOnly={noteLocked || showTrashed}
@@ -2072,7 +2802,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             { icon: <Lock className="w-3.5 h-3.5" />, label:"Visibility", value:(
   <div className="flex flex-col gap-2 min-w-0">
     <div className="flex flex-wrap gap-1.5">
-      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
         <button key={v} title={tip} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteVisibility(v)}
           className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
           style={{ fontFamily:FONT, background:editNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>
@@ -2080,19 +2810,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         </button>
       ))}
     </div>
-    {editNoteVisibility === "Shared" && (
-      <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
-        <div className="flex -space-x-1">
-          {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
-            <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
-          ))}
-        </div>
-        <span>You + {TEAMMATES.length - 1} teammates</span>
-        <span>·</span>
-        <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }}
-          className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
-      </div>
-    )}
   </div>
 ) },
                             { icon: <Building2 className="w-3.5 h-3.5" />, label:"Agency", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agency.name}</span> },
@@ -2130,7 +2847,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               const isLockedByOther = noteLocked && lockedBy !== CURRENT_USER;
               return (
               <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width:"58vw" }}
-                onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); setNoteShareOpen(false); }}>
+                onClick={e => { e.stopPropagation(); setNoteMoreOpen(false); }}>
                 <div className="flex-1 cursor-pointer" onClick={() => setNoteExpanded(false)} style={{ background:"rgba(0,0,0,0.25)" }} />
                 <div className="flex flex-col h-full shadow-2xl" style={{ width:"100%", background:c.cardBg, borderLeft:`1px solid ${c.border}` }}>
                   {/* Top bar */}
@@ -2144,11 +2861,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {pinnedIds.has(selectedNote.id) && <Pin className="w-3 h-3 flex-shrink-0" style={{ color:"#F59E0B" }} />}
                     </div>
                     <div className="flex items-center gap-0.5 flex-shrink-0">
-                      <button onClick={e => { e.stopPropagation(); setNoteShareOpen(p => !p); setNoteMoreOpen(false); }}
-                        className="p-1.5 rounded-md transition-colors"
-                        style={{ color: noteShareOpen ? "#A855F7" : c.muted, background: noteShareOpen ? "rgba(168,85,247,0.10)" : "transparent" }}>
-                        <Users className="w-3.5 h-3.5" />
-                      </button>
                       <button onClick={e => { e.stopPropagation(); setPinnedIds(prev => { const s = new Set(prev); s.has(selectedNote.id) ? s.delete(selectedNote.id) : s.add(selectedNote.id); return s; }); }}
                         className="p-1.5 rounded-md transition-colors"
                         style={{ color: pinnedIds.has(selectedNote.id) ? "#F59E0B" : c.muted, background: pinnedIds.has(selectedNote.id) ? "rgba(245,158,11,0.10)" : "transparent" }}>
@@ -2163,7 +2875,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <Minimize2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
                       </button>
                       <div className="relative" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => { setNoteMoreOpen(p => !p); setNoteShareOpen(false); }} className="p-1.5 rounded-md" style={{ color: c.muted }}>
+                        <button onClick={() => { setNoteMoreOpen(p => !p); }} className="p-1.5 rounded-md" style={{ color: c.muted }}>
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
                         {noteMoreOpen && (
@@ -2215,7 +2927,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           style={{ fontFamily: FONT, background: btnGrad }}
                           onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")} onMouseLeave={e=>(e.currentTarget.style.filter="none")}>Save</button>
                       )}
-                      <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); setNoteShareOpen(false); }}
+                      <button onClick={() => { setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
                         className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
                         onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                         <X className="w-4 h-4" />
@@ -2225,18 +2937,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   {/* Body */}
                   <div className="flex-1 overflow-y-auto relative" style={{ paddingLeft:72, paddingRight:72, paddingTop:24, paddingBottom:24 }}>
                     {copyToast && <div className="absolute top-3 right-6 z-50 px-3 py-1.5 rounded-lg text-[12px] font-medium text-white shadow-lg" style={{ background:btnGrad, fontFamily:FONT }}>{copyToast}</div>}
-                    {noteShareOpen && renderSharePanel()}
                     {noteLocked && isLockedByOther && (
                       <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl" style={{ background:"rgba(168,85,247,0.07)", border:"1px solid rgba(168,85,247,0.20)" }}>
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4" style={{ color:"#A855F7" }} />
                           <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>Locked by <strong>{lockedBy}</strong></span>
                         </div>
-                        <button onClick={() => { setCopyToast(`Access requested from ${lockedBy.split(" ")[0]}`); setTimeout(()=>setCopyToast(""),3000); }}
-                          className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                          style={{ fontFamily: FONT, background:"rgba(168,85,247,0.12)", color:"#A855F7", border:"1px solid rgba(168,85,247,0.25)" }}>
-                          Request Access
-                        </button>
                       </div>
                     )}
                     <input value={editNoteTitle} onChange={e=>setEditNoteTitle(e.target.value)} readOnly={noteLocked||showTrashed}
@@ -2251,7 +2957,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         { icon: <Lock className="w-3.5 h-3.5" />, label:"Visibility", value:(
   <div className="flex flex-col gap-2 min-w-0">
     <div className="flex flex-wrap gap-1.5">
-      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Shared with specific teammates"],["Public",Globe,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
+      {([["Private",Lock,"Only you can see this note"],["Shared",Users,"Visible to everyone in your team"]] as const).map(([v,Ic,tip]) => (
         <button key={v} title={tip} onClick={() => (!noteLocked&&!showTrashed)&&setEditNoteVisibility(v)}
           className="px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5"
           style={{ fontFamily:FONT, background:editNoteVisibility===v?"rgba(168,85,247,0.10)":"transparent", color:editNoteVisibility===v?"#A855F7":c.muted, border:`1px solid ${editNoteVisibility===v?"rgba(168,85,247,0.35)":c.border}`, cursor:(noteLocked||showTrashed)?"default":"pointer" }}>
@@ -2259,19 +2965,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         </button>
       ))}
     </div>
-    {editNoteVisibility === "Shared" && (
-      <div className="text-[11px] flex items-center gap-1.5 flex-wrap" style={{ fontFamily:FONT, color: c.muted }}>
-        <div className="flex -space-x-1">
-          {TEAMMATES.filter(t => t.name !== CURRENT_USER).slice(0,3).map(t => (
-            <div key={t.name} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ ...avatarStyle, border: `1.5px solid ${c.cardBg}` }}><span style={avatarTextStyle}>{initials(t.name)}</span></div>
-          ))}
-        </div>
-        <span>You + {TEAMMATES.length - 1} teammates</span>
-        <span>·</span>
-        <button onClick={e => { e.stopPropagation(); setNoteShareOpen(true); }}
-          className="font-medium transition-colors" style={{ color: "#A855F7" }}>Manage</button>
-      </div>
-    )}
   </div>
 ) },
                         { icon: <Building2 className="w-3.5 h-3.5" />, label:"Agency", value:<span className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{agency.name}</span> },
@@ -2325,22 +3018,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
+                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter("All LOBs"); setStatusFilter("All Statuses"); setApplicantFilter(new Set()); setProducerFilter(new Set()); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
+                  className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
+                <div className="relative" onClick={e=>e.stopPropagation()}><button title="View columns" onClick={()=>setQpViewOpen(o=>!o)} className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3", background: qpViewOpen ? c.hoverBg : "transparent" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background = qpViewOpen ? c.hoverBg : "transparent")}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg></button>{qpViewOpen && (<div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}><div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold" style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>Show Columns</div><div className="py-1.5 max-h-[280px] overflow-y-auto">{QP_COLUMNS.map(col => { const visible = !qpHiddenCols.has(col.key); return (<label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors" onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")} onClick={() => setQpHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}><div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>{visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span></label>); })}</div><button onClick={() => setQpHiddenCols(new Set())} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}><RefreshCw className="w-3.5 h-3.5" />Show All</button></div>)}</div>
+                <button title="Export" className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
+              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
+                {!qpHiddenCols.has("created") && (
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Policy Number */}
+                {!qpHiddenCols.has("policyNumber") && (
                 <button onClick={()=>{if(qpSortKey==="policyNumber")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("policyNumber");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Policy Number<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="policyNumber"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="policyNumber"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Applicant */}
+                {!qpHiddenCols.has("applicant") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
                     Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":sub}/></svg></span>
@@ -2371,15 +3070,21 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* DBA */}
+                {!qpHiddenCols.has("dba") && (
                 <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Effective */}
+                {!qpHiddenCols.has("effective") && (
                 <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* LOB */}
+                {!qpHiddenCols.has("lob") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
                     LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
@@ -2396,7 +3101,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* Status */}
+                {!qpHiddenCols.has("status") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
                     Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
@@ -2413,7 +3120,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* Producer */}
+                {!qpHiddenCols.has("producer") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
                     Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":sub}/></svg></span>
@@ -2444,6 +3153,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
               </div>
               <div className="overflow-y-auto flex-1">
                 {agencyPolicies.length === 0 ? (
@@ -2452,16 +3162,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   const isRenewal = p.status === "Upcoming Renewal";
                   return (
                     <div key={p.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
-                      style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isRenewal?"rgba(116,195,183,0.08)":"transparent", borderLeft:isRenewal?"3px solid #74C3B7":"3px solid transparent" }}
+                      style={{ gridTemplateColumns:qpGridTemplate, borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isRenewal?"rgba(116,195,183,0.08)":"transparent", borderLeft:isRenewal?"3px solid #74C3B7":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.08)":"transparent")}>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>
-                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{p.policyNumber}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba||"—"}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.lob}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.status}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.producer}</div>
+                      {!qpHiddenCols.has("created")      && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>}
+                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{p.policyNumber}</div>}
+                      {!qpHiddenCols.has("applicant")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>}
+                      {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba||"—"}</div>}
+                      {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>}
+                      {!qpHiddenCols.has("lob")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.lob}</div>}
+                      {!qpHiddenCols.has("status")       && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.status}</div>}
+                      {!qpHiddenCols.has("producer")     && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.producer}</div>}
                     </div>
                   );
                 })}
@@ -2491,22 +3201,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><LayoutGrid className="w-4 h-4"/></button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
+                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter("All LOBs"); setStatusFilter("All Statuses"); setApplicantFilter(new Set()); setProducerFilter(new Set()); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
+                  className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
+                <div className="relative" onClick={e=>e.stopPropagation()}><button title="View columns" onClick={()=>setQpViewOpen(o=>!o)} className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3", background: qpViewOpen ? c.hoverBg : "transparent" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background = qpViewOpen ? c.hoverBg : "transparent")}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg></button>{qpViewOpen && (<div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}><div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold" style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>Show Columns</div><div className="py-1.5 max-h-[280px] overflow-y-auto">{QP_COLUMNS.map(col => { const visible = !qpHiddenCols.has(col.key); return (<label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors" onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")} onClick={() => setQpHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}><div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>{visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span></label>); })}</div><button onClick={() => setQpHiddenCols(new Set())} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}><RefreshCw className="w-3.5 h-3.5" />Show All</button></div>)}</div>
+                <button title="Export" className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
+              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
+                {!qpHiddenCols.has("created") && (
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Created<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="createdDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="createdDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Submission ID */}
+                {!qpHiddenCols.has("policyNumber") && (
                 <button onClick={()=>{if(qpSortKey==="quoteId")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("quoteId");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Submission ID<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="quoteId"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="quoteId"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Applicant */}
+                {!qpHiddenCols.has("applicant") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setApplicantOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:applicantFilter.size>0?"#A614C3":c.muted}}>
                     Applicant<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={applicantFilter.size>0?"#A614C3":sub}/></svg></span>
@@ -2537,15 +3253,21 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* DBA */}
+                {!qpHiddenCols.has("dba") && (
                 <button onClick={()=>{if(qpSortKey==="dba")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("dba");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   DBA<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="dba"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="dba"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* Effective */}
+                {!qpHiddenCols.has("effective") && (
                 <button onClick={()=>{if(qpSortKey==="effectiveDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("effectiveDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
                   Effective<span className="inline-flex ml-0.5"><svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M4 8V1M4 1L2 3M4 1L6 3" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="asc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 1V8M10 8L8 6M10 8L12 6" stroke={qpSortKey==="effectiveDate"&&qpSortDir==="desc"?(isDark?"#fff":"#374151"):sub} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
                 </button>
+                )}
                 {/* LOB */}
+                {!qpHiddenCols.has("lob") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
                     LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
@@ -2562,7 +3284,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* Status */}
+                {!qpHiddenCols.has("status") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
                     Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
@@ -2579,7 +3303,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
                 {/* Producer */}
+                {!qpHiddenCols.has("producer") && (
                 <div className="relative">
                   <button onClick={()=>{closeAllDropdowns();setProducerOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:producerFilter.size>0?"#A614C3":c.muted}}>
                     Producer<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={producerFilter.size>0?"#A614C3":sub}/></svg></span>
@@ -2610,6 +3336,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </>)}
                 </div>
+                )}
               </div>
               <div className="overflow-y-auto flex-1">
                 {agencyQuotes.length === 0 ? (
@@ -2618,16 +3345,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   const isIncomplete = q.status === "Incomplete";
                   return (
                     <div key={q.id} className="grid px-5 py-3.5 items-center gap-4 transition-colors cursor-pointer"
-                      style={{ gridTemplateColumns:"1.1fr 1.6fr 1.2fr 1fr 1.1fr 1.1fr 1.2fr 1.2fr", borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isIncomplete?"rgba(245,158,11,0.06)":"transparent", borderLeft:isIncomplete?"3px solid #F59E0B":"3px solid transparent" }}
+                      style={{ gridTemplateColumns:qpGridTemplate, borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isIncomplete?"rgba(245,158,11,0.06)":"transparent", borderLeft:isIncomplete?"3px solid #F59E0B":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.06)":"transparent")}>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>
-                      <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{q.quoteId}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba||"—"}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate?new Date(q.effectiveDate).toLocaleDateString():"—"}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.lob}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.status}</div>
-                      <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.producer}</div>
+                      {!qpHiddenCols.has("created")      && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>}
+                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{q.quoteId}</div>}
+                      {!qpHiddenCols.has("applicant")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>}
+                      {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba||"—"}</div>}
+                      {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate?new Date(q.effectiveDate).toLocaleDateString():"—"}</div>}
+                      {!qpHiddenCols.has("lob")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.lob}</div>}
+                      {!qpHiddenCols.has("status")       && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.status}</div>}
+                      {!qpHiddenCols.has("producer")     && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.producer}</div>}
                     </div>
                   );
                 })}
@@ -2673,7 +3400,23 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 onClick={e=>{e.stopPropagation();setImportUsersOpen(true);}}>
                 <Upload className="w-3.5 h-3.5" style={{ color: teal }} />Import Users
               </button>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={e => { e.stopPropagation(); setUsersView(v => v === "inactive" ? "active" : "inactive"); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  title={usersView === "inactive" ? "Click to go back to Active Users" : "Show deactivated users"}
+                  style={{ fontFamily: FONT,
+                    background: usersView === "inactive" ? "rgba(245,158,11,0.10)" : "transparent",
+                    color: usersView === "inactive" ? "#F59E0B" : c.muted,
+                    border: `1px solid ${usersView === "inactive" ? "rgba(245,158,11,0.25)" : c.border}` }}
+                  onMouseEnter={e => { if (usersView !== "inactive") e.currentTarget.style.background = c.hoverBg; }}
+                  onMouseLeave={e => { if (usersView !== "inactive") e.currentTarget.style.background = "transparent"; }}>
+                  <Archive className="w-3.5 h-3.5" />
+                  {usersView === "inactive" ? "Back to Active Users" : "View Inactive Users"}
+                  {usersView !== "inactive" && inactiveCount > 0 && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", color: c.muted }}>{inactiveCount}</span>
+                  )}
+                </button>
                 <button className="p-2 rounded-lg transition-colors" style={{ color:teal }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                   <Download className="w-4 h-4" />
@@ -2746,12 +3489,67 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
               </div>
 
+              {/* No-Principal guard — if the agency has active users but none of them is Principal,
+                  surface a CTA to assign one. Either pick from existing users or jump to the Add User flow. */}
+              {(() => {
+                const activeForAgency = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && !inactiveUserIds.has(u.id));
+                const hasPrincipal = activeForAgency.some(u =>
+                  principalOverride && u.id === principalOverride.newId ? true
+                  : principalOverride && u.id === principalOverride.oldId ? false
+                  : u.jobTitle === "Principal"
+                );
+                if (hasPrincipal || usersView !== "active" || activeForAgency.length === 0) return null;
+                return (
+                  <div className="px-6 py-2.5 flex items-center gap-2 text-[12px]"
+                    style={{ fontFamily: FONT, color: c.text, background: c.cardBg, borderBottom: `1px solid ${c.border}` }}>
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#F59E0B" }} />
+                    <span>No Principal assigned — every agency requires one.</span>
+                    <button onClick={() => { setAssignPrincipalChoice(""); setAssignPrincipalOpen(true); }}
+                      className="font-semibold transition-colors ml-auto" style={{ color: "#A614C3" }}>Pick existing</button>
+                    <span style={{ color: c.muted }}>·</span>
+                    <button onClick={() => { setAuJobTitle("Principal"); setAddUserOpen(true); }}
+                      className="font-semibold transition-colors" style={{ color: "#A614C3" }}>Add new user</button>
+                  </div>
+                );
+              })()}
+
               {/* Rows */}
               <div className="overflow-y-auto flex-1" style={{ background: c.cardBg }}>
-                {agencyUsers.length === 0 ? (
-                  <div className="flex items-center justify-center py-16 text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>No users found</div>
-                ) : agencyUsers.map((u, i, arr) => {
-                  const isPrincipal = u.jobTitle === "Principal";
+                {agencyUsers.length === 0 ? (() => {
+                  // When search has 0 active matches, check if any inactive users would match the same query
+                  // and offer to surface them with a one-click "Show inactive" affordance.
+                  const q = userSearch.trim().toLowerCase();
+                  const inactiveMatchCount = q && usersView === "active"
+                    ? mockAgencyUsers.filter(u =>
+                        u.agencyId === agency.id
+                        && !removedUserIds.has(u.id)
+                        && inactiveUserIds.has(u.id)
+                        && (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+                        && (jobTitleFilter.size === 0 || jobTitleFilter.has(u.jobTitle))
+                      ).length
+                    : 0;
+                  return (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3" style={{ fontFamily: FONT }}>
+                      <span className="text-[13px]" style={{ color: c.muted }}>No users found</span>
+                      {inactiveMatchCount > 0 && (
+                        <button onClick={() => setUsersView("inactive")}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                          style={{ background: "rgba(245,158,11,0.10)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.25)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.16)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.10)")}>
+                          {inactiveMatchCount} inactive {inactiveMatchCount === 1 ? "user" : "users"} also match — Show inactive
+                        </button>
+                      )}
+                    </div>
+                  );
+                })() : agencyUsers.map((u, i, arr) => {
+                  // Honor a Principal-role transfer: the new user becomes Principal, the old one is demoted in the UI.
+                  const effectiveJobTitle =
+                    principalOverride && u.id === principalOverride.newId ? "Principal"
+                    : principalOverride && u.id === principalOverride.oldId && u.jobTitle === "Principal" ? "Producer"
+                    : u.jobTitle;
+                  const isPrincipal = effectiveJobTitle === "Principal";
+                  const isInactive = inactiveUserIds.has(u.id);
                   return (
                     <div key={u.id}
                       className="grid items-center px-6 cursor-pointer transition-colors relative"
@@ -2761,25 +3559,31 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
 
                       {/* Principal indicator — absolute so it doesn't shift grid */}
-                      {isPrincipal && (
+                      {isPrincipal && !isInactive && (
                         <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:teal }} />
+                      )}
+                      {isInactive && (
+                        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:"#F59E0B" }} />
                       )}
 
                       {/* Name */}
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex items-center gap-2">
                         <div className="text-[13px] font-semibold truncate" style={{ fontFamily:FONT, color:c.text }}>{u.name}</div>
+                        {isInactive && (
+                          <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                            style={{ fontFamily:FONT, background:"rgba(245,158,11,0.12)", color:"#F59E0B", letterSpacing: "0.04em" }}>
+                            Inactive
+                          </span>
+                        )}
                       </div>
 
-                      {/* Admin */}
+                      {/* Admin — render gear icon when the user has admin permissions (including auto-grants from Principal reassignment). */}
                       <div className="flex items-center justify-center">
-                        {u.isAdmin
-                          ? <UserCog className="w-[18px] h-[18px]" style={{ color:teal }}/>
-                          : <Users   className="w-[18px] h-[18px]" style={{ color:c.muted }}/>
-                        }
+                        {(u.isAdmin || adminGrantOverrides.has(u.id)) && <UserCog className="w-[18px] h-[18px]" style={{ color:teal }}/>}
                       </div>
 
                       {/* Job title */}
-                      <div className="text-[13px] text-left" style={{ fontFamily:FONT, color:c.text }}>{u.jobTitle || "—"}</div>
+                      <div className="text-[13px] text-left" style={{ fontFamily:FONT, color:c.text }}>{effectiveJobTitle || "—"}</div>
 
                       {/* Email */}
                       <div className="text-[13px] truncate text-left" style={{ fontFamily:FONT, color:c.muted }}>{u.email}</div>
@@ -2799,12 +3603,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           onClick={()=>setUserMenuId(userMenuId===u.id?null:u.id)}>
                           <MoreVertical className="w-4 h-4"/>
                         </button>
-                        {userMenuId === u.id && (
+                        {userMenuId === u.id && (() => {
+                          const isInactive = inactiveUserIds.has(u.id);
+                          const base = ["Edit User", "Reset Password"];
+                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Deactivate", "Remove"];
+                          const actions = currentUserIsAdmin ? [...base, ...adminOnly] : base;
+                          return (
                           <div className="absolute right-0 top-9 z-20 rounded-xl shadow-xl overflow-hidden min-w-[150px]"
-                            style={{ background:isDark?"#1E2240":c.cardBg, border:`1px solid ${c.border}` }}>
-                            {["Edit User","Reset Password","Deactivate","Remove"].map(action => (
+                            style={{ background:isDark?"#1E2240":"#FFFFFF", border:`1px solid ${c.border}` }}>
+                            {actions.map(action => (
                               <button key={action} className="w-full text-left px-4 py-2 text-[12px] transition-colors"
-                                style={{ fontFamily:FONT, color:action==="Remove"?"#EF4444":c.text }}
+                                style={{ fontFamily:FONT, color:action==="Remove"?"#EF4444":action==="Reactivate"?"#10B981":c.text }}
                                 onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                                 onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                                 onClick={() => {
@@ -2826,6 +3635,44 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     setAuState("");
                                     setAuZip("");
                                     setEditUserId(u.id);
+                                  } else if (action === "Deactivate") {
+                                    // If Principal or Agency Contact, require reassignment before deactivating.
+                                    // Use effective role (honors a previous reassignment override).
+                                    const isPrin = principalOverride
+                                      ? u.id === principalOverride.newId
+                                      : u.jobTitle === "Principal";
+                                    const currentContactName = agencyContactOverride ?? agency.contact;
+                                    const isCon = u.name === currentContactName;
+                                    if (isPrin || isCon) {
+                                      setRoleReassign({ userId: u.id, userName: u.name, action: "deactivate", needsPrincipal: isPrin, needsContact: isCon });
+                                      setReassignPrincipalId("");
+                                      setReassignContactId("");
+                                    } else {
+                                      setInactiveUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; });
+                                      showToast({
+                                        title: "User deactivated",
+                                        description: `${u.name} moved to Inactive Users.`,
+                                        action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; }) },
+                                      });
+                                    }
+                                  } else if (action === "Reactivate") {
+                                    setInactiveUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; });
+                                    showToast({
+                                      title: "User reactivated",
+                                      description: `${u.name} is active again.`,
+                                      action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; }) },
+                                    });
+                                  } else if (action === "Remove") {
+                                    const isPrin = u.jobTitle === "Principal" && !(principalOverride && principalOverride.oldId === u.id);
+                                    const currentContactName = agencyContactOverride ?? agency.contact;
+                                    const isCon = u.name === currentContactName;
+                                    if (isPrin || isCon) {
+                                      setRoleReassign({ userId: u.id, userName: u.name, action: "remove", needsPrincipal: isPrin, needsContact: isCon });
+                                      setReassignPrincipalId("");
+                                      setReassignContactId("");
+                                    } else {
+                                      setRemoveUserConfirm({ id: u.id, name: u.name });
+                                    }
                                   }
                                   setUserMenuId(null);
                                 }}>
@@ -2833,7 +3680,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               </button>
                             ))}
                           </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
                   );
@@ -3077,9 +3925,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
                 <button
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}
+                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"#FFFFFF" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
-                  onMouseLeave={e=>(e.currentTarget.style.background="linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))")}
+                  onMouseLeave={e=>(e.currentTarget.style.background="#FFFFFF")}
                   onClick={()=>{ closeModal(); closeAll(); }}>
                   Cancel Changes
                 </button>
@@ -3243,64 +4091,172 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         </div>
       )}
 
-      {/* ── Edit Agency Contact Modal (admin) ── */}
-      {contactCardEditing && (
+      {/* ── Update Agency Contact Modal (admin) — Edit / Reassign / Add New ── */}
+      {contactCardEditing && (() => {
+        const eligibleUsers = mockAgencyUsers
+          .filter(u => u.agencyId === agency.id)
+          .filter(u => !inactiveUserIds.has(u.id) && !removedUserIds.has(u.id));
+        const closeModal = () => { setContactCardEditing(false); setContactMode("edit"); setReassignSelection(""); setNewContactName(""); setNewContactPhone(""); setNewContactEmail(""); };
+        const canSave =
+          contactMode === "edit" ? eContact.trim().length > 0 :
+          contactMode === "reassign" ? reassignSelection !== "" :
+          newContactName.trim().length > 0;
+        const handleSave = () => {
+          if (contactMode === "reassign") {
+            const u = eligibleUsers.find(x => x.id === reassignSelection);
+            if (u) { setEContact(u.name); setEContactPhone(u.phone); setEEmail(u.email); }
+            showToast({ title: "Contact reassigned", description: `Agency contact set to ${u?.name ?? "selected user"}.` });
+          } else if (contactMode === "new") {
+            setEContact(newContactName.trim());
+            setEContactPhone(newContactPhone.trim());
+            setEEmail(newContactEmail.trim());
+            showToast({ title: "Contact added", description: `${newContactName.trim()} is now the agency contact.` });
+          } else {
+            // edit mode: eContact / eContactPhone / eEmail are already updated via inputs
+            showToast({ title: "Contact updated", description: "Changes saved." });
+          }
+          closeModal();
+        };
+        const tabs: [typeof contactMode, string][] = [["edit", "Edit Info"], ["reassign", "Reassign"], ["new", "Add New"]];
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={() => setContactCardEditing(false)}>
-          <div className="rounded-2xl w-[440px] max-w-[95vw] overflow-hidden"
+          onClick={closeModal}>
+          <div className="rounded-2xl w-[480px] max-w-[95vw] max-h-[85vh] flex flex-col overflow-hidden"
             style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${c.border}` }}>
-              <h3 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Edit Agency Contact</h3>
-              <button onClick={() => setContactCardEditing(false)} className="p-1 rounded-md transition-colors" style={{ color: c.muted }}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <div>
+                <h3 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Update Agency Contact</h3>
+                <p className="text-[12px] mt-0.5 flex items-center gap-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  {contactMode === "new" && <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A855F7" }} />}
+                  {contactMode === "edit" ? "Tweak the current contact's info." :
+                   contactMode === "reassign" ? "Hand off to another existing user." :
+                   "Only add new if the contact isn't an existing user."}
+                </p>
+              </div>
+              <button onClick={closeModal} className="p-1 rounded-md transition-colors flex-shrink-0" style={{ color: c.muted }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-3">
-              <div>
-                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Contact Name</label>
-                <input value={eContact} onChange={e => setEContact(e.target.value)} placeholder="Full name"
-                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
-                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
-                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Phone</label>
-                <input value={eContactPhone} onChange={e => setEContactPhone(e.target.value)} placeholder="(000) 000-0000"
-                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
-                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
-                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Email</label>
-                <input value={eEmail} onChange={e => setEEmail(e.target.value)} placeholder="email@example.com"
-                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                  style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }}
-                  onFocus={e => e.currentTarget.style.borderColor = "#A855F7"}
-                  onBlur={e => e.currentTarget.style.borderColor = c.border} />
+            {/* Segmented tab control */}
+            <div className="px-6 pt-4 pb-1 flex-shrink-0">
+              <div className="flex p-1 rounded-lg" style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6" }}>
+                {tabs.map(([key, label]) => {
+                  const active = contactMode === key;
+                  return (
+                    <button key={key} onClick={() => setContactMode(key)}
+                      className="flex-1 text-[12px] font-semibold py-1.5 rounded-md transition-all"
+                      style={{ fontFamily: FONT,
+                        background: active ? c.cardBg : "transparent",
+                        color: active ? "#A614C3" : c.muted,
+                        boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none" }}>
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
-              <button onClick={() => setContactCardEditing(false)}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {contactMode === "edit" && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Contact Name<span style={{ color: "#EF4444" }}>*</span></label>
+                    <input value={eContact} onChange={e => setEContact(e.target.value)} placeholder="Full name"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Phone</label>
+                    <input value={eContactPhone} onChange={e => setEContactPhone(formatPhone(e.target.value))} placeholder="(000) 000-0000"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} inputMode="tel" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Email</label>
+                    <input value={eEmail} onChange={e => setEEmail(e.target.value)} placeholder="email@example.com"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} type="email" />
+                  </div>
+                  <p className="text-[11px] mt-2" style={{ fontFamily: FONT, color: c.muted }}>Use this to fix typos. To change who the contact is, switch to <strong style={{ color: c.text }}>Reassign</strong>.</p>
+                </div>
+              )}
+              {contactMode === "reassign" && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Existing Users</p>
+                  <div className="space-y-1.5">
+                    {eligibleUsers.length === 0 && (
+                      <p className="text-[12px] py-3" style={{ fontFamily: FONT, color: c.muted }}>No active users for this agency.</p>
+                    )}
+                    {eligibleUsers.map(u => {
+                      const checked = reassignSelection === u.id;
+                      return (
+                        <label key={u.id} className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                          style={{ border: `1px solid ${checked ? "rgba(168,85,247,0.35)" : c.border}`, background: checked ? "rgba(168,85,247,0.06)" : "transparent" }}
+                          onMouseEnter={e => { if (!checked) e.currentTarget.style.background = c.hoverBg; }}
+                          onMouseLeave={e => { if (!checked) e.currentTarget.style.background = "transparent"; }}>
+                          <div onClick={() => setReassignSelection(u.id)}
+                            className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
+                            style={{ background: checked ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : c.cardBg, border: checked ? "none" : `1.5px solid ${c.borderStrong}` }}>
+                            {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                          <input type="radio" checked={checked} onChange={() => setReassignSelection(u.id)} className="sr-only" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{u.name}</span>
+                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                                style={{ fontFamily: FONT, background: "rgba(168,85,247,0.10)", color: "#A855F7" }}>{u.jobTitle}</span>
+                            </div>
+                            <div className="text-[11px] truncate mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{u.email}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {contactMode === "new" && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Contact Name<span style={{ color: "#EF4444" }}>*</span></label>
+                    <input value={newContactName} onChange={e => setNewContactName(e.target.value)} placeholder="Full name"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Phone</label>
+                    <input value={newContactPhone} onChange={e => setNewContactPhone(formatPhone(e.target.value))} placeholder="(000) 000-0000"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} inputMode="tel" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.muted }}>Email</label>
+                    <input value={newContactEmail} onChange={e => setNewContactEmail(e.target.value)} placeholder="email@example.com"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} type="email" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 px-6 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}` }}>
+              <button onClick={closeModal}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}>
                 Cancel
               </button>
-              <button onClick={() => setContactCardEditing(false)}
+              <button onClick={handleSave} disabled={!canSave}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
-                style={{ fontFamily: FONT, background: btnGrad }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                Save Changes
+                style={{ fontFamily: FONT, background: canSave ? btnGrad : (isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"), color: canSave ? "#fff" : c.muted, cursor: canSave ? "pointer" : "not-allowed" }}
+                onMouseEnter={e => { if (canSave) e.currentTarget.style.filter = "brightness(1.1)"; }}
+                onMouseLeave={e => { if (canSave) e.currentTarget.style.filter = "none"; }}>
+                {contactMode === "edit" ? "Save Changes" : contactMode === "reassign" ? "Reassign Contact" : "Add Contact"}
               </button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Contact Request Modal (non-admin) ── */}
       {contactRequestOpen && (
@@ -3362,7 +4318,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                 <button onClick={() => setContactRequestOpen(false)}
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(192,192,192,0.10), rgba(172,172,172,0.10))" }}>
+                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}>
                   Cancel
                 </button>
                 <button onClick={() => { setContactRequestSent(true); setTimeout(() => { setContactRequestOpen(false); setContactRequestSent(false); }, 1800); }}
@@ -3432,15 +4388,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
 /* ─── Add New Agency Form ────────────────────────────────────────────────── */
 const AFFILIATIONS = [
-  "AAA/ACG (AC364)","Acceptance (TI091)","Acrisure","Affordable American Insurance",
-  "American Family (AM102)","ASNOA (AL335)","Brown & Brown Insurance","BTIS",
-  "Dream Insurance (IN432)","EPIC Insurance Brokers & Consultants","Farmers","Fiesta Insurance (FI062)",
-  "First Choice Agents Alliance","First Connect Insurance Services (FI475)","Foundation Risk Partners","GlobalGreen Insurance Agency",
-  "Green Path","Horizon Agency Systems (RC021)","HUB International Limited","IMSG/Insurance Market Solutions Group",
-  "Insurance Alliance Network","InterWest Insurance Services","IronPeak","ISU",
-  "Join the Brokers","LTA Marketing Group (LT006)","Nationwide","New Age Underwriters Agency Inc",
-  "NowCerts (NO147)","Pacific Crest (PA004)","Pacwest Alliance","PIIB",
-  "Premier Group (PR196)","Reliable Insurance","Renaissance Alliance","SIAA",
+  "AAA/ACG (AC364)","Acceptance","Acrisure","Affordable American Insurance",
+  "American Family (AM102)","ASNOA (AL335)",
+  "EPIC Insurance Brokers & Consultants","Farmers","Fiesta Insurance (FI062)",
+  "First Choice Agents Alliance","First Connect Insurance Services (FI475)","Foundation Risk Partners",
+  "Horizon Agency Systems (RC021)","HUB International Limited",
+  "Insurance Alliance Network","IronPeak","ISU",
+  "Join the Brokers","LTA Marketing Group (LT006)","New Age Underwriters Agency Inc",
+  "NowCerts (NO147)","Pacific Crest (PA004)","PIIB",
+  "Premier Group (PR196)","Renaissance Alliance","SIAA",
   "Smart Choice","The Agency Collective","TWFG (TW037)","United Agencies",
   "United Valley","Victor",
 ];
@@ -3449,55 +4405,191 @@ const WORKERS_COMP = [
   "GUARD","ICW Group","LIBERTYMUTUAL","Pie","Travelers","Zenith",
 ];
 
-function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
-  isDark: boolean; onCancel: () => void;
+export type AgencyDraft = {
+  agencyName: string; agencyCode: string; agencyType: "Retail"|"Wholesale";
+  country: string; street: string; city: string; stateVal: string; zip: string;
+  sameAddress: boolean;
+  mCountry: string; mStreet: string; mCity: string; mState: string; mZip: string;
+  status: string; apptDate: string;
+  contact: string; email: string;
+  bizType: string; taxId: string; website: string;
+  phone: string; tollFree: string;
+  licenseNo: string; licenseExp: string;
+  eoPolicyNo: string; eoExp: string;
+  agencyBill: boolean; directBill: boolean; premiumFin: boolean;
+  affiliations: string[]; workersComp: string[];
+};
+
+function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btnGrad, FONT }: {
+  isDark: boolean; onSaveForLater: (d: AgencyDraft) => void; onDiscard: () => void;
+  initialDraft: AgencyDraft | null;
   c: Record<string, string>; btnGrad: string; FONT: string;
 }) {
-  const [agencyName, setAgencyName]   = useState("");
-  const [agencyCode, setAgencyCode]   = useState("");
-  const [agencyType, setAgencyType]   = useState<"Retail"|"Wholesale">("Retail");
-  const [country, setCountry]         = useState("United States of America");
-  const [street, setStreet]           = useState("");
-  const [city, setCity]               = useState("");
-  const [stateVal, setStateVal]       = useState("");
-  const [zip, setZip]                 = useState("");
-  const [sameAddress, setSameAddress] = useState(true);
-  const [mCountry, setMCountry]       = useState("United States of America");
-  const [mStreet, setMStreet]         = useState("");
-  const [mCity, setMCity]             = useState("");
-  const [mState, setMState]           = useState("");
-  const [mZip, setMZip]               = useState("");
-  const [status, setStatus]           = useState("Appointed");
-  const [apptDate, setApptDate]       = useState("03/24/2026");
-  const [contact, setContact]         = useState("");
-  const [email, setEmail]             = useState("");
-  const [bizType, setBizType]         = useState("");
-  const [taxId, setTaxId]             = useState("");
-  const [website, setWebsite]         = useState("");
-  const [phone, setPhone]             = useState("");
-  const [tollFree, setTollFree]       = useState("");
-  const [licenseNo, setLicenseNo]     = useState("");
-  const [licenseExp, setLicenseExp]   = useState("03/24/2026");
-  const [eoPolicyNo, setEoPolicyNo]   = useState("");
-  const [eoExp, setEoExp]             = useState("03/24/2026");
-  const [agencyBill, setAgencyBill]   = useState(true);
-  const [directBill, setDirectBill]   = useState(true);
-  const [premiumFin, setPremiumFin]   = useState(true);
-  const [affiliations, setAffiliations] = useState<Set<string>>(new Set(["AAA/ACG (AC364)"]));
-  const [workersComp, setWorkersComp]   = useState<Set<string>>(new Set(["AIG"]));
-  const [note, setNote]               = useState("");
-  const [notes, setNotes]             = useState<string[]>([]);
+  const [agencyName, setAgencyName]   = useState(initialDraft?.agencyName ?? "");
+  const [agencyCode, setAgencyCode]   = useState(initialDraft?.agencyCode ?? "");
+  const [agencyType, setAgencyType]   = useState<"Retail"|"Wholesale">(initialDraft?.agencyType ?? "Retail");
+  const [country, setCountry]         = useState(initialDraft?.country ?? "United States of America");
+  const [street, setStreet]           = useState(initialDraft?.street ?? "");
+  const [city, setCity]               = useState(initialDraft?.city ?? "");
+  const [stateVal, setStateVal]       = useState(initialDraft?.stateVal ?? "");
+  const [zip, setZip]                 = useState(initialDraft?.zip ?? "");
+  const [sameAddress, setSameAddress] = useState(initialDraft?.sameAddress ?? true);
+  const [mCountry, setMCountry]       = useState(initialDraft?.mCountry ?? "United States of America");
+  const [mStreet, setMStreet]         = useState(initialDraft?.mStreet ?? "");
+  const [mCity, setMCity]             = useState(initialDraft?.mCity ?? "");
+  const [mState, setMState]           = useState(initialDraft?.mState ?? "");
+  const [mZip, setMZip]               = useState(initialDraft?.mZip ?? "");
+  const [status, setStatus]           = useState(initialDraft?.status ?? "Appointed");
+  const [apptDate, setApptDate]       = useState(initialDraft?.apptDate ?? "03/24/2026");
+  const [contact, setContact]         = useState(initialDraft?.contact ?? "");
+  const [email, setEmail]             = useState(initialDraft?.email ?? "");
+  const [bizType, setBizType]         = useState(initialDraft?.bizType ?? "");
+  const [taxId, setTaxId]             = useState(initialDraft?.taxId ?? "");
+  const [website, setWebsite]         = useState(initialDraft?.website ?? "");
+  const [phone, setPhone]             = useState(initialDraft?.phone ?? "");
+  const [tollFree, setTollFree]       = useState(initialDraft?.tollFree ?? "");
+  const [licenseNo, setLicenseNo]     = useState(initialDraft?.licenseNo ?? "");
+  const [licenseExp, setLicenseExp]   = useState(initialDraft?.licenseExp ?? "03/24/2026");
+  const [eoPolicyNo, setEoPolicyNo]   = useState(initialDraft?.eoPolicyNo ?? "");
+  const [eoExp, setEoExp]             = useState(initialDraft?.eoExp ?? "03/24/2026");
+  const [agencyBill, setAgencyBill]   = useState(initialDraft?.agencyBill ?? true);
+  const [directBill, setDirectBill]   = useState(initialDraft?.directBill ?? true);
+  const [premiumFin, setPremiumFin]   = useState(initialDraft?.premiumFin ?? true);
+  const [affiliations, setAffiliations] = useState<Set<string>>(new Set(initialDraft?.affiliations ?? ["AAA/ACG (AC364)"]));
+  const [workersComp, setWorkersComp]   = useState<Set<string>>(new Set(initialDraft?.workersComp ?? ["AIG"]));
+
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [bizTypeOpen, setBizTypeOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const REASON_OPTIONS = ["Closed", "Sold", "Credit Hold", "Missing Info", "Terminated"];
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const validators: Record<string, (v: string) => string | null> = {
+    email: v => !v ? null : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Enter a valid email",
+    phone: v => !v ? null : v.replace(/\D/g, "").length === 10 ? null : "Enter a 10-digit phone",
+    zip: v => !v ? null : /^\d{5}(-\d{4})?$/.test(v) ? null : "Enter a valid ZIP (5 digits)",
+    website: v => !v ? null : /^(https?:\/\/)?([\w-]+\.)+[\w-]+.*$/.test(v) ? null : "Enter a valid URL",
+    number: v => !v ? null : /^\d+$/.test(v.replace(/[,\s-]/g, "")) ? null : "Digits only",
+  };
+
+  const requiredKeys = new Set([
+    "agencyName", "agencyCode",
+    "street", "city", "stateVal", "zip",
+    "contact", "email",
+    "bizType", "taxId", "phone",
+    "licenseNo", "eoPolicyNo",
+  ]);
+
+  const fieldFormat: Record<string, keyof typeof validators> = {
+    email: "email",
+    phone: "phone",
+    tollFree: "phone",
+    zip: "zip",
+    mZip: "zip",
+    website: "website",
+    taxId: "number",
+  };
+
+  const getFieldVal = (k: string): string => {
+    switch (k) {
+      case "agencyName": return agencyName;
+      case "agencyCode": return agencyCode;
+      case "street": return street;
+      case "city": return city;
+      case "stateVal": return stateVal;
+      case "zip": return zip;
+      case "mStreet": return sameAddress ? street : mStreet;
+      case "mCity": return sameAddress ? city : mCity;
+      case "mState": return sameAddress ? stateVal : mState;
+      case "mZip": return sameAddress ? zip : mZip;
+      case "contact": return contact;
+      case "email": return email;
+      case "bizType": return bizType;
+      case "taxId": return taxId;
+      case "website": return website;
+      case "phone": return phone;
+      case "tollFree": return tollFree;
+      case "licenseNo": return licenseNo;
+      case "eoPolicyNo": return eoPolicyNo;
+      default: return "";
+    }
+  };
+
+  const validateKey = (k: string, val?: string): string | null => {
+    const v = val !== undefined ? val : getFieldVal(k);
+    if (requiredKeys.has(k) && !v.trim()) return "Required";
+    const f = fieldFormat[k];
+    if (f) return validators[f](v);
+    return null;
+  };
+
+  const runValidate = (k: string, val: string) => {
+    const hasFormat = !!fieldFormat[k];
+    if (submitted || errors[k] || (hasFormat && val)) {
+      const err = validateKey(k, val);
+      setErrors(e => {
+        const n = { ...e };
+        if (err && (err !== "Required" || submitted)) n[k] = err;
+        else delete n[k];
+        return n;
+      });
+    }
+  };
+
+  const errorStyleFor = (k: string): React.CSSProperties =>
+    errors[k]
+      ? { border: `1px solid #EF4444`, background: isDark ? "rgba(239,68,68,0.06)" : "#FEF2F2" }
+      : {};
+
+  const handleSubmit = () => {
+    const keys = [...requiredKeys, ...Object.keys(fieldFormat)];
+    const newErrors: Record<string, string> = {};
+    for (const k of keys) {
+      const err = validateKey(k);
+      if (err) newErrors[k] = err;
+    }
+    setErrors(newErrors);
+    setSubmitted(true);
+    if (Object.keys(newErrors).length === 0) {
+      // form submission would happen here
+    }
+  };
+
+  const ErrMsg = ({ k }: { k: string }) =>
+    errors[k] ? <p className="text-[11px] mt-1" style={{ color: "#EF4444", fontFamily: FONT }}>{errors[k]}</p> : null;
+
+  const formatPhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 10);
+    if (digits.length === 0) return "";
+    if (digits.length <= 3) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
+  const collectDraft = (): AgencyDraft => ({
+    agencyName, agencyCode, agencyType,
+    country, street, city, stateVal, zip,
+    sameAddress, mCountry, mStreet, mCity, mState, mZip,
+    status, apptDate, contact, email,
+    bizType, taxId, website, phone, tollFree,
+    licenseNo, licenseExp, eoPolicyNo, eoExp,
+    agencyBill, directBill, premiumFin,
+    affiliations: Array.from(affiliations), workersComp: Array.from(workersComp),
+  });
 
   const font = { fontFamily: FONT };
 
   const inputStyle: React.CSSProperties = {
     fontFamily: FONT, color: c.text, background: c.cardBg,
-    border: `1px solid ${c.borderStrong}`, borderRadius: 14,
-    padding: "14px 16px", fontSize: 13, outline: "none", width: "100%",
-    height: 50, boxSizing: "border-box",
+    border: `1px solid ${c.borderStrong}`, borderRadius: 10,
+    padding: "9px 12px", fontSize: 13, outline: "none", width: "100%",
+    height: 40, boxSizing: "border-box",
   };
   const labelStyle: React.CSSProperties = {
-    fontFamily: FONT, fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 10, display: "block",
+    fontFamily: FONT, fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 6, display: "block",
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: "none", cursor: "pointer",
@@ -3532,85 +4624,120 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
     prefix: string;
     vals: { country: string; street: string; city: string; state: string; zip: string };
     setters: { country: (v:string)=>void; street: (v:string)=>void; city: (v:string)=>void; state: (v:string)=>void; zip: (v:string)=>void };
-  }) => (
+  }) => {
+    const disabled = prefix === "m" && sameAddress;
+    const streetKey = prefix === "m" ? "mStreet" : "street";
+    const cityKey = prefix === "m" ? "mCity" : "city";
+    const stateKey = prefix === "m" ? "mState" : "stateVal";
+    const zipKey = prefix === "m" ? "mZip" : "zip";
+    return (
     <div className="space-y-3">
-      {/* Row 1: Country | Street (spans 2 cols) */}
+      {/* Row 1: Country | Street */}
       <div className="grid grid-cols-3 gap-6">
         <select value={vals.country} onChange={e => setters.country(e.target.value)}
           autoComplete="country-name"
-          style={{ ...selectStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          disabled={prefix === "m" && sameAddress}>
+          style={{ ...selectStyle, opacity: disabled ? 0.5 : 1 }}
+          disabled={disabled}>
           <option>United States of America</option><option>Canada</option><option>Mexico</option>
         </select>
-        <div className="col-span-2">
+        <div>
           <AddressAutocomplete
             value={vals.street}
-            onChange={setters.street}
+            onChange={v => { setters.street(v); runValidate(streetKey, v); }}
             onSelect={a => {
               setters.street(a.street);
               if (a.city) setters.city(a.city);
               if (a.state) setters.state(a.state);
               if (a.zip) setters.zip(a.zip);
               if (a.country) setters.country(a.country);
+              runValidate(streetKey, a.street);
             }}
             placeholder="Street address"
-            containerStyle={{ width: "100%", opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-            inputStyle={{ ...inputStyle, width: "100%" }}
-            disabled={prefix === "m" && sameAddress}
+            containerStyle={{ width: "100%", opacity: disabled ? 0.5 : 1 }}
+            inputStyle={{ ...inputStyle, width: "100%", ...errorStyleFor(streetKey) }}
+            disabled={disabled}
             dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
           />
+          <ErrMsg k={streetKey} />
         </div>
+        <div />
       </div>
-      {/* Row 2: City | State | ZIP */}
+      {/* Row 2: City | State + ZIP | (empty) */}
       <div className="grid grid-cols-3 gap-6">
-        <input value={vals.city} onChange={e => setters.city(e.target.value)} placeholder="City"
-          autoComplete="address-level2"
-          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          disabled={prefix === "m" && sameAddress} />
-        <select value={vals.state} onChange={e => setters.state(e.target.value)}
-          autoComplete="address-level1"
-          style={{ ...selectStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          disabled={prefix === "m" && sameAddress}>
-          {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
-        </select>
-        <input value={vals.zip} onChange={e => setters.zip(e.target.value)} placeholder="ZIP"
-          autoComplete="postal-code"
-          style={{ ...inputStyle, opacity: (prefix === "m" && sameAddress) ? 0.5 : 1 }}
-          disabled={prefix === "m" && sameAddress} />
+        <div>
+          <input value={vals.city}
+            onChange={e => { setters.city(e.target.value); runValidate(cityKey, e.target.value); }}
+            placeholder="City"
+            autoComplete="address-level2"
+            style={{ ...inputStyle, opacity: disabled ? 0.5 : 1, ...errorStyleFor(cityKey) }}
+            disabled={disabled} />
+          <ErrMsg k={cityKey} />
+        </div>
+        <div>
+          <div className="flex gap-4">
+            <div style={{ flex: 1 }}>
+              <select value={vals.state}
+                onChange={e => { setters.state(e.target.value); runValidate(stateKey, e.target.value); }}
+                autoComplete="address-level1"
+                style={{ ...selectStyle, width: "100%", opacity: disabled ? 0.5 : 1, ...errorStyleFor(stateKey) }}
+                disabled={disabled}>
+                {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
+              </select>
+              <ErrMsg k={stateKey} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <input value={vals.zip}
+                onChange={e => { setters.zip(e.target.value); runValidate(zipKey, e.target.value); }}
+                onBlur={e => runValidate(zipKey, e.target.value)}
+                placeholder="ZIP"
+                autoComplete="postal-code"
+                style={{ ...inputStyle, width: "100%", opacity: disabled ? 0.5 : 1, ...errorStyleFor(zipKey) }}
+                disabled={disabled} />
+              <ErrMsg k={zipKey} />
+            </div>
+          </div>
+        </div>
+        <div />
       </div>
     </div>
-  );
+    );
+  };
 
   const mailingVals = sameAddress
     ? { country, street, city, state: stateVal, zip }
     : { country: mCountry, street: mStreet, city: mCity, state: mState, zip: mZip };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
+    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}
+      onClick={() => { setStatusOpen(false); setBizTypeOpen(false); setReasonOpen(false); }}>
       {/* Form card + breadcrumb scroll together */}
       <div className="flex-1 overflow-y-auto pr-1">
         {/* Breadcrumb */}
-        <div className="pb-2 mb-3 flex items-center gap-2" style={{ marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48, paddingTop: 12 }}>
-          <button onClick={onCancel} className="flex items-center gap-1.5 transition-all" style={{ color: c.muted }}
+        <div className="pb-2 mb-3 flex items-center gap-2" style={{ marginLeft: -48, marginRight: -48, paddingLeft: 48, paddingRight: 48 }}>
+          <button onClick={() => onSaveForLater(collectDraft())} className="flex items-center gap-1.5 transition-all" style={{ color: c.muted }}
             onMouseEnter={e => (e.currentTarget.style.color = c.text)}
             onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-[13px]" style={{ color: c.muted }}>Admin Tasks</span>
+          <button onClick={() => onSaveForLater(collectDraft())}
+            className="text-[13px] transition-colors"
+            style={{ color: c.muted, background: "transparent", border: "none", cursor: "pointer" }}
+            onMouseEnter={e => (e.currentTarget.style.color = c.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>Back to Admin</button>
           <span style={{ color: c.muted }}>/</span>
           <span className="text-[13px] font-semibold" style={{ color: c.text }}>Add New</span>
         </div>
         <form autoComplete="on" onSubmit={e => e.preventDefault()}>
-        <div className="rounded-2xl p-8 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+        <div className="rounded-2xl p-8 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[18px] font-bold" style={{ ...font, color: c.text }}>Add New Agency Information</h2>
-            <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+            <button onClick={() => onSaveForLater(collectDraft())} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
               style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              <Pencil className="w-3.5 h-3.5" />Cancel Edit
+              <Bookmark className="w-3.5 h-3.5" />Save for Later
             </button>
           </div>
 
@@ -3618,21 +4745,27 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>Agency Name:</label>
-              <input value={agencyName} onChange={e => setAgencyName(e.target.value)} placeholder="Agency name" style={inputStyle} />
+              <input value={agencyName}
+                onChange={e => { setAgencyName(e.target.value); runValidate("agencyName", e.target.value); }}
+                placeholder="Agency name" style={{ ...inputStyle, ...errorStyleFor("agencyName") }} />
+              <ErrMsg k="agencyName" />
             </div>
             <div>
               <label style={labelStyle}>Agency Code:</label>
-              <div className="flex" style={{ gap: 10 }}>
-                <input value={agencyCode} onChange={e => setAgencyCode(e.target.value)} placeholder="Code" style={{ ...inputStyle, flex: 1 }} />
+              <div className="flex gap-2">
+                <input value={agencyCode}
+                  onChange={e => { setAgencyCode(e.target.value); runValidate("agencyCode", e.target.value); }}
+                  placeholder="Code" style={{ ...inputStyle, flex: 1, ...errorStyleFor("agencyCode") }} />
                 <button type="button" onClick={() => setAgencyCode(generateAgencyCode())}
-                  className="flex items-center justify-center gap-2 flex-shrink-0 transition-all"
-                  style={{ ...font, background: isDark ? c.cardBg : "#FFFFFF", border: `1px solid ${c.borderStrong}`, borderRadius: 14, height: 50, width: 140, whiteSpace: "nowrap", boxSizing: "border-box" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB")}
-                  onMouseLeave={e => (e.currentTarget.style.background = isDark ? c.cardBg : "#FFFFFF")}>
-                  <RefreshCw className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#7C3AED" }} />
-                  <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 13, fontWeight: 600 }}>Create Code</span>
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all"
+                  style={{ ...font, border: `1px solid #A855F7`, background: "transparent" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <RefreshCw className="w-3 h-3" style={{ color: "#7C3AED" }} />
+                  <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
                 </button>
               </div>
+              <ErrMsg k="agencyCode" />
             </div>
             <div>
               <label style={labelStyle}>Agency Type:</label>
@@ -3641,9 +4774,9 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
                   const active = agencyType === t;
                   return (
                     <button key={t} onClick={() => setAgencyType(t)}
-                      className="flex items-center gap-2 justify-center transition-all"
-                      style={{ ...font, fontSize: 13, fontWeight: 600, width: 186, height: 50, borderRadius: 14, boxSizing: "border-box",
-                        border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                      className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                      style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
+                        border: active ? "1px solid transparent" : `1px solid ${c.border}`,
                         background: active ? undefined : c.cardBg,
                         backgroundImage: active
                           ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
@@ -3685,14 +4818,69 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>Status:</label>
-              <select value={status} onChange={e => setStatus(e.target.value)} style={selectStyle}>
-                <option>Appointed</option><option>Unappointed</option>
-              </select>
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <button type="button" onClick={() => { setStatusOpen(o => !o); setBizTypeOpen(false); }}
+                  className="w-full flex items-center justify-between outline-none"
+                  style={{ ...inputStyle, cursor: "pointer" }}>
+                  <span style={{ color: status ? c.text : c.muted }}>{status || "Select status"}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${statusOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                </button>
+                {statusOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                    {["Appointed", "Unappointed"].map(opt => {
+                      const active = status === opt;
+                      return (
+                      <button key={opt} type="button" onClick={() => { setStatus(opt); setStatusOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                        style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                        <span>{opt}</span>
+                        {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label style={labelStyle}>Appt. Date</label>
-              <DatePicker value={apptDate} onChange={setApptDate} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
-            </div>
+            {status === "Unappointed" ? (
+              <div>
+                <label style={labelStyle}>Reason:</label>
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button type="button" onClick={() => { setReasonOpen(o => !o); setStatusOpen(false); setBizTypeOpen(false); }}
+                    className="w-full flex items-center justify-between outline-none"
+                    style={{ ...inputStyle, cursor: "pointer" }}>
+                    <span style={{ color: reason ? c.text : c.muted }}>{reason || "Select reason"}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${reasonOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                  </button>
+                  {reasonOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                      {REASON_OPTIONS.map(opt => {
+                        const active = reason === opt;
+                        return (
+                          <button key={opt} type="button" onClick={() => { setReason(opt); setReasonOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                            style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                            <span>{opt}</span>
+                            {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label style={labelStyle}>Appt. Date</label>
+                <DatePicker value={apptDate} onChange={setApptDate} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
+              </div>
+            )}
             <div />
           </div>
 
@@ -3700,11 +4888,18 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>Agency Contact:</label>
-              <input value={contact} onChange={e => setContact(e.target.value)} placeholder="Contact name" style={inputStyle} />
+              <input value={contact}
+                onChange={e => { setContact(e.target.value); runValidate("contact", e.target.value); }}
+                placeholder="Contact name" style={{ ...inputStyle, ...errorStyleFor("contact") }} />
+              <ErrMsg k="contact" />
             </div>
             <div>
               <label style={labelStyle}>Email Address:</label>
-              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle} type="email" />
+              <input value={email}
+                onChange={e => { setEmail(e.target.value); runValidate("email", e.target.value); }}
+                onBlur={e => runValidate("email", e.target.value)}
+                placeholder="Email" style={{ ...inputStyle, ...errorStyleFor("email") }} type="email" />
+              <ErrMsg k="email" />
             </div>
           </div>
 
@@ -3712,17 +4907,48 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>Type of Business:</label>
-              <select value={bizType} onChange={e => setBizType(e.target.value)} style={selectStyle}>
-                <option value="">-Business Type</option><option>LLC</option><option>Corporation</option><option>Sole Proprietor</option><option>Partnership</option>
-              </select>
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <button type="button" onClick={() => { setBizTypeOpen(o => !o); setStatusOpen(false); }}
+                  className="w-full flex items-center justify-between outline-none"
+                  style={{ ...inputStyle, cursor: "pointer", ...errorStyleFor("bizType") }}>
+                  <span style={{ color: bizType ? c.text : c.muted }}>{bizType || "-Business Type"}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${bizTypeOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                </button>
+                {bizTypeOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                    {["LLC", "Corporation", "Sole Proprietor", "Partnership"].map(opt => {
+                      const active = bizType === opt;
+                      return (
+                      <button key={opt} type="button" onClick={() => { setBizType(opt); setBizTypeOpen(false); runValidate("bizType", opt); }}
+                        className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                        style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                        <span>{opt}</span>
+                        {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <ErrMsg k="bizType" />
             </div>
             <div>
               <label style={labelStyle}>Tax ID:</label>
-              <input value={taxId} onChange={e => setTaxId(e.target.value)} placeholder="Tax ID" style={inputStyle} />
+              <input value={taxId}
+                onChange={e => { setTaxId(e.target.value); runValidate("taxId", e.target.value); }}
+                placeholder="Tax ID" style={{ ...inputStyle, ...errorStyleFor("taxId") }} inputMode="numeric" />
+              <ErrMsg k="taxId" />
             </div>
             <div>
               <label style={labelStyle}>Website Url:</label>
-              <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" style={inputStyle} />
+              <input value={website}
+                onChange={e => { setWebsite(e.target.value); runValidate("website", e.target.value); }}
+                onBlur={e => runValidate("website", e.target.value)}
+                placeholder="https://" style={{ ...inputStyle, ...errorStyleFor("website") }} />
+              <ErrMsg k="website" />
             </div>
           </div>
 
@@ -3730,11 +4956,19 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>Phone Number:</label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+              <input value={phone}
+                onChange={e => { const v = formatPhone(e.target.value); setPhone(v); runValidate("phone", v); }}
+                onBlur={e => runValidate("phone", e.target.value)}
+                placeholder="(000) 000-0000" style={{ ...inputStyle, ...errorStyleFor("phone") }} inputMode="tel" />
+              <ErrMsg k="phone" />
             </div>
             <div>
               <label style={labelStyle}>Toll Free Number:</label>
-              <input value={tollFree} onChange={e => setTollFree(e.target.value)} placeholder="(000) 000-0000" style={inputStyle} />
+              <input value={tollFree}
+                onChange={e => { const v = formatPhone(e.target.value); setTollFree(v); runValidate("tollFree", v); }}
+                onBlur={e => runValidate("tollFree", e.target.value)}
+                placeholder="(000) 000-0000" style={{ ...inputStyle, ...errorStyleFor("tollFree") }} inputMode="tel" />
+              <ErrMsg k="tollFree" />
             </div>
             <div />
           </div>
@@ -3743,7 +4977,10 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>License Number:</label>
-              <input value={licenseNo} onChange={e => setLicenseNo(e.target.value)} style={inputStyle} />
+              <input value={licenseNo}
+                onChange={e => { setLicenseNo(e.target.value); runValidate("licenseNo", e.target.value); }}
+                style={{ ...inputStyle, ...errorStyleFor("licenseNo") }} />
+              <ErrMsg k="licenseNo" />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
@@ -3756,7 +4993,10 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>E&O Policy #:</label>
-              <input value={eoPolicyNo} onChange={e => setEoPolicyNo(e.target.value)} style={inputStyle} />
+              <input value={eoPolicyNo}
+                onChange={e => { setEoPolicyNo(e.target.value); runValidate("eoPolicyNo", e.target.value); }}
+                style={{ ...inputStyle, ...errorStyleFor("eoPolicyNo") }} />
+              <ErrMsg k="eoPolicyNo" />
             </div>
             <div>
               <label style={labelStyle}>Expiration Date:</label>
@@ -3774,13 +5014,13 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
             ] as [string, boolean, (v:boolean)=>void][]).map(([label, val, set]) => (
               <div key={label}>
                 <label style={labelStyle}>{label}</label>
-                <div className="flex" style={{ gap: 10 }}>
+                <div className="flex gap-3">
                   {([["Yes", true],["No", false]] as [string, boolean][]).map(([opt, bool]) => {
                     const active = val === bool;
                     return (
                       <button key={opt} onClick={() => set(bool)}
-                        className="flex items-center gap-2 justify-center transition-all"
-                        style={{ ...font, height: 50, flex: 1, borderRadius: 14, boxSizing: "border-box",
+                        className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                        style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
                           border: "1.65px solid transparent",
                           backgroundImage: active
                             ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
@@ -3790,8 +5030,8 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
                         }}>
                         <Radio checked={active} onClick={() => set(bool)} />
                         {active
-                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 13, fontWeight: 600 }}>{opt}</span>
-                          : <span style={{ color: "#6B7280", fontSize: 13, fontWeight: 600 }}>{opt}</span>
+                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
+                          : <span style={{ color: "#6B7280" }}>{opt}</span>
                         }
                       </button>
                     );
@@ -3826,53 +5066,61 @@ function AddAgencyForm({ isDark, onCancel, c, btnGrad, FONT }: {
             ))}
           </div>
 
-          {/* Notes */}
-          <SectionHeader title="Notes" />
-          <div className="rounded-xl p-5" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}>
-            <p className="text-[13px] font-bold mb-3" style={{ ...font, color: c.text }}>Add New Note</p>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Write your note here..."
-              rows={4} className="w-full outline-none resize-none text-[13px] rounded-lg p-3"
-              style={{ ...font, color: c.text, background: c.cardBg, border: `1px solid ${c.border}` }} />
-            <div className="flex justify-end mt-3">
-              <button onClick={() => { if (note.trim()) { setNotes(p => [...p, note.trim()]); setNote(""); } }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                style={{ ...font, background: btnGrad }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                <Plus className="w-3.5 h-3.5" />Add Note
-              </button>
-            </div>
-            {notes.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {notes.map((n, i) => (
-                  <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                    <FileText className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: c.muted }} />
-                    <span className="text-[12px]" style={{ ...font, color: c.text }}>{n}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
         </form>
 
         {/* Footer buttons */}
         <div className="flex items-center justify-between pb-6">
-          <button onClick={onCancel}
+          <button onClick={() => setDiscardConfirmOpen(true)}
             className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            Cancel
+            style={{ ...font, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
+            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
+            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+            Discard
           </button>
-          <button className="text-[13px] font-semibold text-white transition-all"
+          <button onClick={handleSubmit}
+            className="text-[13px] font-semibold text-white transition-all"
             style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
             onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
             onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-            Add New Agency
+            Save Changes
           </button>
         </div>
       </div>
+      {discardConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setDiscardConfirmOpen(false)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.10)" }}>
+                <X className="w-6 h-6" style={{ color: "#EF4444" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Discard this draft?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  Your progress will be lost and can&apos;t be recovered.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDiscardConfirmOpen(false)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Keep editing
+              </button>
+              <button onClick={() => { setDiscardConfirmOpen(false); onDiscard(); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ background: "#EF4444" }}>
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3893,6 +5141,116 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     new Set(mockAgencies.filter(a => a.isStarred).map(a => a.id))
   );
   const [starLimitToast, setStarLimitToast] = useState(false);
+  const [agencyDraft, setAgencyDraft] = useState<AgencyDraft | null>(null);
+  const [resumeDraftOpen, setResumeDraftOpen] = useState(false);
+  const [saveForLaterToast, setSaveForLaterToast] = useState(false);
+  const [resumeFromDraft, setResumeFromDraft] = useState(false);
+  const [selectedAff, setSelectedAff] = useState<string | null>(null);
+  const [allUsersJobFilter, setAllUsersJobFilter] = useState<Set<string>>(new Set());
+  const [allUsersJobOpen, setAllUsersJobOpen] = useState(false);
+  const [allUsersJobSearch, setAllUsersJobSearch] = useState("");
+  const [viewOpen, setViewOpen] = useState(false);
+  const [usersHiddenCols, setUsersHiddenCols] = useState<Set<string>>(new Set());
+  const [agenciesHiddenCols, setAgenciesHiddenCols] = useState<Set<string>>(new Set());
+  const USERS_COLS: Array<{ key: string; label: string }> = [
+    { key: "admin",    label: "Admin"     },
+    { key: "jobTitle", label: "Job Title" },
+    { key: "email",    label: "Email"     },
+    { key: "phone",    label: "Phone"     },
+    { key: "ext",      label: "Ext"       },
+    { key: "agency",   label: "Agency"    },
+  ];
+  const AGENCIES_COLS: Array<{ key: string; label: string }> = [
+    { key: "code",       label: "Agency Code"   },
+    { key: "location",   label: "Location"      },
+    { key: "aff1",       label: "Affiliation 1" },
+    { key: "aff2",       label: "Affiliation 2" },
+    { key: "aff3",       label: "Affiliation 3" },
+    { key: "totalUsers", label: "Total User"    },
+    { key: "lastLogin",  label: "Last Login"    },
+    { key: "status",     label: "Status"        },
+  ];
+  // Affiliations tab uses a *visible* set instead of *hidden* — the table has a small default set
+  // of columns plus optional extras the user can add (e.g. Phone, Email, Contact Name).
+  const AFFILIATIONS_COLS: Array<{ key: string; label: string }> = [
+    { key: "code",       label: "Agency Code"   },
+    { key: "location",   label: "Location"      },
+    { key: "status",     label: "Status"        },
+    { key: "lastLogin",  label: "Last Login"    },
+    { key: "contact",    label: "Contact Name"  },
+    { key: "phone",      label: "Phone"         },
+    { key: "email",      label: "Email"         },
+    { key: "totalUsers", label: "Total User"    },
+  ];
+  const AFF_DEFAULT_VISIBLE = ["code", "location", "status", "lastLogin"];
+  const [affVisibleCols, setAffVisibleCols] = useState<Set<string>>(new Set(AFF_DEFAULT_VISIBLE));
+  const [affListFilter, setAffListFilter] = useState<Set<string>>(new Set());
+  const [affListFilterOpen, setAffListFilterOpen] = useState(false);
+  const [affListFilterSearch, setAffListFilterSearch] = useState("");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "xlsx">("csv");
+  const [exportFormatMenuOpen, setExportFormatMenuOpen] = useState(false);
+  // Export-dialog-only state. Lazily initialized when the dialog is first opened.
+  const AGENCIES_EXPORT_COLS_BASIC = ["code", "name", "city", "state", "aff1", "aff2", "aff3", "totalUsers", "lastLogin", "status"];
+  const AGENCIES_EXPORT_COLS_CONTACTS = ["code", "name", "contact", "address", "city", "state", "zip", "phone", "email", "aff1", "aff2", "aff3", "totalUsers", "lastLogin", "status"];
+  const [exportSelectedCols, setExportSelectedCols] = useState<Set<string>>(new Set(AGENCIES_EXPORT_COLS_CONTACTS));
+  const [exportAffs, setExportAffs] = useState<Set<string>>(new Set());
+  const [exportAffSearch, setExportAffSearch] = useState("");
+  type ExportScope = "all" | "master" | "excludeMaster" | "withAffs";
+  const [exportScope, setExportScope] = useState<ExportScope>("all");
+  const [locationFilter, setLocationFilter] = useState<Set<string>>(new Set());
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [affiliationFilter, setAffiliationFilter] = useState<Set<string>>(new Set());
+  const [affiliationOpen, setAffiliationOpen] = useState<number | null>(null);
+  const [affiliationSearch, setAffiliationSearch] = useState("");
+  const [agencyNameFilter, setAgencyNameFilter] = useState<Set<string>>(new Set());
+  const [agencyNameOpen, setAgencyNameOpen] = useState(false);
+  const [agencyNameSearch, setAgencyNameSearch] = useState("");
+  const [allUsersSortDir, setAllUsersSortDir] = useState<"asc"|"desc">("asc");
+  const ALL_JOB_TITLES = ["Principal", "Producer", "CSR", "Accounting", "Account Manager"];
+  // Lifted from AgencyDetailView so deactivations propagate to the All Users tab in the main view.
+  const [inactiveUserIds, setInactiveUserIds] = useState<Set<string>>(new Set());
+  const [removedUserIds,  setRemovedUserIds]  = useState<Set<string>>(new Set());
+  const [allUsersShowInactive, setAllUsersShowInactive] = useState(false);
+  // Book Roll state: maps source agency id to the target agency code + effective date.
+  // Used to flip the source agency's display to Unappointed (reason: Sold, soldTo: <code>).
+  const [bookRolled, setBookRolled] = useState<Map<string, { targetCode: string; date: string }>>(new Map());
+
+  // Whenever the search query changes, collapse the "Show inactive" toggle so each new search
+  // starts from the default Active-only view. Users must explicitly click "Show inactive" again.
+  useEffect(() => {
+    setAllUsersShowInactive(false);
+  }, [search]);
+
+  // Auto-switch tab when the search box has a query that matches in a different tab.
+  // Stays on the current tab if it has any match; otherwise jumps to the first tab that does.
+  useEffect(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return;
+    const agencyById = new Map(allAgencies.map(a => [a.id, a]));
+    const agenciesMatches = allAgencies.some(a =>
+      a.name.toLowerCase().includes(q)
+      || a.code.toLowerCase().includes(q)
+      || a.city.toLowerCase().includes(q)
+      || a.state.toLowerCase().includes(q)
+    );
+    const usersMatches = mockAgencyUsers.some(u =>
+      u.name.toLowerCase().includes(q)
+      || u.email.toLowerCase().includes(q)
+      || u.jobTitle.toLowerCase().includes(q)
+      || (agencyById.get(u.agencyId)?.name.toLowerCase().includes(q) ?? false)
+    );
+    const affMatches = Array.from(new Set(allAgencies.flatMap(a => a.affiliations))).some(n =>
+      n.toLowerCase().includes(q)
+    );
+    const currentHasMatches = tab === "agencies" ? agenciesMatches : tab === "users" ? usersMatches : affMatches;
+    if (currentHasMatches) return;
+    if (agenciesMatches) setTab("agencies");
+    else if (usersMatches) setTab("users");
+    else if (affMatches) setTab("affiliations");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   /* colours */
   const c = {
@@ -3918,11 +5276,21 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     if (filterStatus === "Unappointed") return a.status === "Unappointed";
     return true;
   }).filter(a => {
+    if (locationFilter.size === 0) return true;
+    return locationFilter.has(a.state);
+  }).filter(a => {
+    if (affiliationFilter.size === 0) return true;
+    return a.affiliations.some(aff => affiliationFilter.has(aff));
+  }).filter(a => {
+    if (agencyNameFilter.size === 0) return true;
+    return agencyNameFilter.has(a.name);
+  }).filter(a => {
     if (!search) return true;
     return (
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.code.toLowerCase().includes(search.toLowerCase()) ||
-      a.city.toLowerCase().includes(search.toLowerCase())
+      a.city.toLowerCase().includes(search.toLowerCase()) ||
+      a.state.toLowerCase().includes(search.toLowerCase())
     );
   }).sort((a, b) => {
     if (!sortKey) return 0;
@@ -3932,10 +5300,31 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     if (sortKey === "location")   { av = a.city;      bv = b.city; }
     if (sortKey === "status")     { av = a.status;    bv = b.status; }
     if (sortKey === "totalUsers") { return sortDir === "asc" ? a.totalUsers - b.totalUsers : b.totalUsers - a.totalUsers; }
+    if (sortKey === "lastLogin")  {
+      const ta = new Date(a.lastLogin).getTime();
+      const tb = new Date(b.lastLogin).getTime();
+      return sortDir === "asc" ? ta - tb : tb - ta;
+    }
     return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  // Filtered user count for All Users tab pagination
+  const filteredUsersCount = (() => {
+    if (tab !== "users") return 0;
+    const q = search.trim().toLowerCase();
+    const agencyById = new Map(allAgencies.map(a => [a.id, a]));
+    return mockAgencyUsers
+      .filter(u => !q
+        || u.name.toLowerCase().includes(q)
+        || u.email.toLowerCase().includes(q)
+        || u.jobTitle.toLowerCase().includes(q)
+        || (agencyById.get(u.agencyId)?.name.toLowerCase().includes(q) ?? false))
+      .filter(u => allUsersJobFilter.size === 0 || allUsersJobFilter.has(u.jobTitle))
+      .length;
+  })();
+  const totalPagesAgencies = Math.max(1, Math.ceil(filtered.length / perPage));
+  const totalPagesUsers = Math.max(1, Math.ceil(filteredUsersCount / perPage));
+  const totalPages = tab === "users" ? totalPagesUsers : totalPagesAgencies;
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage);
   const starred    = allAgencies.filter(a => a.isStarred);
 
@@ -3950,6 +5339,280 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const escapeCsv = (v: string | number | undefined): string => {
+    const s = (v ?? "").toString();
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const downloadCsv = (filename: string, headers: string[], rows: string[]) => {
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  // Compute export data (headers + 2D row values) for the current tab. Used by both the export
+  // dialog preview and the download flow.
+  const getExportData = (): { headers: string[]; rows: string[][]; filename: string } | null => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
+    if (tab === "affiliations") {
+      const affMap = new Map<string, Agency[]>();
+      for (const a of allAgencies) for (const aff of a.affiliations) {
+        if (!affMap.has(aff)) affMap.set(aff, []);
+        affMap.get(aff)!.push(a);
+      }
+      const q = search.trim().toLowerCase();
+      const allRows = Array.from(affMap.entries())
+        .map(([name, ags]) => ({ name, agencies: ags }))
+        .filter(r => !q || r.name.toLowerCase().includes(q) || r.agencies.some(a => a.name.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const affRows = affListFilter.size === 0 ? allRows : allRows.filter(r => affListFilter.has(r.name));
+      const multiMode = affListFilter.size >= 2;
+      let target: { name: string; agencies: Agency[] } | null;
+      if (multiMode) {
+        const deduped = Array.from(new Map(affRows.flatMap(r => r.agencies).map(a => [a.id, a])).values())
+          .sort((a, b) => a.name.localeCompare(b.name));
+        target = { name: Array.from(affListFilter).sort().join(" + "), agencies: deduped };
+      } else {
+        const activeAff = selectedAff && affRows.find(r => r.name === selectedAff)
+          ? selectedAff
+          : (affRows[0]?.name ?? null);
+        target = activeAff ? affRows.find(r => r.name === activeAff)! : null;
+      }
+      if (!target) return null;
+      const exportScope = multiMode ? affListFilter : new Set([target.name]);
+      const otherAffs = (a: Agency) => a.affiliations.filter(x => !exportScope.has(x));
+      const allCols: Array<{ key: string; label: string; get: (a: Agency) => string }> = [
+        { key: "code",       label: "Agency Code",         get: a => a.code },
+        { key: "name",       label: "Name",                get: a => a.name },
+        { key: "otherAff1",  label: "Other Affiliation 1", get: a => otherAffs(a)[0] || "" },
+        { key: "otherAff2",  label: "Other Affiliation 2", get: a => otherAffs(a)[1] || "" },
+        { key: "contact",    label: "Contact Name",        get: a => getDetail(a).contact || "" },
+        { key: "address",    label: "Address",             get: a => getDetail(a).street || "" },
+        { key: "city",       label: "City",                get: a => a.city },
+        { key: "state",      label: "State",               get: a => a.state },
+        { key: "zip",        label: "ZIP Code",            get: a => getDetail(a).zip || "" },
+        { key: "phone",      label: "Phone",               get: a => getDetail(a).phone || "" },
+        { key: "email",      label: "Email",               get: a => getDetail(a).contactEmail || "" },
+        { key: "totalUsers", label: "Total User",          get: a => String(a.totalUsers) },
+        { key: "lastLogin",  label: "Last Login",          get: a => a.lastLogin },
+        { key: "status",     label: "Status",              get: a => a.status },
+        { key: "location",   label: "Location",            get: a => `${a.city || ""}${a.state ? `, ${a.state}` : ""}` },
+      ];
+      const togglable = new Set(AFFILIATIONS_COLS.map(col => col.key));
+      const visible = allCols.filter(col => !togglable.has(col.key) || affVisibleCols.has(col.key));
+      return {
+        headers: visible.map(c => c.label),
+        rows: target.agencies.map(a => visible.map(c => c.get(a))),
+        filename: `affiliation-${safe(target.name)}-${stamp}`,
+      };
+    }
+    if (tab === "users") {
+      const q = search.trim().toLowerCase();
+      const agencyById = new Map(allAgencies.map(a => [a.id, a]));
+      const userRows = mockAgencyUsers
+        .filter(u => !q
+          || u.name.toLowerCase().includes(q)
+          || u.email.toLowerCase().includes(q)
+          || u.jobTitle.toLowerCase().includes(q)
+          || (agencyById.get(u.agencyId)?.name.toLowerCase().includes(q) ?? false))
+        .filter(u => allUsersJobFilter.size === 0 || allUsersJobFilter.has(u.jobTitle))
+        .sort((a, b) => allUsersSortDir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+      const allCols: Array<{ key: string; label: string; get: (u: typeof mockAgencyUsers[number]) => string }> = [
+        { key: "name",     label: "Name",      get: u => u.name },
+        { key: "admin",    label: "Admin",     get: u => u.isAdmin ? "Yes" : "No" },
+        { key: "jobTitle", label: "Job Title", get: u => u.jobTitle },
+        { key: "email",    label: "Email",     get: u => u.email },
+        { key: "phone",    label: "Phone",     get: u => u.phone },
+        { key: "ext",      label: "Ext",       get: u => u.ext || "" },
+        { key: "agency",   label: "Agency",    get: u => agencyById.get(u.agencyId)?.name ?? "" },
+      ];
+      const visible = allCols.filter(col => !usersHiddenCols.has(col.key));
+      return {
+        headers: visible.map(c => c.label),
+        rows: userRows.map(u => visible.map(c => c.get(u))),
+        filename: `users-${stamp}`,
+      };
+    }
+    // agencies tab
+    const allCols: Array<{ key: string; label: string; get: (a: Agency) => string }> = [
+      { key: "code",       label: "Agency Code",   get: a => a.code },
+      { key: "name",       label: "Name",          get: a => a.name },
+      { key: "contact",    label: "Contact Name",  get: a => getDetail(a).contact || "" },
+      { key: "address",    label: "Address",       get: a => getDetail(a).street || "" },
+      { key: "city",       label: "City",          get: a => a.city },
+      { key: "state",      label: "State",         get: a => a.state },
+      { key: "zip",        label: "ZIP Code",      get: a => getDetail(a).zip || "" },
+      { key: "phone",      label: "Phone",         get: a => getDetail(a).phone || "" },
+      { key: "email",      label: "Email",         get: a => getDetail(a).contactEmail || "" },
+      { key: "aff1",       label: "Affiliation 1", get: a => a.affiliations[0] || "" },
+      { key: "aff2",       label: "Affiliation 2", get: a => a.affiliations[1] || "" },
+      { key: "aff3",       label: "Affiliation 3", get: a => a.affiliations[2] || "" },
+      { key: "totalUsers", label: "Total User",    get: a => String(a.totalUsers) },
+      { key: "lastLogin",  label: "Last Login",    get: a => a.lastLogin },
+      { key: "status",     label: "Status",        get: a => a.status },
+    ];
+    // The export dialog drives column selection + scope + affiliation row filter.
+    // `filtered` already reflects table-level filters (search, status, affiliations, etc).
+    // Master Agencies: we use `isStarred` as the master/strategic-partner proxy in this mock data.
+    const visible = allCols.filter(col => exportSelectedCols.has(col.key));
+    const scopeFiltered = filtered.filter(a => {
+      if (exportScope === "master") return a.isStarred;
+      if (exportScope === "excludeMaster") return !a.isStarred;
+      if (exportScope === "withAffs") return a.affiliations.length > 0;
+      return true;
+    });
+    const filteredByAff = exportAffs.size === 0
+      ? scopeFiltered
+      : scopeFiltered.filter(a => a.affiliations.some(aff => exportAffs.has(aff)));
+    return {
+      headers: visible.map(c => c.label),
+      rows: filteredByAff.map(a => visible.map(c => c.get(a))),
+      filename: `agencies-${stamp}`,
+    };
+  };
+  const downloadXlsx = (filename: string, headers: string[], rows: string[][]) => {
+    // Minimal XLSX-like download via TSV (Excel opens it cleanly)
+    const tsv = [headers.join("\t"), ...rows.map(r => r.map(v => v.replace(/\t/g, " ")).join("\t"))].join("\n");
+    const blob = new Blob(["\uFEFF" + tsv], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  const runExport = () => {
+    const data = getExportData();
+    if (!data) return;
+    if (exportFormat === "xlsx") {
+      downloadXlsx(`${data.filename}.xls`, data.headers, data.rows);
+    } else {
+      const csvRows = data.rows.map(r => r.map(escapeCsv).join(","));
+      downloadCsv(`${data.filename}.csv`, data.headers, csvRows);
+    }
+    setExportDialogOpen(false);
+  };
+  const exportAgencies = () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
+    if (tab === "affiliations") {
+      // Export agencies in the currently selected affiliation, or the union when 2+ are filter-selected.
+      const affMap = new Map<string, Agency[]>();
+      for (const a of allAgencies) for (const aff of a.affiliations) {
+        if (!affMap.has(aff)) affMap.set(aff, []);
+        affMap.get(aff)!.push(a);
+      }
+      const q = search.trim().toLowerCase();
+      const allRows = Array.from(affMap.entries())
+        .map(([name, ags]) => ({ name, agencies: ags }))
+        .filter(r => !q || r.name.toLowerCase().includes(q) || r.agencies.some(a => a.name.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const affRows = affListFilter.size === 0 ? allRows : allRows.filter(r => affListFilter.has(r.name));
+      const multiMode = affListFilter.size >= 2;
+      let target: { name: string; agencies: Agency[] } | null;
+      if (multiMode) {
+        const deduped = Array.from(new Map(affRows.flatMap(r => r.agencies).map(a => [a.id, a])).values())
+          .sort((a, b) => a.name.localeCompare(b.name));
+        target = { name: Array.from(affListFilter).sort().join(" + "), agencies: deduped };
+      } else {
+        const activeAff = selectedAff && affRows.find(r => r.name === selectedAff)
+          ? selectedAff
+          : (affRows[0]?.name ?? null);
+        target = activeAff ? affRows.find(r => r.name === activeAff)! : null;
+      }
+      if (!target) return;
+      // Always export the underlying contact details (Address, City, State, ZIP, Contact Name, Phone, Email).
+      // The View dropdown only toggles which agency-summary columns appear.
+      // "Other" means the agency's affiliations that aren't part of the current export scope.
+      const exportScope = multiMode ? affListFilter : new Set([target.name]);
+      const otherAffs = (a: Agency) => a.affiliations.filter(x => !exportScope.has(x));
+      const allCols: Array<{ key: string; label: string; get: (a: Agency) => string }> = [
+        { key: "code",       label: "Agency Code",         get: a => a.code },
+        { key: "name",       label: "Name",                get: a => a.name },
+        { key: "otherAff1",  label: "Other Affiliation 1", get: a => otherAffs(a)[0] || "" },
+        { key: "otherAff2",  label: "Other Affiliation 2", get: a => otherAffs(a)[1] || "" },
+        { key: "contact",    label: "Contact Name", get: a => getDetail(a).contact || "" },
+        { key: "address",    label: "Address",      get: a => getDetail(a).street || "" },
+        { key: "city",       label: "City",         get: a => a.city },
+        { key: "state",      label: "State",        get: a => a.state },
+        { key: "zip",        label: "ZIP Code",     get: a => getDetail(a).zip || "" },
+        { key: "phone",      label: "Phone",        get: a => getDetail(a).phone || "" },
+        { key: "email",      label: "Email",        get: a => getDetail(a).contactEmail || "" },
+        { key: "totalUsers", label: "Total User",   get: a => String(a.totalUsers) },
+        { key: "lastLogin",  label: "Last Login",   get: a => a.lastLogin },
+        { key: "status",     label: "Status",       get: a => a.status },
+        { key: "location",   label: "Location",     get: a => `${a.city || ""}${a.state ? `, ${a.state}` : ""}` },
+      ];
+      const togglable = new Set(AFFILIATIONS_COLS.map(col => col.key));
+      const visibleCols = allCols.filter(col => !togglable.has(col.key) || affVisibleCols.has(col.key));
+      const headers = visibleCols.map(c => c.label);
+      const rows = target.agencies.map(a => visibleCols.map(c => c.get(a)).map(escapeCsv).join(","));
+      downloadCsv(`affiliation-${safe(target.name)}-${stamp}.csv`, headers, rows);
+      return;
+    }
+    if (tab === "users") {
+      // Export currently filtered users (search + job-title filter), respecting hidden columns
+      const q = search.trim().toLowerCase();
+      const agencyById = new Map(allAgencies.map(a => [a.id, a]));
+      const userRows = mockAgencyUsers
+        .filter(u => !q
+          || u.name.toLowerCase().includes(q)
+          || u.email.toLowerCase().includes(q)
+          || u.jobTitle.toLowerCase().includes(q)
+          || (agencyById.get(u.agencyId)?.name.toLowerCase().includes(q) ?? false))
+        .filter(u => allUsersJobFilter.size === 0 || allUsersJobFilter.has(u.jobTitle))
+        .sort((a, b) => allUsersSortDir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+      const allCols: Array<{ key: string; label: string; get: (u: typeof mockAgencyUsers[number]) => string }> = [
+        { key: "name",     label: "Name",      get: u => u.name },
+        { key: "admin",    label: "Admin",     get: u => u.isAdmin ? "Yes" : "No" },
+        { key: "jobTitle", label: "Job Title", get: u => u.jobTitle },
+        { key: "email",    label: "Email",     get: u => u.email },
+        { key: "phone",    label: "Phone",     get: u => u.phone },
+        { key: "ext",      label: "Ext",       get: u => u.ext || "" },
+        { key: "agency",   label: "Agency",    get: u => agencyById.get(u.agencyId)?.name ?? "" },
+      ];
+      const visibleCols = allCols.filter(col => !usersHiddenCols.has(col.key));
+      const headers = visibleCols.map(c => c.label);
+      const rows = userRows.map(u => visibleCols.map(c => c.get(u)).map(escapeCsv).join(","));
+      downloadCsv(`users-${stamp}.csv`, headers, rows);
+      return;
+    }
+    // Always export the underlying contact details (Contact Name, Address, City, State, ZIP, Phone, Email).
+    // The visible-column toggle only hides table columns: Code, Location, Affiliation 1/2/3, Total User, Last Login, Status.
+    const allCols: Array<{ key: string; label: string; get: (a: Agency) => string }> = [
+      { key: "code",       label: "Agency Code",   get: a => a.code },
+      { key: "name",       label: "Name",          get: a => a.name },
+      { key: "contact",    label: "Contact Name",  get: a => getDetail(a).contact || "" },
+      { key: "address",    label: "Address",       get: a => getDetail(a).street || "" },
+      { key: "city",       label: "City",          get: a => a.city },
+      { key: "state",      label: "State",         get: a => a.state },
+      { key: "zip",        label: "ZIP Code",      get: a => getDetail(a).zip || "" },
+      { key: "phone",      label: "Phone",         get: a => getDetail(a).phone || "" },
+      { key: "email",      label: "Email",         get: a => getDetail(a).contactEmail || "" },
+      { key: "aff1",       label: "Affiliation 1", get: a => a.affiliations[0] || "" },
+      { key: "aff2",       label: "Affiliation 2", get: a => a.affiliations[1] || "" },
+      { key: "aff3",       label: "Affiliation 3", get: a => a.affiliations[2] || "" },
+      { key: "totalUsers", label: "Total User",    get: a => String(a.totalUsers) },
+      { key: "lastLogin",  label: "Last Login",    get: a => a.lastLogin },
+      { key: "status",     label: "Status",        get: a => a.status },
+    ];
+    // Skip only columns that are togglable from the View dropdown AND currently hidden.
+    // Contact details (name/contact/address/city/state/zip/phone/email) are always exported.
+    const togglable = new Set(AGENCIES_COLS.map(col => col.key));
+    const visibleCols = allCols.filter(col => !(togglable.has(col.key) && agenciesHiddenCols.has(col.key)));
+    const headers = visibleCols.map(c => c.label);
+    const rows = filtered.map(a => visibleCols.map(c => c.get(a)).map(escapeCsv).join(","));
+    downloadCsv(`agencies-${stamp}.csv`, headers, rows);
   };
 
   const SortIcon = ({ col }: { col: SortKey }) => {
@@ -4011,7 +5674,23 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
         {sectionTitle}
-        <AddAgencyForm isDark={isDark} onCancel={() => setAddOpen(false)} c={c} btnGrad={btnGrad} FONT={FONT} />
+        <AddAgencyForm
+          isDark={isDark}
+          initialDraft={resumeFromDraft ? agencyDraft : null}
+          onSaveForLater={(d) => {
+            setAgencyDraft(d);
+            setAddOpen(false);
+            setResumeFromDraft(false);
+            setSaveForLaterToast(true);
+            setTimeout(() => setSaveForLaterToast(false), 2400);
+          }}
+          onDiscard={() => {
+            setAddOpen(false);
+            setResumeFromDraft(false);
+            setAgencyDraft(null);
+          }}
+          c={c} btnGrad={btnGrad} FONT={FONT}
+        />
       </div>
     );
   }
@@ -4026,16 +5705,354 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         btnGrad={btnGrad}
         stars={stars}
         onToggleStar={toggleStar}
+        inactiveUserIds={inactiveUserIds}
+        setInactiveUserIds={setInactiveUserIds}
+        removedUserIds={removedUserIds}
+        setRemovedUserIds={setRemovedUserIds}
+        bookRolled={bookRolled}
+        setBookRolled={setBookRolled}
+        allAgencies={allAgencies}
       />
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => setPerPageOpen(false)}>
+    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => { setPerPageOpen(false); setViewOpen(false); setAffListFilterOpen(false); setAgencyNameOpen(false); setLocationOpen(false); setAffiliationOpen(null); }}>
+      {exportDialogOpen && (() => {
+        const data = getExportData();
+        const previewRows = data ? data.rows.slice(0, 3) : [];
+        const totalRows = data ? data.rows.length : 0;
+        const isAgenciesTab = tab === "agencies";
+        // All available columns shown in the column-picker for the agencies tab.
+        const ALL_AGENCY_COLS: Array<{ key: string; label: string }> = [
+          { key: "code",       label: "Agency Code"   },
+          { key: "name",       label: "Name"          },
+          { key: "contact",    label: "Contact Name"  },
+          { key: "address",    label: "Address"       },
+          { key: "city",       label: "City"          },
+          { key: "state",      label: "State"         },
+          { key: "zip",        label: "ZIP Code"      },
+          { key: "phone",      label: "Phone"         },
+          { key: "email",      label: "Email"         },
+          { key: "aff1",       label: "Affiliation 1" },
+          { key: "aff2",       label: "Affiliation 2" },
+          { key: "aff3",       label: "Affiliation 3" },
+          { key: "totalUsers", label: "Total User"    },
+          { key: "lastLogin",  label: "Last Login"    },
+          { key: "status",     label: "Status"        },
+        ];
+        const allAffNames = Array.from(new Set(allAgencies.flatMap(a => a.affiliations))).sort();
+        const filteredAffNames = allAffNames.filter(n => !exportAffSearch || n.toLowerCase().includes(exportAffSearch.toLowerCase()));
+        // Compute which preset is currently active (if any) — used to highlight the preset button.
+        const colsKey = Array.from(exportSelectedCols).sort().join(",");
+        const basicKey = [...AGENCIES_EXPORT_COLS_BASIC].sort().join(",");
+        const contactsKey = [...AGENCIES_EXPORT_COLS_CONTACTS].sort().join(",");
+        const activePreset = colsKey === basicKey ? "basic" : colsKey === contactsKey ? "contacts" : null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setExportDialogOpen(false)}>
+            <div className="rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(960px, 94vw)", maxHeight: "88vh", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
+              onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+                <div>
+                  <h2 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Export {tab === "users" ? "Users" : tab === "affiliations" ? "Affiliation Agencies" : "Agencies"}</h2>
+                  <p className="text-[12px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{data ? `${totalRows} ${totalRows === 1 ? "row" : "rows"} · ${data.headers.length} columns · respects your current filters` : "No data to export"}</p>
+                </div>
+                <button onClick={() => setExportDialogOpen(false)}
+                  className="p-1.5 rounded-md transition-colors"
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <X className="w-4 h-4" style={{ color: c.muted }} />
+                </button>
+              </div>
+              {/* Body — for agencies tab show full options; for other tabs simpler */}
+              {isAgenciesTab ? (
+                <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+                  {/* Scope */}
+                  <div className="px-5 pt-4 pb-3 flex-shrink-0">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Scope</div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {([
+                        ["all",            "All Agencies"           ],
+                        ["master",         "Master Agencies Only"   ],
+                        ["excludeMaster",  "Exclude Master Agencies"],
+                        ["withAffs",       "Agencies with Affiliations"],
+                      ] as const).map(([key, label]) => {
+                        const active = exportScope === key;
+                        return (
+                          <label key={key} className="flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => setExportScope(key)}>
+                            <span className="flex items-center justify-center w-3.5 h-3.5 rounded-full flex-shrink-0"
+                              style={{ border: `1.5px solid ${active ? "#A614C3" : c.borderStrong}`, background: c.cardBg }}>
+                              {active && <span style={{ width: 7, height: 7, borderRadius: 999, background: "#A614C3" }} />}
+                            </span>
+                            <span className="text-[12px]" style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 400 }}>{label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="mx-5" style={{ borderBottom: `1px solid ${c.border}` }} />
+                  {/* Quick Preset + Columns — combined into one section */}
+                  <div className="px-5 pt-4 pb-4 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-x-6 gap-y-2">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Quick Preset</div>
+                        {([["basic", "Agencies Only", AGENCIES_EXPORT_COLS_BASIC], ["contacts", "Agencies with Contacts", AGENCIES_EXPORT_COLS_CONTACTS]] as const).map(([key, label, cols]) => {
+                          const active = activePreset === key;
+                          return (
+                            <label key={key} className="flex items-center gap-1.5 cursor-pointer"
+                              onClick={() => setExportSelectedCols(new Set(cols))}>
+                              <span className="flex items-center justify-center w-3.5 h-3.5 rounded-full flex-shrink-0"
+                                style={{ border: `1.5px solid ${active ? "#A614C3" : c.borderStrong}`, background: c.cardBg }}>
+                                {active && <span style={{ width: 7, height: 7, borderRadius: 999, background: "#A614C3" }} />}
+                              </span>
+                              <span className="text-[12px]" style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 400 }}>{label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Columns ({exportSelectedCols.size}/{ALL_AGENCY_COLS.length})</div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setExportSelectedCols(new Set(ALL_AGENCY_COLS.map(c => c.key)))}
+                          className="text-[11px] font-semibold transition-colors"
+                          style={{ fontFamily: FONT, color: "#A614C3" }}>All</button>
+                        <span className="text-[11px]" style={{ color: c.muted }}>·</span>
+                        <button onClick={() => setExportSelectedCols(new Set())}
+                          className="text-[11px] font-semibold transition-colors"
+                          style={{ fontFamily: FONT, color: "#A614C3" }}>None</button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-y-1 gap-x-3">
+                      {ALL_AGENCY_COLS.map(col => {
+                        const checked = exportSelectedCols.has(col.key);
+                        return (
+                          <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
+                            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                            onClick={() => setExportSelectedCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                              style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                              {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </div>
+                            <span className="text-[12px] truncate" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {/* Affiliation filter — only shown when scope is "Agencies with Affiliations" — moved BELOW Columns */}
+                  {exportScope === "withAffs" && (
+                    <>
+                    <div className="mx-5" style={{ borderBottom: `1px solid ${c.border}` }} />
+                    <div className="px-5 pt-4 pb-4 flex-shrink-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Filter by Affiliation {exportAffs.size > 0 ? `(${exportAffs.size})` : "(All)"}</div>
+                        {exportAffs.size > 0 && (
+                          <button onClick={() => { setExportAffs(new Set()); setExportAffSearch(""); }}
+                            className="text-[11px] font-semibold" style={{ fontFamily: FONT, color: "#A614C3" }}>Clear</button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-4 gap-y-1 gap-x-3" style={{ maxHeight: 180, overflowY: "auto" }}>
+                        {allAffNames.map(name => {
+                          const checked = exportAffs.has(name);
+                          return (
+                            <label key={name} className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                              onClick={() => setExportAffs(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s; })}>
+                              <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </div>
+                              <span className="text-[12px] truncate" style={{ fontFamily: FONT, color: c.text }} title={name}>{name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="px-6 py-3 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)" }}>
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <span className="text-[12px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: FONT, color: c.text }}>
+                    Want to drop columns? Click
+                    <button onClick={() => { setExportDialogOpen(false); setTimeout(() => setViewOpen(true), 0); }}
+                      title="Open View columns"
+                      className="inline-flex items-center justify-center p-1 rounded-md transition-colors"
+                      style={{ color: "#A614C3", background: isDark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.12)", verticalAlign: "middle" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.25)" : "rgba(168,85,247,0.20)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.12)")}>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg>
+                    </button>
+                    in the toolbar to hide any column — the export updates with it.
+                  </span>
+                </div>
+              )}
+              {/* Preview */}
+              <div className="mx-5" style={{ borderTop: `1px solid ${c.border}` }} />
+              <div className="px-6 py-3 flex-shrink-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>
+                  Preview {totalRows > 3 ? `(first 3 of ${totalRows})` : ""}
+                </div>
+                {!data || previewRows.length === 0 ? (
+                  <div className="py-8 text-center text-[13px] rounded-xl"
+                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.mutedBg }}>
+                    No rows match your current filters.
+                  </div>
+                ) : data.headers.length === 0 ? (
+                  <div className="py-8 text-center text-[13px] rounded-xl"
+                    style={{ fontFamily: FONT, color: c.muted, border: `1px dashed ${c.border}`, background: c.mutedBg }}>
+                    No columns selected.
+                  </div>
+                ) : (
+                  <div className="overflow-auto rounded-xl" style={{ border: `1px solid ${c.border}`, maxHeight: 200 }}>
+                    <table className="text-left border-collapse" style={{ minWidth: "100%" }}>
+                      <thead className="sticky top-0" style={{ background: c.mutedBg, zIndex: 1 }}>
+                        <tr style={{ borderBottom: `1px solid ${c.border}` }}>
+                          {data.headers.map(h => (
+                            <th key={h} className="text-[11px] font-bold uppercase tracking-wider py-2.5 px-4 whitespace-nowrap"
+                              style={{ fontFamily: FONT, color: c.muted }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewRows.map((row, i) => (
+                          <tr key={i} style={{ borderBottom: i !== previewRows.length - 1 ? `1px solid ${c.border}` : "none" }}>
+                            {row.map((v, j) => (
+                              <td key={j} className="py-2.5 px-4 whitespace-nowrap text-[12px]"
+                                style={{ fontFamily: FONT, color: c.text }}>{v || <span style={{ color: c.muted }}>—</span>}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              {/* Footer */}
+              <div className="px-6 py-3 flex items-center justify-between gap-2 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}>
+                {isAgenciesTab ? (
+                  <button onClick={() => { setExportSelectedCols(new Set(AGENCIES_EXPORT_COLS_CONTACTS)); setExportAffs(new Set()); setExportAffSearch(""); setExportFormat("csv"); setExportScope("all"); }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors"
+                    style={{ fontFamily: FONT, color: "#A614C3" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <RefreshCw className="w-3.5 h-3.5" />Reset
+                  </button>
+                ) : <div />}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setExportDialogOpen(false)}
+                    className="px-4 py-2 rounded-lg text-[13px] transition-colors"
+                    style={{ fontFamily: FONT, color: c.text, border: `1px solid ${c.border}`, background: c.cardBg }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                    Cancel
+                  </button>
+                  {/* Split button: shared gradient on the wrapper so both halves read as one continuous fill. */}
+                  <div className="relative inline-flex transition-all"
+                    onClick={e => e.stopPropagation()}
+                    onMouseEnter={e => { if (data && totalRows > 0 && data.headers.length > 0) e.currentTarget.style.filter = "brightness(1.12)"; }}
+                    onMouseLeave={e => (e.currentTarget.style.filter = "none")}
+                    style={{ background: btnGrad, borderRadius: 10, boxShadow: "0 4px 14px rgba(166,20,195,0.25)", opacity: !data || totalRows === 0 || data.headers.length === 0 ? 0.5 : 1 }}>
+                    <button onClick={runExport}
+                      disabled={!data || totalRows === 0 || data.headers.length === 0}
+                      className="flex items-center gap-2 pl-4 pr-3 py-2 text-[13px] font-semibold text-white"
+                      style={{ fontFamily: FONT, background: "transparent", borderRadius: "10px 0 0 10px", cursor: !data || totalRows === 0 || data.headers.length === 0 ? "not-allowed" : "pointer" }}>
+                      <Download className="w-4 h-4" />Download {exportFormat === "csv" ? "CSV" : "Excel"}
+                    </button>
+                    <button onClick={() => setExportFormatMenuOpen(o => !o)}
+                      disabled={!data || totalRows === 0 || data.headers.length === 0}
+                      className="flex items-center justify-center px-2 py-2 text-white"
+                      style={{ fontFamily: FONT, background: "transparent", borderRadius: "0 10px 10px 0", borderLeft: "1px solid rgba(255,255,255,0.25)", cursor: !data || totalRows === 0 || data.headers.length === 0 ? "not-allowed" : "pointer" }}>
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    {exportFormatMenuOpen && (
+                      <div className="absolute right-0 bottom-full mb-1 z-30 w-[160px] rounded-lg shadow-xl overflow-hidden"
+                        style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        {([["csv", "CSV"], ["xlsx", "Excel"]] as const).map(([key, label]) => {
+                          const active = exportFormat === key;
+                          return (
+                            <button key={key} onClick={() => { setExportFormat(key); setExportFormatMenuOpen(false); }}
+                              className="w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors"
+                              style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent", fontWeight: active ? 600 : 400 }}
+                              onMouseEnter={e => (e.currentTarget.style.background = active ? "rgba(168,85,247,0.12)" : c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = active ? "rgba(168,85,247,0.08)" : "transparent")}>
+                              <span>{label}</span>
+                              {active && <svg width="9" height="7" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {starLimitToast && (
-        <div className="fixed top-[68px] right-6 z-50 px-4 py-2.5 rounded-xl text-[13px] font-semibold"
-          style={{ background: isDark ? "#1E2240" : "#fff", color: c.text, border: `1px solid ${c.border}`, fontFamily: FONT, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-          ⭐ You can only pin up to 6 agencies
+        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-4"
+          style={{ background: isDark ? "#1E2240" : "#fff", border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: 320, maxWidth: 420, fontFamily: FONT }}>
+          <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold" style={{ color: c.text }}>Pin limit reached</div>
+            <div className="text-[12px] mt-0.5" style={{ color: c.muted }}>You can only pin up to 6 agencies.</div>
+          </div>
+        </div>
+      )}
+      {saveForLaterToast && (
+        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-4"
+          style={{ background: isDark ? "#1E2240" : "#fff", border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: 320, maxWidth: 420, fontFamily: FONT }}>
+          <Bookmark className="w-4 h-4 flex-shrink-0" style={{ color: "#A855F7" }} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold" style={{ color: c.text }}>Draft saved</div>
+            <div className="text-[12px] mt-0.5" style={{ color: c.muted }}>Pick up where you left off any time.</div>
+          </div>
+        </div>
+      )}
+      {resumeDraftOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setResumeDraftOpen(false)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(168,85,247,0.12)" }}>
+                <FilePen className="w-6 h-6" style={{ color: "#A855F7" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Continue your unfinished agency?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  You saved a draft{agencyDraft?.agencyName ? <> for <strong style={{ color: c.text }}>{agencyDraft.agencyName}</strong></> : ""}. Pick up where you left off, or start from scratch.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setAgencyDraft(null); setResumeDraftOpen(false); setResumeFromDraft(false); setAddOpen(true); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Start fresh
+              </button>
+              <button onClick={() => { setResumeFromDraft(true); setResumeDraftOpen(false); setAddOpen(true); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ background: btnGrad }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Continue
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -4043,11 +6060,11 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {sectionTitle}
 
       {/* Search + buttons */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-2 mb-4">
         <div className="flex flex-1 max-w-[360px] transition-all"
           style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search agencies or users..."
+            placeholder={tab === "affiliations" ? "Search affiliations, agencies, or codes..." : tab === "users" ? "Search users..." : "Search agencies, users, or codes..."}
             className="flex-1 outline-none"
             style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
           <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
@@ -4057,12 +6074,17 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
             <Search className="w-3.5 h-3.5" />Search
           </button>
         </div>
-        <button onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 text-[13px] font-semibold text-white transition-all"
+        <button onClick={() => { if (agencyDraft) { setResumeDraftOpen(true); } else { setResumeFromDraft(false); setAddOpen(true); } }}
+          className="relative flex items-center gap-1.5 text-[13px] font-semibold text-white transition-all"
           style={{ fontFamily: FONT, background: btnGrad, padding:"9px 16px", borderRadius: 10 }}
+          title={agencyDraft ? "You have an unfinished draft" : undefined}
           onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
           onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
           <Plus className="w-4 h-4" />Add New Agency
+          {agencyDraft && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
+              style={{ background: "#F59E0B", border: `2px solid ${isDark ? "#0B0F1C" : "#FFFFFF"}` }} />
+          )}
         </button>
       </div>
 
@@ -4080,16 +6102,16 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
             <span className="text-[13px] font-bold" style={{ fontFamily: FONT, color: c.text }}>
-              Starred Agencies <span className="font-normal" style={{ color: c.muted }}>({starred.length} of {allAgencies.length})</span>
+              Starred Agencies <span className="font-normal" style={{ color: c.muted }}>({starred.length} of 6)</span>
             </span>
           </div>
           <div className="flex gap-3 flex-wrap">
             {starred.map(a => (
               <div key={a.id} onClick={() => setSelectedAgency(getDetail(a))}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, minWidth: 180 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = c.cardBg; }}>
                 <Star className="w-4 h-4 flex-shrink-0" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{a.name}</p>
@@ -4103,38 +6125,324 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
       {/* Tabs */}
       <div className="flex items-center gap-0 mb-0 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-        {([["agencies", "Agencies", Building2], ["users", "All Users", Users]] as [TabKey, string, React.ComponentType<{className?:string;style?:React.CSSProperties}>][]).map(([key, label, Icon]) => {
-          const active = tab === key;
-          return (
-            <button key={key} onClick={() => setTab(key)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-normal relative transition-colors"
-              style={{ fontFamily: FONT, color: active ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}>
-              <Icon className="w-[15px] h-[15px]" style={{ color: active ? "#A614C3" : undefined }} />
-              {label}
-              {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
+        <div className="flex items-center gap-0">
+          {([["agencies", "Agencies", Building2], ["users", "All Users", Users], ["affiliations", "Affiliations", Network]] as [TabKey, string, React.ComponentType<{className?:string;style?:React.CSSProperties}>][]).map(([key, label, Icon]) => {
+            const active = tab === key;
+            return (
+              <button key={key} onClick={() => setTab(key)}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-normal relative transition-colors"
+                style={{ fontFamily: FONT, color: active ? (isDark ? "#fff" : "#A614C3") : c.muted, letterSpacing: "0.01em" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = c.text; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
+                <Icon className="w-[15px] h-[15px]" style={{ color: active ? "#A614C3" : undefined }} />
+                {label}
+                {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)" }} />}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10, marginLeft: 6 }}>
+          <button title="Reset filters"
+            onClick={() => {
+              setSearch("");
+              setFilterStatus("All");
+              setSortKey(null);
+              setSortDir("asc");
+              setPage(1);
+              setLocationFilter(new Set()); setLocationSearch(""); setLocationOpen(false);
+              setAffiliationFilter(new Set()); setAffiliationSearch(""); setAffiliationOpen(null);
+              setAgencyNameFilter(new Set()); setAgencyNameSearch(""); setAgencyNameOpen(false);
+              setAllUsersJobFilter(new Set()); setAllUsersJobSearch(""); setAllUsersJobOpen(false);
+              setAllUsersSortDir("asc");
+            }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "#A855F7" }}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <button title="View columns" onClick={() => setViewOpen(o => !o)}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: "#A855F7", background: viewOpen ? c.hoverBg : "transparent" }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : "transparent")}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg>
             </button>
-          );
-        })}
+            {viewOpen && (() => {
+              // Unified column-visibility picker. Each tab tracks visibility differently:
+              // - users/agencies use a "hidden" set (default = all visible)
+              // - affiliations uses a "visible" set (default = base columns; user can also add extras)
+              const cols = tab === "users" ? USERS_COLS : tab === "agencies" ? AGENCIES_COLS : AFFILIATIONS_COLS;
+              const isVisible = (k: string) =>
+                tab === "affiliations" ? affVisibleCols.has(k)
+                  : tab === "users" ? !usersHiddenCols.has(k)
+                  : !agenciesHiddenCols.has(k);
+              const toggle = (k: string) => {
+                if (tab === "affiliations") setAffVisibleCols(prev => { const s = new Set(prev); s.has(k) ? s.delete(k) : s.add(k); return s; });
+                else if (tab === "users")   setUsersHiddenCols(prev => { const s = new Set(prev); s.has(k) ? s.delete(k) : s.add(k); return s; });
+                else                        setAgenciesHiddenCols(prev => { const s = new Set(prev); s.has(k) ? s.delete(k) : s.add(k); return s; });
+              };
+              const reset = () => {
+                if (tab === "affiliations") setAffVisibleCols(new Set(AFF_DEFAULT_VISIBLE));
+                else if (tab === "users")   setUsersHiddenCols(new Set());
+                else                        setAgenciesHiddenCols(new Set());
+              };
+              return (
+                <div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden"
+                  style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold"
+                    style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>
+                    Show Columns
+                  </div>
+                  <div className="py-1.5 max-h-[280px] overflow-y-auto">
+                    {cols.map(col => {
+                      const visible = isVisible(col.key);
+                      return (
+                        <label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          onClick={() => toggle(col.key)}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                            style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                            {visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <button onClick={reset}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+                    style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <RefreshCw className="w-3.5 h-3.5" />Reset
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+          <button onClick={() => setExportDialogOpen(true)}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "#A855F7" }}
+            title={tab === "affiliations" ? "Preview & export agencies in this affiliation" : tab === "users" ? "Preview & export users (filtered)" : "Preview & export agencies (filtered)"}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <Download className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }}>
+      {tab === "agencies" && (
+      <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); setViewOpen(false); }}>
         <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-          <thead>
+          <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
             <tr style={{ borderBottom: `1px solid ${c.border}` }}>
               {([
-                ["name",       "Agency Name", "26%"],
-                ["code",       "Agency Code", "16%"],
-                ["location",   "Location",    "22%"],
-                ["totalUsers", "Total User",  "14%"],
-                ["status",     "Status",      "14%"],
-              ] as [SortKey, string, string][]).map(([key, label, w]) => (
-                <th key={key} onClick={() => handleSort(key)}
-                  className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
-                  style={{ fontFamily: FONT, color: c.muted, width: w, paddingLeft: key === "name" ? 52 : key === "status" ? 20 : undefined }}>
-                  {label}<SortIcon col={key} />
+                ["name",       "Agency Name", "15%",  true ],
+                ["code",       "Agency Code", "11%",  true ],
+                ["location",   "Location",    "12%",  false],
+                [null,         "Affiliation 1","10%", false],
+                [null,         "Affiliation 2","10%", false],
+                [null,         "Affiliation 3","10%", false],
+                ["totalUsers", "Total User",  "8%",   true ],
+                ["lastLogin",  "Last Login",  "12%",  true ],
+                ["status",     "Status",      "12%",  true ],
+              ] as [SortKey, string, string, boolean][]).map(([key, label, w, sortable], idx) => {
+                const affMatch = label?.match(/^Affiliation (\d)$/);
+                const affIdx = affMatch ? parseInt(affMatch[1]) : null;
+                const colKey = affIdx !== null ? `aff${affIdx}` : key;
+                if (colKey && colKey !== "name" && agenciesHiddenCols.has(colKey)) return null;
+                return (
+                <th key={`${key}-${idx}`} onClick={() => sortable && key && key !== "name" && handleSort(key)}
+                  className={`text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap ${sortable && key !== "name" ? "cursor-pointer" : ""} ${(key === "name" || key === "location" || affIdx !== null) ? "relative" : ""}`}
+                  style={{ fontFamily: FONT, color: (key === "name" && agencyNameFilter.size > 0) || (key === "location" && locationFilter.size > 0) || (affIdx !== null && affiliationFilter.size > 0) ? "#A614C3" : c.muted, width: w,
+                    paddingLeft: idx === 0 ? 52
+                      : key === "code" ? 20
+                      : key === "location" ? 16
+                      : affIdx === 1 ? 6
+                      : (label?.startsWith("Affiliation")) ? 16
+                      : key === "totalUsers" ? 25
+                      : key === "lastLogin" ? 76
+                      : key === "status" ? 25
+                      : undefined,
+                    textAlign: (key === "totalUsers" || key === "status") ? "center" : undefined }}>
+                  {key === "name" ? (
+                    <>
+                      <button onClick={e => { e.stopPropagation(); setAgencyNameOpen(o => !o); setLocationOpen(false); setAffiliationOpen(null); }}
+                        className="inline-flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+                        style={{ fontFamily: FONT, color: agencyNameFilter.size > 0 || sortKey === "name" ? "#A614C3" : c.muted }}>
+                        {label}
+                        <ChevronDown className="w-3 h-3 ml-0.5" />
+                      </button>
+                      {agencyNameOpen && (() => {
+                        const names = Array.from(new Set(allAgencies.map(a => a.name))).sort();
+                        const toggleName = (n: string) => setAgencyNameFilter(prev => { const s = new Set(prev); s.has(n) ? s.delete(n) : s.add(n); return s; });
+                        const sortItem = (label: string, dir: "asc" | "desc") => {
+                          const active = sortKey === "name" && sortDir === dir;
+                          return (
+                            <button onClick={() => { setSortKey("name"); setSortDir(dir); setAgencyNameOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors text-left normal-case tracking-normal"
+                              style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 400 }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              {dir === "asc"
+                                ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" />
+                                : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />}
+                              <span className="text-[12px] flex-1">{label}</span>
+                              {active && <svg width="9" height="7" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                          );
+                        };
+                        return (
+                          <div className="absolute left-0 top-8 z-30 w-[260px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div className="py-1.5">
+                              {sortItem("Sort A → Z", "asc")}
+                              {sortItem("Sort Z → A", "desc")}
+                            </div>
+                            <div className="p-3" style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                                <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                                <input placeholder="Search Agency" value={agencyNameSearch} onChange={e => setAgencyNameSearch(e.target.value)}
+                                  className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
+                              </div>
+                            </div>
+                            <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                              {names.filter(n => !agencyNameSearch || n.toLowerCase().includes(agencyNameSearch.toLowerCase())).map(n => {
+                                const checked = agencyNameFilter.has(n);
+                                return (
+                                  <label key={n} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                                    onClick={() => toggleName(n)}>
+                                    <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                      style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                    </div>
+                                    <span className="text-[12px] font-normal truncate" style={{ fontFamily: FONT, color: c.text }} title={n}>{n}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <button onClick={() => { setAgencyNameFilter(new Set()); setAgencyNameSearch(""); }}
+                              className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                              style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : key === "location" ? (
+                    <>
+                      <button onClick={e => { e.stopPropagation(); setLocationOpen(o => !o); }}
+                        className="flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+                        style={{ fontFamily: FONT, color: locationFilter.size > 0 ? "#A614C3" : c.muted }}>
+                        Location<ChevronDown className="w-3 h-3 ml-0.5" />
+                      </button>
+                      {locationOpen && (() => {
+                        const states = Array.from(new Set(allAgencies.map(a => a.state).filter(Boolean))).sort();
+                        const toggleState = (s: string) => setLocationFilter(prev => { const n = new Set(prev); n.has(s) ? n.delete(s) : n.add(s); return n; });
+                        return (
+                          <div className="absolute left-0 top-8 z-30 w-[240px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div className="p-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                                <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                                <input placeholder="Search State" value={locationSearch} onChange={e => setLocationSearch(e.target.value)}
+                                  className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
+                              </div>
+                            </div>
+                            <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                              {states.filter(s => !locationSearch || s.toLowerCase().includes(locationSearch.toLowerCase())).map(s => {
+                                const checked = locationFilter.has(s);
+                                return (
+                                  <label key={s} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                                    onClick={() => toggleState(s)}>
+                                    <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                      style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                    </div>
+                                    <span className="text-[12px] font-normal" style={{ fontFamily: FONT, color: c.text }}>{s}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <button onClick={() => { setLocationFilter(new Set()); setLocationSearch(""); }}
+                              className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                              style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : affIdx !== null ? (
+                    <>
+                      <button onClick={e => { e.stopPropagation(); setAffiliationOpen(o => o === affIdx ? null : affIdx); setLocationOpen(false); }}
+                        className="flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+                        style={{ fontFamily: FONT, color: affiliationFilter.size > 0 ? "#A614C3" : c.muted }}>
+                        {label}<ChevronDown className="w-3 h-3 ml-0.5" />
+                      </button>
+                      {affiliationOpen === affIdx && (() => {
+                        const allAffs = Array.from(new Set(allAgencies.flatMap(a => a.affiliations))).sort();
+                        const toggleAff = (a: string) => setAffiliationFilter(prev => { const n = new Set(prev); n.has(a) ? n.delete(a) : n.add(a); return n; });
+                        return (
+                          <div className="absolute left-0 top-8 z-30 w-[260px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div className="p-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                                <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                                <input placeholder="Search Affiliation" value={affiliationSearch} onChange={e => setAffiliationSearch(e.target.value)}
+                                  className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
+                              </div>
+                            </div>
+                            <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                              {allAffs.filter(a => !affiliationSearch || a.toLowerCase().includes(affiliationSearch.toLowerCase())).map(a => {
+                                const checked = affiliationFilter.has(a);
+                                return (
+                                  <label key={a} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                                    onClick={() => toggleAff(a)}>
+                                    <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                      style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                    </div>
+                                    <span className="text-[12px] font-normal truncate" style={{ fontFamily: FONT, color: c.text }} title={a}>{a}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <button onClick={() => { setAffiliationFilter(new Set()); setAffiliationSearch(""); }}
+                              className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                              style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <>{label}{sortable && key && <SortIcon col={key} />}</>
+                  )}
                 </th>
-              ))}
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -4157,30 +6465,53 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   </div>
                 </td>
                 {/* Agency Code */}
-                <td className="py-3 pr-6">
+                {!agenciesHiddenCols.has("code") && (
+                <td className="py-3 pr-6" style={{ paddingLeft: 20 }}>
                   <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>
                 </td>
+                )}
                 {/* Location */}
-                <td className="py-3 pr-6 whitespace-nowrap">
+                {!agenciesHiddenCols.has("location") && (
+                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 16 }}>
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
                     <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city}, {a.state}</span>
                   </div>
                 </td>
+                )}
+                {/* Affiliation 1 / 2 / 3 */}
+                {[0, 1, 2].filter(i => !agenciesHiddenCols.has(`aff${i + 1}`)).map(i => (
+                  <td key={`aff-${i}`} className="py-3 pr-6" style={{ paddingLeft: i === 0 ? 6 : 16 }}>
+                    <span className="text-[13px] truncate block" style={{ fontFamily: FONT, color: a.affiliations[i] ? c.text : c.muted }}
+                      title={a.affiliations[i] || ""}>
+                      {a.affiliations[i] || "—"}
+                    </span>
+                  </td>
+                ))}
                 {/* Total User */}
-                <td className="py-3 pr-6 whitespace-nowrap">
-                  <div className="flex items-center gap-1.5">
+                {!agenciesHiddenCols.has("totalUsers") && (
+                <td className="py-3 pr-6 whitespace-nowrap text-center" style={{ paddingLeft: 25 }}>
+                  <div className="inline-flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
                     <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{a.totalUsers}</span>
                   </div>
                 </td>
+                )}
+                {/* Last Login */}
+                {!agenciesHiddenCols.has("lastLogin") && (
+                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 76 }}>
+                  <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.lastLogin}</span>
+                </td>
+                )}
                 {/* Status */}
-                <td className="py-3" style={{ paddingLeft: 20 }}><StatusBadge status={a.status} /></td>
+                {!agenciesHiddenCols.has("status") && (
+                <td className="py-3 pr-6 text-center" style={{ paddingLeft: 25 }}><StatusBadge status={a.status} /></td>
+                )}
               </tr>
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-16 text-center text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>
+                <td colSpan={9 - agenciesHiddenCols.size} className="py-16 text-center text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>
                   No agencies found
                 </td>
               </tr>
@@ -4188,8 +6519,398 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           </tbody>
         </table>
       </div>
+      )}
 
-      {/* Pagination */}
+      {/* Affiliations tab content — master/detail layout */}
+      {tab === "affiliations" && (() => {
+        const affMap = new Map<string, Agency[]>();
+        for (const a of allAgencies) {
+          for (const aff of a.affiliations) {
+            if (!affMap.has(aff)) affMap.set(aff, []);
+            affMap.get(aff)!.push(a);
+          }
+        }
+        const q = search.trim().toLowerCase();
+        const allAffRows = Array.from(affMap.entries())
+          .map(([name, ags]) => ({ name, agencies: ags, count: ags.length }))
+          .filter(r => !q || r.name.toLowerCase().includes(q) || r.agencies.some(a => a.name.toLowerCase().includes(q)))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        // When user has multi-selected via the filter, narrow the list and (for 2+) show a combined view on the right.
+        const affRows = affListFilter.size === 0 ? allAffRows : allAffRows.filter(r => affListFilter.has(r.name));
+        const multiMode = affListFilter.size >= 2;
+        const activeAff = !multiMode && selectedAff && affRows.find(r => r.name === selectedAff)
+          ? selectedAff
+          : (!multiMode ? (affRows[0]?.name ?? null) : null);
+        const activeRow = activeAff ? affRows.find(r => r.name === activeAff) : null;
+        const combinedAgencies = multiMode
+          ? Array.from(new Map(affRows.flatMap(r => r.agencies).map(a => [a.id, a])).values())
+              .sort((a, b) => a.name.localeCompare(b.name))
+          : [];
+        return (
+          <div className="flex-1 flex min-h-0 mt-0 rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+            {/* LEFT: affiliation list */}
+            <div className="flex flex-col flex-shrink-0" style={{ width: 280, borderRight: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}>
+              <div className="px-4 py-2.5 flex items-center justify-between flex-shrink-0 relative" style={{ borderBottom: `1px solid ${c.border}` }} onClick={e => e.stopPropagation()}>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted }}>Affiliations</span>
+                <button onClick={() => setAffListFilterOpen(o => !o)}
+                  title="Filter affiliations"
+                  className="p-1 rounded transition-colors"
+                  style={{ color: affListFilter.size > 0 ? "#A614C3" : c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <Filter className="w-3.5 h-3.5" />
+                </button>
+                {affListFilterOpen && (
+                  <div className="absolute right-2 top-9 z-30 w-[260px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                    style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                    onClick={e => e.stopPropagation()}>
+                    <div className="p-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                        <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                        <input placeholder="Search Affiliation" value={affListFilterSearch} onChange={e => setAffListFilterSearch(e.target.value)}
+                          className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
+                      </div>
+                    </div>
+                    <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                      {allAffRows
+                        .filter(r => !affListFilterSearch || r.name.toLowerCase().includes(affListFilterSearch.toLowerCase()))
+                        .map(r => {
+                          const checked = affListFilter.has(r.name);
+                          return (
+                            <label key={r.name} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                              onClick={() => setAffListFilter(prev => { const s = new Set(prev); s.has(r.name) ? s.delete(r.name) : s.add(r.name); return s; })}>
+                              <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </div>
+                              <span className="text-[12px] font-normal truncate" style={{ fontFamily: FONT, color: c.text }} title={r.name}>{r.name}</span>
+                              <span className="text-[10px] flex-shrink-0 ml-auto px-1.5 py-0.5 rounded-full"
+                                style={{ background: isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB", color: c.muted }}>{r.count}</span>
+                            </label>
+                          );
+                        })}
+                    </div>
+                    <button onClick={() => { setAffListFilter(new Set()); setAffListFilterSearch(""); }}
+                      className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                      style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                      onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {affRows.length === 0 && (
+                  <p className="px-4 py-8 text-center text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>No matches</p>
+                )}
+                {affRows.map(r => {
+                  const on = r.name === activeAff;
+                  return (
+                    <button key={r.name} onClick={() => setSelectedAff(r.name)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left transition-colors"
+                      style={{ fontFamily: FONT,
+                        background: on ? (isDark ? "rgba(168,85,247,0.10)" : "#fff") : "transparent",
+                        borderLeft: on ? "3px solid #A855F7" : "3px solid transparent",
+                        paddingLeft: on ? 13 : 16 }}
+                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"; }}
+                      onMouseLeave={e => { if (!on) e.currentTarget.style.background = "transparent"; }}>
+                      <span className="text-[13px] font-medium truncate"
+                        style={{ color: on ? (isDark ? "#fff" : "#A614C3") : c.text }}>{r.name}</span>
+                      <span className="text-[11px] font-semibold flex-shrink-0 px-1.5 py-0.5 rounded-full"
+                        style={{ background: on ? "rgba(168,85,247,0.18)" : (isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"),
+                          color: on ? "#A855F7" : c.muted }}>{r.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* RIGHT: agencies in selected affiliation (single) OR union of selected affiliations (multi) */}
+            <div className="flex-1 flex flex-col min-w-0">
+              {!activeRow && !multiMode ? (
+                <div className="flex-1 flex items-center justify-center text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>
+                  Select an affiliation to see its agencies.
+                </div>
+              ) : (() => {
+                const headerName = multiMode
+                  ? Array.from(affListFilter).sort().join(" + ")
+                  : activeRow!.name;
+                const rowsToRender = multiMode ? combinedAgencies : activeRow!.agencies;
+                const count = rowsToRender.length;
+                return (
+                <>
+                  <div className="px-6 py-3 flex items-center justify-between flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}`, background: c.cardBg }}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Network className="w-4 h-4 flex-shrink-0" style={{ color: "#A855F7" }} />
+                      <h3 className="text-[14px] font-bold truncate" style={{ fontFamily: FONT, color: c.text }} title={headerName}>{headerName}</h3>
+                      <span className="text-[12px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>· {count} {count === 1 ? "agency" : "agencies"}{multiMode ? ` across ${affListFilter.size} affiliations` : ""}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto" style={{ scrollbarGutter: "stable" }}>
+                    <table className="text-left border-collapse" style={{ minWidth: "100%" }}>
+                      <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
+                        <tr style={{ borderBottom: `1px solid ${c.border}` }}>
+                          <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 whitespace-nowrap"
+                            style={{ fontFamily: FONT, color: c.muted, paddingLeft: 24 }}>Agency Name</th>
+                          {AFFILIATIONS_COLS.filter(col => affVisibleCols.has(col.key)).map(col => (
+                            <th key={col.key} className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 whitespace-nowrap"
+                              style={{ fontFamily: FONT, color: c.muted, textAlign: col.key === "totalUsers" ? "center" : undefined }}>{col.label}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rowsToRender.map(a => {
+                          const d = getDetail(a);
+                          const renderCell = (key: string) => {
+                            switch (key) {
+                              case "code":       return <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>;
+                              case "location":   return <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} /><span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city || "—"}{a.state ? `, ${a.state}` : ""}</span></div>;
+                              case "status":     return <StatusBadge status={a.status} />;
+                              case "lastLogin":  return <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.lastLogin}</span>;
+                              case "contact":    return <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{d.contact || "—"}</span>;
+                              case "phone":      return <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{d.phone || "—"}</span>;
+                              case "email":      return <span className="text-[13px] truncate block" style={{ fontFamily: FONT, color: c.muted }} title={d.contactEmail || ""}>{d.contactEmail || "—"}</span>;
+                              case "totalUsers": return <div className="inline-flex items-center gap-1.5"><Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} /><span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{a.totalUsers}</span></div>;
+                              default: return null;
+                            }
+                          };
+                          return (
+                            <tr key={a.id} className="cursor-pointer transition-colors"
+                              style={{ borderBottom: `1px solid ${c.border}` }}
+                              onClick={() => setSelectedAgency(getDetail(a))}
+                              onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB")}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <td className="py-3 pr-6" style={{ paddingLeft: 24 }}>
+                                <span className="text-[13px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.text }}>{a.name}</span>
+                              </td>
+                              {AFFILIATIONS_COLS.filter(col => affVisibleCols.has(col.key)).map(col => (
+                                <td key={col.key} className="py-3 pr-6 whitespace-nowrap" style={{ textAlign: col.key === "totalUsers" ? "center" : undefined }}>{renderCell(col.key)}</td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+                );
+              })()}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* All Users tab content */}
+      {tab === "users" && (() => {
+        const teal = isDark ? "#A78BFA" : "#73C9B7";
+        const q = search.trim().toLowerCase();
+        const agencyById = new Map(allAgencies.map(a => [a.id, a]));
+        const matchesQuery = (u: typeof mockAgencyUsers[number]) => !q
+          || u.name.toLowerCase().includes(q)
+          || u.email.toLowerCase().includes(q)
+          || u.jobTitle.toLowerCase().includes(q)
+          || (agencyById.get(u.agencyId)?.name.toLowerCase().includes(q) ?? false);
+        const matchesJobFilter = (u: typeof mockAgencyUsers[number]) =>
+          allUsersJobFilter.size === 0 || allUsersJobFilter.has(u.jobTitle);
+        // Hide removed users entirely. Hide inactive users by default unless allUsersShowInactive is true.
+        const userRowsAll = mockAgencyUsers
+          .filter(u => !removedUserIds.has(u.id))
+          .filter(u => allUsersShowInactive || !inactiveUserIds.has(u.id))
+          .filter(matchesQuery)
+          .filter(matchesJobFilter)
+          .sort((a, b) => allUsersSortDir === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+        const userRows = userRowsAll.slice((page - 1) * perPage, page * perPage);
+        // Count how many inactive users would match the same query/filters — used for both the
+        // empty-state banner (orange, when 0 active) and the inline hint (subtle gray, when ≥1 active).
+        const inactiveMatchCount = !allUsersShowInactive && q
+          ? mockAgencyUsers.filter(u => !removedUserIds.has(u.id) && inactiveUserIds.has(u.id) && matchesQuery(u) && matchesJobFilter(u)).length
+          : 0;
+        const toggleJob = (t: string) => {
+          setAllUsersJobFilter(prev => { const s = new Set(prev); s.has(t) ? s.delete(t) : s.add(t); return s; });
+        };
+        const sub = isDark ? "#6B7280" : "#9CA3AF";
+        return (
+          <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setAllUsersJobOpen(false); setViewOpen(false); }}>
+            {/* Inline hint — shown only when active list has matches AND inactive also has matches.
+                Empty-state (0 active) keeps the orange banner inside the table body. */}
+            {inactiveMatchCount > 0 && userRowsAll.length > 0 && (
+              <div className="px-[52px] py-2.5 flex items-center gap-2 text-[12px]"
+                style={{ fontFamily: FONT, color: c.text, background: c.cardBg, borderBottom: `1px solid ${c.border}` }}>
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3" }} />
+                <span>Showing {userRowsAll.length} active {userRowsAll.length === 1 ? "user" : "users"} · {inactiveMatchCount} inactive also {inactiveMatchCount === 1 ? "matches" : "match"}</span>
+                <button onClick={() => setAllUsersShowInactive(true)}
+                  className="font-semibold transition-colors ml-auto"
+                  style={{ color: "#A614C3" }}>Show inactive</button>
+              </div>
+            )}
+            <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
+              <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
+                <tr style={{ borderBottom: `1px solid ${c.border}` }}>
+                  {/* NAME (sortable) */}
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
+                    style={{ fontFamily: FONT, color: c.muted, width: "16%", paddingLeft: 52 }}
+                    onClick={() => setAllUsersSortDir(d => d === "asc" ? "desc" : "asc")}>
+                    Name
+                    <span className="inline-flex items-center ml-1 flex-shrink-0" style={{ verticalAlign: "middle", gap: 1 }}>
+                      <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                        <path d="M3.5 9V2M3.5 2L1.5 4M3.5 2L5.5 4" stroke={allUsersSortDir === "asc" ? c.text : sub} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                        <path d="M3.5 1V8M3.5 8L1.5 6M3.5 8L5.5 6" stroke={allUsersSortDir === "desc" ? c.text : sub} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </th>
+                  {!usersHiddenCols.has("admin") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-center"
+                    style={{ fontFamily: FONT, color: c.muted, width: "10%", paddingRight: 50 }}>Admin</th>
+                  )}
+                  {/* JOB TITLE filter */}
+                  {!usersHiddenCols.has("jobTitle") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap relative"
+                    style={{ fontFamily: FONT, color: allUsersJobFilter.size > 0 ? "#A614C3" : c.muted, width: "14%", paddingLeft: 55 }}>
+                    <button onClick={e => { e.stopPropagation(); setAllUsersJobOpen(o => !o); }}
+                      className="flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+                      style={{ fontFamily: FONT, color: allUsersJobFilter.size > 0 ? "#A614C3" : c.muted }}>
+                      Job Title<ChevronDown className="w-3 h-3 ml-0.5" />
+                    </button>
+                    {allUsersJobOpen && (
+                      <div className="absolute left-0 top-8 z-30 w-[240px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                        style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                            <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                            <input placeholder="Search Title" value={allUsersJobSearch} onChange={e => setAllUsersJobSearch(e.target.value)}
+                              className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
+                          </div>
+                        </div>
+                        <div className="py-1.5 max-h-[260px] overflow-y-auto">
+                          {ALL_JOB_TITLES.filter(t => !allUsersJobSearch || t.toLowerCase().includes(allUsersJobSearch.toLowerCase())).map(t => {
+                            const checked = allUsersJobFilter.has(t);
+                            return (
+                              <label key={t} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
+                                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                                onClick={() => toggleJob(t)}>
+                                <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                  style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                  {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                </div>
+                                <span className="text-[12px] font-normal" style={{ fontFamily: FONT, color: c.text }}>{t}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <button onClick={() => { setAllUsersJobFilter(new Set()); setAllUsersJobSearch(""); }}
+                          className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                          style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                          <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                        </button>
+                      </div>
+                    )}
+                  </th>
+                  )}
+                  {!usersHiddenCols.has("email") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap"
+                    style={{ fontFamily: FONT, color: c.muted, width: "24%", paddingLeft: 72 }}>Email</th>
+                  )}
+                  {!usersHiddenCols.has("phone") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap"
+                    style={{ fontFamily: FONT, color: c.muted, width: "14%" }}>Phone</th>
+                  )}
+                  {!usersHiddenCols.has("ext") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-center"
+                    style={{ fontFamily: FONT, color: c.muted, width: "10%", paddingLeft: 0, paddingRight: 120 }}>Ext</th>
+                  )}
+                  {!usersHiddenCols.has("agency") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-left"
+                    style={{ fontFamily: FONT, color: c.muted, width: "12%" }}>Agency</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {userRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7 - usersHiddenCols.size} className="py-16 text-center" style={{ fontFamily: FONT }}>
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <span className="text-[13px]" style={{ color: c.muted }}>No users found</span>
+                        {inactiveMatchCount > 0 && (
+                          <button onClick={() => setAllUsersShowInactive(true)}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                            style={{ background: "rgba(245,158,11,0.10)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.25)" }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.16)")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.10)")}>
+                            {inactiveMatchCount} inactive {inactiveMatchCount === 1 ? "user" : "users"} also match — Show inactive
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : userRows.map(u => {
+                  const ag = agencyById.get(u.agencyId);
+                  const isPrincipal = u.jobTitle === "Principal";
+                  const isInactive = inactiveUserIds.has(u.id);
+                  return (
+                    <tr key={u.id} className="cursor-pointer transition-colors"
+                      style={{ borderBottom: `1px solid ${c.border}`, opacity: isInactive ? 0.5 : 1 }}
+                      onClick={() => ag && setSelectedAgency(getDetail(ag))}
+                      onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <td className="py-3 pr-6 relative" style={{ paddingLeft: 52 }}>
+                        {isPrincipal && (
+                          <div className="absolute" style={{ left: 0, top: 0, bottom: 0, width: 3, background: teal }} />
+                        )}
+                        <span className="text-[13px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.text }}>{u.name}</span>
+                      </td>
+                      {!usersHiddenCols.has("admin") && (
+                      <td className="py-3 text-center" style={{ paddingRight: 50 }}>
+                        {u.isAdmin ? (
+                          <UserCog className="w-4 h-4 inline-block" style={{ color: teal }} />
+                        ) : (
+                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>—</span>
+                        )}
+                      </td>
+                      )}
+                      {!usersHiddenCols.has("jobTitle") && (
+                      <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 55 }}>
+                        <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{u.jobTitle}</span>
+                      </td>
+                      )}
+                      {!usersHiddenCols.has("email") && (
+                      <td className="py-3 pr-6 truncate" style={{ paddingLeft: 72 }}>
+                        <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{u.email}</span>
+                      </td>
+                      )}
+                      {!usersHiddenCols.has("phone") && (
+                      <td className="py-3 pr-6 whitespace-nowrap">
+                        <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{u.phone}</span>
+                      </td>
+                      )}
+                      {!usersHiddenCols.has("ext") && (
+                      <td className="py-3 whitespace-nowrap text-center" style={{ paddingLeft: 0, paddingRight: 120 }}>
+                        <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{u.ext || "—"}</span>
+                      </td>
+                      )}
+                      {!usersHiddenCols.has("agency") && (
+                      <td className="py-3 pr-6 truncate text-left">
+                        <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{ag?.name ?? "—"}</span>
+                      </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
+      {/* Pagination — Agencies & All Users tabs */}
+      {(tab === "agencies" || tab === "users") && (
       <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
         style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-48px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
         {/* Per page */}
@@ -4243,6 +6964,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           Page {page} of {totalPages}
         </div>
       </div>
+      )}
     </div>
   );
 }
