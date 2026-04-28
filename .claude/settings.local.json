@@ -65,7 +65,10 @@
       "Bash(vercel ls *)",
       "Bash(vercel inspect *)",
       "Bash(wait)",
-      "Bash(grep -iA 5 \"Aliases\")"
+      "Bash(grep -iA 5 \"Aliases\")",
+      "Bash(perl -i -pe 's|linear-gradient\\\\\\(to bottom, rgba\\\\\\(255,255,255,0\\\\.10\\\\\\), rgba\\\\\\(192,192,192,0\\\\.10\\\\\\), rgba\\\\\\(172,172,172,0\\\\.10\\\\\\)\\\\\\)|#FFFFFF|g' src/components/Agencies.tsx src/components/Clients.tsx)",
+      "Bash(awk 'NR==3800,NR==3960' /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "WebFetch(domain:norbielink.btisinc.com)"
     ]
   }
 }

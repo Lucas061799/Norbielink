@@ -8,6 +8,7 @@ import Agencies from "@/components/Agencies";
 import Quotes from "@/components/Quotes";
 import Policies from "@/components/Policies";
 import Endorsements from "@/components/Endorsements";
+import Website from "@/components/Website";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -17,6 +18,14 @@ interface DashboardShellProps {
 export default function DashboardShell({ children, pageTitle }: DashboardShellProps) {
   const [darkMode, setDarkMode] = useState(false);
   const [activePage, setActivePage] = useState("Marketplace");
+
+  if (activePage === "Website") {
+    return (
+      <div className="h-screen w-screen overflow-hidden">
+        <Website isDark={darkMode} />
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (activePage) {

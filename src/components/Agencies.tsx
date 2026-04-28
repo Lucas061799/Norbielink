@@ -857,10 +857,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
           {userToast.action && (
             <button onClick={() => { userToast.action!.onClick(); setUserToast(null); }}
-              className="flex-shrink-0 text-[12px] font-semibold transition-all"
-              style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
-              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
-              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+              className="flex-shrink-0 text-[12px] font-semibold transition-colors"
+              style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               {userToast.action.label}
             </button>
           )}
@@ -913,8 +913,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Target Agency</label>
                   <select value={bookRollTargetId} onChange={e => setBookRollTargetId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                    className="w-full pl-3 pr-10 py-2 rounded-lg text-[13px] outline-none appearance-none cursor-pointer"
+                    style={{ fontFamily: FONT, background: `${c.cardBg} url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") no-repeat right 12px center`, border: `1px solid ${c.border}`, color: c.text }}>
                     <option value="">Select an agency…</option>
                     {targetCandidates.map(a => (
                       <option key={a.id} value={a.id}>{a.name} · {a.code}</option>
@@ -1185,14 +1185,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <ul className="text-[12px] space-y-1.5" style={{ color: c.text }}>
                 {docUpdateModal.w9 && (
                   <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: btnGrad }} />
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />
                     <span>New <strong>W-9</strong> required</span>
                     <span className="ml-auto text-[11px]" style={{ color: c.muted }}>name · entity · address · TIN</span>
                   </li>
                 )}
                 {docUpdateModal.license && (
                   <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: btnGrad }} />
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />
                     <span>New <strong>License copy</strong> required</span>
                     <span className="ml-auto text-[11px]" style={{ color: c.muted }}>license number changed</span>
                   </li>
@@ -1238,9 +1238,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex gap-3 justify-end">
               <button onClick={() => setRemoveUserConfirm(null)}
                 className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 Cancel
               </button>
               <button onClick={() => {
@@ -2142,8 +2142,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
               {/* Trigger banners */}
               {w9Drift && (
-                <div className="flex items-center gap-2 px-5 py-2.5 mb-3 rounded-lg text-[12px] flex-shrink-0"
-                  style={{ ...font, color: c.text, background: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%)", border: "1px solid rgba(166,20,195,0.20)" }}>
+                <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
+                  style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                     <defs>
                       <linearGradient id="w9-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -2163,8 +2163,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
               )}
               {licenseDrift && (
-                <div className="flex items-center gap-2 px-5 py-2.5 mb-3 rounded-lg text-[12px] flex-shrink-0"
-                  style={{ ...font, color: c.text, background: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%)", border: "1px solid rgba(166,20,195,0.20)" }}>
+                <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
+                  style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                     <defs>
                       <linearGradient id="lic-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -3944,9 +3944,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
                 <button
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily:FONT, border:`1px solid #E5E7EB`, color: c.text, background:"#FFFFFF" }}
+                  style={{ fontFamily:FONT, border:`1px solid ${c.borderStrong}`, color: c.text, background:"transparent" }}
                   onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
-                  onMouseLeave={e=>(e.currentTarget.style.background="#FFFFFF")}
+                  onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                   onClick={()=>{ closeModal(); closeAll(); }}>
                   Cancel Changes
                 </button>
@@ -4261,7 +4261,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex items-center justify-between gap-2 px-6 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}` }}>
               <button onClick={closeModal}
                 className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}>
+                style={{ fontFamily: FONT, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}>
                 Cancel
               </button>
               <button onClick={handleSave} disabled={!canSave}
@@ -4337,7 +4337,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
                 <button onClick={() => setContactRequestOpen(false)}
                   className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily: FONT, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}>
+                  style={{ fontFamily: FONT, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}>
                   Cancel
                 </button>
                 <button onClick={() => { setContactRequestSent(true); setTimeout(() => { setContactRequestOpen(false); setContactRequestSent(false); }, 1800); }}
@@ -4372,7 +4372,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="rounded-xl p-5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.03)":"#F9FAFB" }}>
                 <p className="text-[14px] font-bold mb-2" style={{ fontFamily:FONT, color:c.text }}>CSV File Format</p>
                 <p className="text-[13px] mb-2" style={{ fontFamily:FONT, color:c.muted }}>Please upload a CSV file with the following columns (header row required):</p>
-                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:"#A614C3", background: isDark ? "rgba(168,85,247,0.10)" : "rgba(168,85,247,0.08)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
+                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:"#73C9B7", background: isDark ? "rgba(115,201,183,0.14)" : "rgba(115,201,183,0.12)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>Example: John Doe, Admin, Manager, john@example.com, 555-1234, 123</p>
               </div>
 
@@ -5092,9 +5092,9 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
         <div className="flex items-center justify-between pb-6">
           <button onClick={() => setDiscardConfirmOpen(true)}
             className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-            style={{ ...font, border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
-            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
-            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             Discard
           </button>
           <button onClick={handleSubmit}
@@ -5126,9 +5126,9 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDiscardConfirmOpen(false)}
                 className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 Keep editing
               </button>
               <button onClick={() => { setDiscardConfirmOpen(false); onDiscard(); }}
@@ -6058,9 +6058,9 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
             <div className="flex gap-3 justify-end">
               <button onClick={() => { setAgencyDraft(null); setResumeDraftOpen(false); setResumeFromDraft(false); setAddOpen(true); }}
                 className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                style={{ border: `1px solid #E5E7EB`, color: c.text, background: "#FFFFFF" }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.97)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                 Start fresh
               </button>
               <button onClick={() => { setResumeFromDraft(true); setResumeDraftOpen(false); setAddOpen(true); }}
@@ -6079,7 +6079,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {sectionTitle}
 
       {/* Search + buttons */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-7">
         <div className="flex flex-1 max-w-[360px] transition-all"
           style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -6108,7 +6108,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* Filter pills */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         {filterPill("All")}
         {filterPill("Starred")}
         {filterPill("Appointed")}
@@ -6175,7 +6175,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               setAllUsersSortDir("asc");
             }}
             className="p-2 rounded-lg transition-colors"
-            style={{ color: "#A855F7" }}
+            style={{ color: "#A614C3" }}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <RefreshCw className="w-4 h-4" />
@@ -6183,7 +6183,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           <div className="relative" onClick={e => e.stopPropagation()}>
             <button title="View columns" onClick={() => setViewOpen(o => !o)}
               className="p-2 rounded-lg transition-colors"
-              style={{ color: "#A855F7", background: viewOpen ? c.hoverBg : "transparent" }}
+              style={{ color: "#A614C3", background: viewOpen ? c.hoverBg : "transparent" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : "transparent")}>
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg>
@@ -6244,7 +6244,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           </div>
           <button onClick={() => setExportDialogOpen(true)}
             className="p-2 rounded-lg transition-colors"
-            style={{ color: "#A855F7" }}
+            style={{ color: "#A614C3" }}
             title={tab === "affiliations" ? "Preview & export agencies in this affiliation" : tab === "users" ? "Preview & export users (filtered)" : "Preview & export agencies (filtered)"}
             onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
@@ -6257,7 +6257,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {tab === "agencies" && (
       <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); setViewOpen(false); }}>
         <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-          <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
+          <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
             <tr style={{ borderBottom: `1px solid ${c.border}` }}>
               {([
                 ["name",       "Agency Name", "15%",  true ],
@@ -6669,7 +6669,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   </div>
                   <div className="flex-1 overflow-auto" style={{ scrollbarGutter: "stable" }}>
                     <table className="text-left border-collapse" style={{ minWidth: "100%" }}>
-                      <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
+                      <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
                         <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                           <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 whitespace-nowrap"
                             style={{ fontFamily: FONT, color: c.muted, paddingLeft: 24 }}>Agency Name</th>
@@ -6765,7 +6765,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               </div>
             )}
             <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-              <thead className="sticky top-0 z-10" style={{ background: c.cardBg }}>
+              <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
                 <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                   {/* NAME (sortable) */}
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
