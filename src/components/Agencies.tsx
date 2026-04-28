@@ -15,6 +15,25 @@ import { AddressAutocomplete } from "./AddressAutocomplete";
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 const AGENCY_PHONE = "+1 (888) 555-0188";
 
+// UserCog icon stroked with the brand magenta. Used to denote admins.
+function GradientUserCog({ size = 18 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block" aria-hidden="true">
+      <path d="M10 15H6a4 4 0 0 0-4 4v2" />
+      <path d="m14.305 16.53.923-.382" />
+      <path d="m15.228 13.852-.923-.383" />
+      <path d="m16.852 12.228-.383-.923" />
+      <path d="m16.852 17.772-.383.924" />
+      <path d="m19.148 12.228.383-.923" />
+      <path d="m19.53 18.696-.382-.924" />
+      <path d="m20.772 13.852.924-.383" />
+      <path d="m20.772 16.148.924.383" />
+      <circle cx="18" cy="15" r="3" />
+      <circle cx="9" cy="7" r="4" />
+    </svg>
+  );
+}
+
 function generateAgencyCode(): string {
   const letters = Array.from({ length: 2 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join("");
   const digits = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
@@ -3558,7 +3577,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
                       {/* Principal indicator — absolute so it doesn't shift grid */}
                       {isPrincipal && !isInactive && (
-                        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:teal }} />
+                        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:"#A614C3" }} />
                       )}
                       {isInactive && (
                         <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:"#F59E0B" }} />
@@ -3577,7 +3596,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
                       {/* Admin — render gear icon when the user has admin permissions (including auto-grants from Principal reassignment). */}
                       <div className="flex items-center justify-center">
-                        {(u.isAdmin || adminGrantOverrides.has(u.id)) && <UserCog className="w-[18px] h-[18px]" style={{ color:teal }}/>}
+                        {(u.isAdmin || adminGrantOverrides.has(u.id))
+                          ? <GradientUserCog size={18} />
+                          : <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>—</span>}
                       </div>
 
                       {/* Job title */}
@@ -6860,14 +6881,14 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                       <td className="py-3 pr-6 relative" style={{ paddingLeft: 52 }}>
                         {isPrincipal && (
-                          <div className="absolute" style={{ left: 0, top: 0, bottom: 0, width: 3, background: teal }} />
+                          <div className="absolute" style={{ left: 0, top: 0, bottom: 0, width: 3, background: "#A614C3" }} />
                         )}
                         <span className="text-[13px] font-semibold whitespace-nowrap" style={{ fontFamily: FONT, color: c.text }}>{u.name}</span>
                       </td>
                       {!usersHiddenCols.has("admin") && (
                       <td className="py-3 text-center" style={{ paddingRight: 50 }}>
                         {u.isAdmin ? (
-                          <UserCog className="w-4 h-4 inline-block" style={{ color: teal }} />
+                          <GradientUserCog size={16} />
                         ) : (
                           <span className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>—</span>
                         )}
