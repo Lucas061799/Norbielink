@@ -711,6 +711,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [previewDoc,     setPreviewDoc]     = useState<PreviewDoc | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [imageRightSyncMins, setImageRightSyncMins] = useState(5);
+  // Users-tab export (preview + format selector, mirrors main Agencies export)
+  const [userExportFormat,    setUserExportFormat]    = useState<"csv"|"xlsx">("csv");
+  const [userExportFormatOpen,setUserExportFormatOpen]= useState(false);
   // After saving Agency Info edits, prompt the user to upload fresh docs if W-9/license-relevant fields drifted.
   const [docUpdateModal, setDocUpdateModal] = useState<{ w9: boolean; license: boolean } | null>(null);
 
@@ -4059,7 +4062,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="ml-auto flex items-center gap-2">
                 <button onClick={e => { e.stopPropagation(); setUsersView(v => v === "inactive" ? "active" : "inactive"); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                  title={usersView === "inactive" ? "Click to go back to Active Users" : "Show deactivated users"}
+                  title={usersView === "inactive" ? "Click to go back to Active Users" : "Show archived (deactivated) users"}
                   style={{ fontFamily: FONT,
                     background: usersView === "inactive" ? "rgba(245,158,11,0.10)" : "transparent",
                     color: usersView === "inactive" ? "#F59E0B" : c.muted,
@@ -4067,16 +4070,66 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   onMouseEnter={e => { if (usersView !== "inactive") e.currentTarget.style.background = c.hoverBg; }}
                   onMouseLeave={e => { if (usersView !== "inactive") e.currentTarget.style.background = "transparent"; }}>
                   <Archive className="w-3.5 h-3.5" />
-                  {usersView === "inactive" ? "Back to Active Users" : "View Inactive Users"}
+                  {usersView === "inactive" ? "Back to Active Users" : "Archive"}
                   {usersView !== "inactive" && inactiveCount > 0 && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                       style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", color: c.muted }}>{inactiveCount}</span>
                   )}
                 </button>
-                <button className="p-2 rounded-lg transition-colors" style={{ color:teal }}
-                  onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                  <Download className="w-4 h-4" />
-                </button>
+                {/* Export — split-button matching Notes "New" style. Main click downloads in current format, chevron picks format. */}
+                {(() => {
+                  const cols: { label: string; get: (u: typeof agencyUsers[number]) => string }[] = [
+                    { label: "Name",      get: u => u.name },
+                    { label: "Job Title", get: u => u.jobTitle },
+                    { label: "Email",     get: u => u.email },
+                    { label: "Phone",     get: u => u.phone || "" },
+                    { label: "Ext",       get: u => u.ext || "" },
+                    { label: "Status",    get: u => inactiveUserIds.has(u.id) ? "Inactive" : "Active" },
+                  ];
+                  const triggerDownload = (fmt: "csv"|"xlsx") => {
+                    const rows = agencyUsers.map(u => cols.map(col => col.get(u)));
+                    const fname = `${agency.code}-users.${fmt === "csv" ? "csv" : "xlsx"}`;
+                    const csv = [cols.map(c => c.label).join(","), ...rows.map(r => r.map(v => /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v).join(","))].join("\n");
+                    const blob = new Blob([csv], { type: fmt === "csv" ? "text/csv" : "application/vnd.ms-excel" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                    setUserExportFormatOpen(false);
+                    showToast({ title: "Export started", description: `${fname} (${rows.length} ${rows.length === 1 ? "row" : "rows"}) downloading.` });
+                  };
+                  return (
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center rounded-lg overflow-hidden" style={{ background: btnGrad }}>
+                        <button onClick={() => triggerDownload(userExportFormat)}
+                          className="px-3 py-1.5 text-[12px] font-semibold text-white flex items-center gap-1.5"
+                          style={{ fontFamily: FONT }}>
+                          <Download className="w-3 h-3" />Export {userExportFormat === "csv" ? "CSV" : "Excel"}
+                        </button>
+                        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)" }} />
+                        <button onClick={() => setUserExportFormatOpen(p => !p)} className="px-2 py-1.5 text-white flex items-center" title="Choose format">
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {userExportFormatOpen && (
+                        <div className="absolute right-0 top-10 z-30 w-56 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Download as</p>
+                          {([["csv", "CSV", "Comma-separated"], ["xlsx", "Excel", "Native .xlsx file"]] as ["csv"|"xlsx", string, string][]).map(([f, label, desc]) => (
+                            <button key={f} onClick={() => { setUserExportFormat(f); triggerDownload(f); }}
+                              className="w-full text-left px-3 py-2 transition-colors"
+                              style={{ fontFamily: FONT, background: userExportFormat === f ? "rgba(168,85,247,0.08)" : "transparent" }}
+                              onMouseEnter={e => { if (userExportFormat !== f) e.currentTarget.style.background = c.hoverBg; }}
+                              onMouseLeave={e => { if (userExportFormat !== f) e.currentTarget.style.background = "transparent"; }}>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[12px] font-semibold" style={{ color: userExportFormat === f ? "#A614C3" : c.text }}>{label}</span>
+                                {userExportFormat === f && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </div>
+                              <div className="text-[11px] mt-0.5" style={{ color: c.muted }}>{desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -6974,15 +7027,14 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   className={`text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap ${sortable && key !== "name" ? "cursor-pointer" : ""} ${(key === "name" || key === "location" || affIdx !== null) ? "relative" : ""}`}
                   style={{ fontFamily: FONT, color: (key === "name" && agencyNameFilter.size > 0) || (key === "location" && locationFilter.size > 0) || (affIdx !== null && affiliationFilter.size > 0) ? "#A614C3" : c.muted, width: w,
                     paddingLeft: idx === 0 ? 52
-                      : key === "code" ? 20
-                      : key === "location" ? 16
-                      : affIdx === 1 ? 6
-                      : (label?.startsWith("Affiliation")) ? 16
-                      : key === "totalUsers" ? 25
-                      : key === "lastLogin" ? 76
-                      : key === "status" ? 25
+                      : key === "location" ? 36
+                      : affIdx === 1 ? 26
+                      : (label?.startsWith("Affiliation")) ? 36
+                      : key === "totalUsers" ? 45
+                      : key === "lastLogin" ? 96
+                      : key === "status" ? 45
                       : undefined,
-                    textAlign: (key === "totalUsers" || key === "status") ? "center" : undefined }}>
+                    textAlign: (key === "code" || key === "totalUsers" || key === "status") ? "center" : undefined }}>
                   {key === "name" ? (
                     <>
                       <button onClick={e => { e.stopPropagation(); setAgencyNameOpen(o => !o); setLocationOpen(false); setAffiliationOpen(null); }}
@@ -7180,13 +7232,13 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 </td>
                 {/* Agency Code */}
                 {!agenciesHiddenCols.has("code") && (
-                <td className="py-3 pr-6" style={{ paddingLeft: 20 }}>
+                <td className="py-3 pr-6 text-center">
                   <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>
                 </td>
                 )}
                 {/* Location */}
                 {!agenciesHiddenCols.has("location") && (
-                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 16 }}>
+                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 36 }}>
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
                     <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city}, {a.state}</span>
@@ -7195,7 +7247,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 )}
                 {/* Affiliation 1 / 2 / 3 */}
                 {[0, 1, 2].filter(i => !agenciesHiddenCols.has(`aff${i + 1}`)).map(i => (
-                  <td key={`aff-${i}`} className="py-3 pr-6" style={{ paddingLeft: i === 0 ? 6 : 16 }}>
+                  <td key={`aff-${i}`} className="py-3 pr-6" style={{ paddingLeft: i === 0 ? 26 : 36 }}>
                     <span className="text-[13px] truncate block" style={{ fontFamily: FONT, color: a.affiliations[i] ? c.text : c.muted }}
                       title={a.affiliations[i] || ""}>
                       {a.affiliations[i] || "—"}
@@ -7204,7 +7256,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 ))}
                 {/* Total User */}
                 {!agenciesHiddenCols.has("totalUsers") && (
-                <td className="py-3 pr-6 whitespace-nowrap text-center" style={{ paddingLeft: 25 }}>
+                <td className="py-3 pr-6 whitespace-nowrap text-center" style={{ paddingLeft: 45 }}>
                   <div className="inline-flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
                     <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{a.totalUsers}</span>
@@ -7213,13 +7265,13 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 )}
                 {/* Last Login */}
                 {!agenciesHiddenCols.has("lastLogin") && (
-                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 76 }}>
+                <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 96 }}>
                   <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.lastLogin}</span>
                 </td>
                 )}
                 {/* Status */}
                 {!agenciesHiddenCols.has("status") && (
-                <td className="py-3 pr-6 text-center" style={{ paddingLeft: 25 }}><StatusBadge status={a.status} /></td>
+                <td className="py-3 pr-6 text-center" style={{ paddingLeft: 45 }}><StatusBadge status={a.status} /></td>
                 )}
               </tr>
             ))}
