@@ -225,16 +225,60 @@ type SortKey = "name" | "code" | "location" | "totalUsers" | "lastLogin" | "stat
 type SortDir = "asc" | "desc";
 type TabKey = "agencies" | "users" | "affiliations";
 
+/**
+ * Classifies an agency as "new" (appointed within last 12 months) or "dormant"
+ * (no login activity for >12 months). New takes precedence — a brand-new
+ * agency that hasn't logged in yet should still read as new, not dormant.
+ */
+function getAgencyTimeStatus(apptDate?: string, lastLogin?: string): "new" | "dormant" | null {
+  const monthsAgo = (s?: string) => {
+    if (!s) return Infinity;
+    const t = Date.parse(s);
+    if (isNaN(t)) return Infinity;
+    const now = new Date();
+    const d = new Date(t);
+    return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  };
+  const apptMonths = monthsAgo(apptDate);
+  if (apptMonths >= 0 && apptMonths < 12) return "new";
+  if (monthsAgo(lastLogin) > 12) return "dormant";
+  return null;
+}
+
+function TimeStatusBadge({ status }: { status: "new" | "dormant" | null }) {
+  if (!status) return null;
+  if (status === "new") {
+    return (
+      <span title="New agency · onboarded within the last 12 months"
+        className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+        style={{ width: 22, height: 22, background: "rgba(166,20,195,0.10)" }}>
+        <svg width="14" height="14" viewBox="0 -960 960 960" fill="#A614C3" aria-hidden="true">
+          <path d="M440-120v-319q-64 0-123-24.5T213-533q-45-45-69-104t-24-123v-80h80q63 0 122 24.5T426-746q31 31 51.5 68t31.5 79q5-7 11-13.5t13-13.5q45-45 104-69.5T760-720h80v80q0 64-24.5 123T746-413q-45 45-103.5 69T520-320v200h-80Zm0-400q0-48-18.5-91.5T369-689q-34-34-77.5-52.5T200-760q0 48 18 92t52 78q34 34 78 52t92 18Zm80 120q48 0 91.5-18t77.5-52q34-34 52.5-78t18.5-92q-48 0-92 18.5T590-569q-34 34-52 77.5T520-400Zm0 0Zm-80-120Z"/>
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span title="Dormant agency · no login activity for over 12 months"
+      className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+      style={{ width: 22, height: 22, background: "rgba(100,116,139,0.12)" }}>
+      <svg width="14" height="14" viewBox="0 -960 960 960" fill="#64748B" aria-hidden="true">
+        <path d="M440-80v-166L310-118l-56-56 186-186v-80h-80L174-254l-56-56 128-130H80v-80h166L118-650l56-56 186 186h80v-80L254-786l56-56 130 128v-166h80v166l130-128 56 56-186 186v80h80l186-186 56 56-128 130h166v80H714l128 130-56 56-186-186h-80v80l186 186-56 56-130-128v166h-80Z"/>
+      </svg>
+    </span>
+  );
+}
+
 /* ─── Mock Data ─────────────────────────────────────────────────────────── */
 const mockAgencies: Agency[] = [
   { id: "1", name: "Acme Insurance Agency", code: "ACME01", city: "Des Moines", state: "IA", totalUsers: 7,  status: "Appointed",   isStarred: true,  affiliations: ["AAA/ACG (AC364)", "Acrisure"], lastLogin: "04/24/2026" },
   { id: "2", name: "Summit Solutions",      code: "SUMIT22", city: "Chicago",    state: "IL", totalUsers: 3,  status: "Appointed",   isStarred: true,  affiliations: ["Acrisure", "Acceptance"], lastLogin: "04/22/2026" },
-  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "",           state: "",   totalUsers: 1,  status: "Unappointed", isStarred: true,  affiliations: ["SIAA"], lastLogin: "03/18/2026" },
+  { id: "3", name: "Pioneer Brokers",       code: "PION33",  city: "",           state: "",   totalUsers: 1,  status: "Unappointed", isStarred: true,  affiliations: ["SIAA"], lastLogin: "01/10/2025" },
   { id: "4", name: "Lakefront Coverage",    code: "LAKE04",  city: "Denver",     state: "CO", totalUsers: 10, status: "Appointed",   isStarred: false, affiliations: ["Farmers", "HUB International Limited", "SIAA"], lastLogin: "04/23/2026" },
   { id: "5", name: "Ridgeline Insurance",   code: "RIDG05",  city: "Des Moines", state: "IA", totalUsers: 23, status: "Appointed",   isStarred: false, affiliations: ["AAA/ACG (AC364)", "ASNOA (AL335)", "Acrisure"], lastLogin: "04/24/2026" },
   { id: "6", name: "Harbor Risk Group",     code: "HARB06",  city: "New York",   state: "NY", totalUsers: 5,  status: "Unappointed", isStarred: false, affiliations: ["IronPeak", "ISU"], lastLogin: "02/05/2026" },
   { id: "7", name: "Midland Shield Co.",    code: "MIDL07",  city: "Des Moines", state: "IA", totalUsers: 3,  status: "Unappointed", isStarred: false, affiliations: ["Premier Group (PR196)"], lastLogin: "01/12/2026" },
-  { id: "8", name: "Coastal Guard LLC",     code: "COAS08",  city: "New York",   state: "NY", totalUsers: 6,  status: "Unappointed", isStarred: false, affiliations: ["SIAA", "Smart Choice"], lastLogin: "12/02/2025" },
+  { id: "8", name: "Coastal Guard LLC",     code: "COAS08",  city: "New York",   state: "NY", totalUsers: 6,  status: "Unappointed", isStarred: false, affiliations: ["SIAA", "Smart Choice"], lastLogin: "02/15/2025" },
   { id: "9", name: "Apex Risk Partners",    code: "APEX09",  city: "Austin",     state: "TX", totalUsers: 12, status: "Appointed",   isStarred: false, affiliations: ["Foundation Risk Partners", "Renaissance Alliance", "PIIB"], lastLogin: "04/20/2026" },
   { id: "10", name: "Keystone Group",       code: "KEYS10",  city: "Philadelphia", state: "PA", totalUsers: 8, status: "Appointed",  isStarred: false, affiliations: ["United Agencies"], lastLogin: "04/18/2026" },
   { id: "11", name: "BlueSky Brokers",      code: "BLUE11",  city: "Seattle",    state: "WA", totalUsers: 4,  status: "Unappointed", isStarred: false, affiliations: ["Insurance Alliance Network", "Join the Brokers"], lastLogin: "03/30/2026" },
@@ -1476,6 +1520,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Star className="w-5 h-5" style={{ color: "#F59E0B", fill: isStarred ? "#F59E0B" : "none" }} />
               </button>
               <h2 className="text-[24px] font-bold" style={{ ...font, color: c.text }}>{agency.name}</h2>
+              <TimeStatusBadge status={getAgencyTimeStatus(agency.apptDate, agency.lastLogin)} />
               {agency.badge && (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap"
                   style={{ background: "rgba(168,85,247,0.10)" }}>
