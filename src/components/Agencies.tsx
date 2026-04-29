@@ -8,7 +8,7 @@ import {
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter,
+  MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -447,7 +447,7 @@ const mockAgencyUsers: AgencyUser[] = [
 /* ─── Agency Detail View ─────────────────────────────────────────────────── */
 type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes";
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies }: {
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -457,6 +457,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   onToggleStar: (id: string) => void;
   inactiveUserIds: Set<string>;
   setInactiveUserIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  statusInactiveUserIds: Set<string>;
+  setStatusInactiveUserIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   removedUserIds: Set<string>;
   setRemovedUserIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   bookRolled: Map<string, { targetCode: string; date: string }>;
@@ -473,6 +475,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
   const currentUserIsAdmin = true; // toggle to false to hide admin-only actions (Deactivate, Reactivate, Remove)
+  const currentUserIsReadOnlyAdmin = false; // when true, hide all action-menu items — read-only admins can't operate anything
+  const [lockedUserIds, setLockedUserIds] = useState<Set<string>>(() => new Set(["u5"])); // mock: Brian Nguyen locked by default
   const [contactRequestOpen, setContactRequestOpen] = useState(false);
   const [requestedName, setRequestedName] = useState("");
   const [requestedPhone, setRequestedPhone] = useState("");
@@ -641,10 +645,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
   const [userSearch,      setUserSearch]      = useState("");
+  const [userSort,        setUserSort]        = useState<{ key: "name"|"admin"|"status"|null; dir: "asc"|"desc" }>({ key: null, dir: "asc" });
   const [jobTitleFilter,  setJobTitleFilter]  = useState<Set<string>>(new Set());
   const [jobTitleOpen,    setJobTitleOpen]    = useState(false);
   const [jobTitleSearch,  setJobTitleSearch]  = useState("");
   const [userMenuId,      setUserMenuId]      = useState<string|null>(null);
+  const [userMenuPos,     setUserMenuPos]     = useState<{top: number; right: number} | null>(null);
   // inactiveUserIds and removedUserIds are now lifted to the parent Agencies component
   // so the All Users tab in the main view can also respect deactivation/removal state.
   const [usersView,       setUsersView]       = useState<"active"|"inactive">("active");
@@ -652,6 +658,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [userToast,       setUserToast]       = useState<ToastData | null>(null);
   const showToast = (t: ToastData, ms = 4000) => { setUserToast(t); setTimeout(() => setUserToast(null), ms); };
   const [removeUserConfirm, setRemoveUserConfirm] = useState<{id: string; name: string} | null>(null);
+  const [deactivateUserConfirm, setDeactivateUserConfirm] = useState<{id: string; name: string} | null>(null);
   // When deactivating/removing a Principal or Agency Contact, force the user to pick a replacement first.
   const [roleReassign, setRoleReassign] = useState<{
     userId: string;
@@ -662,6 +669,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   } | null>(null);
   const [reassignPrincipalId, setReassignPrincipalId] = useState("");
   const [reassignContactId, setReassignContactId] = useState("");
+  const [reassignAccountsFrom, setReassignAccountsFrom] = useState<{userId: string; userName: string} | null>(null);
+  const [reassignAccountsToId, setReassignAccountsToId] = useState("");
   // Optional overrides applied after a reassign — used to reflect the new Principal / Contact in the UI.
   const [principalOverride, setPrincipalOverride] = useState<{ oldId: string; newId: string } | null>(null);
   const [agencyContactOverride, setAgencyContactOverride] = useState<string | null>(null);
@@ -669,7 +678,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [adminGrantOverrides, setAdminGrantOverrides] = useState<Set<string>>(new Set());
   // ── Documents tab state (demo only — files are mock entries; uploads add rows but don't store anything). ──
   type AgencyDocCategory = "bor" | "w9" | "license" | "agreement";
-  type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean };
+  type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean; trashed?: boolean };
   const [agencyDocs, setAgencyDocs] = useState<AgencyDoc[]>([
     { id: "d1", category: "bor",       name: "BOR Request - 2025.pdf",      date: "Mar 15, 2025" },
     { id: "d2", category: "bor",       name: "BOR Letter Signed.pdf",       date: "Mar 20, 2025" },
@@ -679,6 +688,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     { id: "d6", category: "agreement", name: "Appointment Letter.pdf",      date: agency.apptDate || "Mar 24, 2026" },
     { id: "d7", category: "agreement", name: "Producer Agreement.pdf",      date: agency.apptDate || "Mar 24, 2026" },
   ]);
+  // Documents toolbar state
+  const [docView,        setDocView]        = useState<"all"|"byType"|"table">("byType");
+  const [docSearch,      setDocSearch]      = useState("");
+  const [docSearchOpen,  setDocSearchOpen]  = useState(false);
+  const [docSortDir,     setDocSortDir]     = useState<"asc"|"desc">("desc");
+  const [docFilterCat,   setDocFilterCat]   = useState<"All"|AgencyDocCategory>("All");
+  const [docFilterOpen,  setDocFilterOpen]  = useState(false);
+  const [docSortOpen,    setDocSortOpen]    = useState(false);
+  const [showDocArchived,setShowDocArchived]= useState(false);
+  const [showDocTrashed, setShowDocTrashed] = useState(false);
+  const [docUploadOpen,  setDocUploadOpen]  = useState(false);
+  const [docConfirm,     setDocConfirm]     = useState<{
+    title: string;
+    body: React.ReactNode;
+    confirmLabel: string;
+    danger: boolean;
+    icon: "archive" | "trash";
+    onConfirm: () => void;
+  } | null>(null);
+  type PreviewDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean; trashed?: boolean };
+  const [previewDoc,     setPreviewDoc]     = useState<PreviewDoc | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [imageRightSyncMins, setImageRightSyncMins] = useState(5);
   // After saving Agency Info edits, prompt the user to upload fresh docs if W-9/license-relevant fields drifted.
   const [docUpdateModal, setDocUpdateModal] = useState<{ w9: boolean; license: boolean } | null>(null);
@@ -733,6 +764,20 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         : b.jobTitle;
       if (aJob === "Principal" && bJob !== "Principal") return -1;
       if (bJob === "Principal" && aJob !== "Principal") return 1;
+      if (userSort.key) {
+        const sign = userSort.dir === "asc" ? 1 : -1;
+        if (userSort.key === "name") return sign * a.name.localeCompare(b.name);
+        if (userSort.key === "admin") {
+          const aAdmin = (a.isAdmin || adminGrantOverrides.has(a.id)) ? 1 : 0;
+          const bAdmin = (b.isAdmin || adminGrantOverrides.has(b.id)) ? 1 : 0;
+          return sign * (bAdmin - aAdmin);
+        }
+        if (userSort.key === "status") {
+          const aInactive = inactiveUserIds.has(a.id) || statusInactiveUserIds.has(a.id) ? 1 : 0;
+          const bInactive = inactiveUserIds.has(b.id) || statusInactiveUserIds.has(b.id) ? 1 : 0;
+          return sign * (aInactive - bInactive);
+        }
+      }
       return 0;
     });
   const inactiveCount = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && inactiveUserIds.has(u.id)).length;
@@ -1086,7 +1131,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="px-6 pt-5 pb-4">
                 <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Reassign {rolesText} first</h3>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
-                  <strong style={{ color: c.text }}>{roleReassign.userName}</strong> is the {rolesText}. Choose {roleReassign.needsPrincipal && roleReassign.needsContact ? "replacements" : "a replacement"} before {roleReassign.action === "deactivate" ? "deactivating" : "removing"} them.
+                  <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{roleReassign.userName}</strong> is the {rolesText}. Choose {roleReassign.needsPrincipal && roleReassign.needsContact ? "replacements" : "a replacement"} before {roleReassign.action === "deactivate" ? "deactivating" : "removing"} them.
                 </p>
               </div>
               <div className="px-6 pb-4 flex flex-col gap-3">
@@ -1152,6 +1197,112 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         );
       })()}
+      {reassignAccountsFrom && (() => {
+        const candidates = mockAgencyUsers.filter(u =>
+          u.agencyId === agency.id
+          && u.id !== reassignAccountsFrom.userId
+          && !removedUserIds.has(u.id)
+          && !inactiveUserIds.has(u.id)
+        );
+        const picked = candidates.find(u => u.id === reassignAccountsToId);
+        const proceed = () => {
+          if (!picked) return;
+          showToast({ title: "Accounts reassigned", description: `${reassignAccountsFrom.userName}'s accounts transferred to ${picked.name}.` });
+          setReassignAccountsFrom(null);
+          setReassignAccountsToId("");
+        };
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setReassignAccountsFrom(null)}>
+            <div className="rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
+              onClick={e => e.stopPropagation()}>
+              <div className="px-6 pt-5 pb-4">
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Reassign Accounts</h3>
+                <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
+                  Transfer all accounts owned by <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{reassignAccountsFrom.userName}</strong> to another active user in this agency.
+                </p>
+              </div>
+              <div className="px-6 pb-4 flex flex-col gap-3">
+                {candidates.length === 0 ? (
+                  <div className="px-3 py-4 rounded-lg text-[12px]" style={{ background: c.hoverBg, border: `1px dashed ${c.border}`, color: c.muted, fontFamily: FONT }}>
+                    No other active users in this agency. Add or reactivate a user before continuing.
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Reassign To</label>
+                    <select value={reassignAccountsToId} onChange={e => setReassignAccountsToId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                      <option value="">Select a user…</option>
+                      {candidates.map(u => (
+                        <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setReassignAccountsFrom(null)}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                  Cancel
+                </button>
+                <button onClick={proceed} disabled={!picked}
+                  className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ fontFamily: FONT, background: btnGrad, opacity: picked ? 1 : 0.5, cursor: picked ? "pointer" : "not-allowed" }}>
+                  Reassign Accounts
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {deactivateUserConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setDeactivateUserConfirm(null)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(166,20,195,0.10)" }}>
+                <Archive className="w-6 h-6" style={{ color: "#A614C3" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Deactivate {deactivateUserConfirm.name}?</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  This will immediately disable <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{deactivateUserConfirm.name}</strong>&apos;s access — they won&apos;t be able to log in or submit applications. You can <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong> them later from Inactive Users.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeactivateUserConfirm(null)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                  const id = deactivateUserConfirm.id;
+                  const name = deactivateUserConfirm.name;
+                  setInactiveUserIds(prev => { const s = new Set(prev); s.add(id); return s; });
+                  showToast({
+                    title: "User deactivated",
+                    description: `${name} moved to Inactive Users.`,
+                    action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(id); return s; }) },
+                  });
+                  setDeactivateUserConfirm(null);
+                }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ background: btnGrad }}>
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {docUpdateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
           onClick={() => setDocUpdateModal(null)}
@@ -1231,7 +1382,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div>
                 <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Remove {removeUserConfirm.name}?</h3>
                 <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
-                  This action <strong style={{ color: c.text }}>cannot be undone</strong>. The user will be permanently removed from this agency. If you just want to suspend access, choose <strong style={{ color: c.text }}>Deactivate</strong> instead.
+                  This action <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>cannot be undone</strong>. <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{removeUserConfirm.name}</strong> will be permanently removed from this agency. To restore access instead, choose <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong>.
                 </p>
               </div>
             </div>
@@ -1256,6 +1407,41 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
                 style={{ background: "#EF4444" }}>
                 Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {docConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          onClick={() => setDocConfirm(null)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: docConfirm.danger ? "rgba(239,68,68,0.10)" : "rgba(245,158,11,0.10)" }}>
+                {docConfirm.icon === "trash"
+                  ? <Trash2 className="w-6 h-6" style={{ color: "#EF4444" }} />
+                  : <Archive className="w-6 h-6" style={{ color: "#F59E0B" }} />}
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>{docConfirm.title}</h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>{docConfirm.body}</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDocConfirm(null)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                Cancel
+              </button>
+              <button onClick={() => { docConfirm.onConfirm(); setDocConfirm(null); }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ background: docConfirm.danger ? "#EF4444" : "#F59E0B" }}>
+                {docConfirm.confirmLabel}
               </button>
             </div>
           </div>
@@ -1388,7 +1574,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 style={{ ...font, background: "transparent", border: `1px solid ${c.border}`, color: c.muted }}
                 onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
-                <Archive className="w-3.5 h-3.5" />Book Roll
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" className="w-3.5 h-3.5" aria-hidden="true"><path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" /></svg>Book Roll
               </button>
             )}
             {bookRolled.has(agency.id) && (
@@ -2012,7 +2198,22 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             || eTaxId !== agency.taxId
           );
           const licenseDrift = eLicNo !== agency.licenseNo;
-          const docsByCat = (cat: AgencyDocCategory) => agencyDocs.filter(d => d.category === cat);
+          const docsByCat = (cat: AgencyDocCategory) => agencyDocs.filter(d => d.category === cat && !d.trashed);
+          const archivedDocs = agencyDocs.filter(d => d.archived && !d.trashed);
+          const trashedDocs  = agencyDocs.filter(d => d.trashed);
+          const archivedCount = archivedDocs.length;
+          const trashedCount  = trashedDocs.length;
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements" };
+          const parseDate = (s: string) => { const t = Date.parse(s); return isNaN(t) ? 0 : t; };
+          const baseDocs: AgencyDoc[] = showDocTrashed
+            ? trashedDocs
+            : showDocArchived
+              ? archivedDocs
+              : agencyDocs.filter(d => !d.trashed && !d.archived);
+          const visibleDocs = baseDocs
+            .filter(d => docFilterCat === "All" || d.category === docFilterCat)
+            .filter(d => !docSearch || d.name.toLowerCase().includes(docSearch.toLowerCase()) || CAT_LABEL[d.category].toLowerCase().includes(docSearch.toLowerCase()))
+            .sort((a, b) => docSortDir === "desc" ? parseDate(b.date) - parseDate(a.date) : parseDate(a.date) - parseDate(b.date));
           // Mock E&O record — read-only per agreement clause.
           const eoExpiry = agency.eoExp || "Mar 1, 2027";
           const isAdmin = currentUserIsAdmin;
@@ -2038,8 +2239,58 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           const archiveDoc = (id: string) => {
             setAgencyDocs(prev => prev.map(d => d.id === id ? { ...d, archived: true } : d));
           };
+          const unarchiveDoc = (id: string) => {
+            setAgencyDocs(prev => prev.map(d => d.id === id ? { ...d, archived: false } : d));
+          };
           const removeDoc = (id: string) => {
+            setAgencyDocs(prev => prev.map(d => d.id === id ? { ...d, trashed: true } : d));
+          };
+          const restoreDoc = (id: string) => {
+            setAgencyDocs(prev => prev.map(d => d.id === id ? { ...d, trashed: false } : d));
+          };
+          const purgeDoc = (id: string) => {
             setAgencyDocs(prev => prev.filter(d => d.id !== id));
+          };
+          const requestArchive = (d: AgencyDoc) => setDocConfirm({
+            title: "Archive document?",
+            body: <>Archive <strong style={{ color: c.text }}>{d.name}</strong>? It will be moved to the Archive tab and can be restored later.</>,
+            confirmLabel: "Archive",
+            danger: false,
+            icon: "archive",
+            onConfirm: () => {
+              archiveDoc(d.id);
+              showToast({ title: "Document archived", description: `${d.name} moved to archive.`, action: { label: "Undo", onClick: () => unarchiveDoc(d.id) } });
+            },
+          });
+          const requestTrash = (d: AgencyDoc) => setDocConfirm({
+            title: "Move to Trash?",
+            body: <>Move <strong style={{ color: c.text }}>{d.name}</strong> to Trash? You can restore it from the Trash tab.</>,
+            confirmLabel: "Move to Trash",
+            danger: true,
+            icon: "trash",
+            onConfirm: () => {
+              removeDoc(d.id);
+              showToast({ title: "Document moved to Trash", description: `${d.name} sent to Trash.`, action: { label: "Undo", onClick: () => restoreDoc(d.id) } });
+            },
+          });
+          const requestPurge = (d: AgencyDoc) => setDocConfirm({
+            title: "Delete permanently?",
+            body: <><strong style={{ color: c.text }}>{d.name}</strong> will be permanently deleted. This action <strong style={{ color: c.text }}>cannot be undone</strong>.</>,
+            confirmLabel: "Delete forever",
+            danger: true,
+            icon: "trash",
+            onConfirm: () => {
+              purgeDoc(d.id);
+              showToast({ title: "Document deleted", description: `${d.name} permanently deleted.` });
+            },
+          });
+          const handleUnarchive = (d: AgencyDoc) => {
+            unarchiveDoc(d.id);
+            showToast({ title: "Document unarchived", description: `${d.name} restored to active.`, action: { label: "Undo", onClick: () => archiveDoc(d.id) } });
+          };
+          const handleRestore = (d: AgencyDoc) => {
+            restoreDoc(d.id);
+            showToast({ title: "Document restored", description: `${d.name} restored.`, action: { label: "Undo", onClick: () => removeDoc(d.id) } });
           };
 
           // Reusable section component
@@ -2075,18 +2326,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <div className="flex items-center gap-2">
                           <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>{d.name}</span>
                           {category === "w9" && !d.archived && (
-                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Current</span>
+                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
                           )}
                           {d.archived && (
-                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>Archived</span>
+                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>{category === "w9" ? "Replaced" : "Archived"}</span>
                           )}
                         </div>
                         <div className="text-[11px]" style={{ ...font, color: c.muted }}>{d.date}</div>
                       </div>
-                      <button title="View" className="p-1.5 rounded transition-colors"
-                        style={{ color: c.muted }}
-                        onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      <button title="View" onClick={() => setPreviewDoc(d)} className="p-1.5 rounded transition-colors"
+                        style={{ color: previewDoc?.id === d.id ? "#A855F7" : c.muted, background: previewDoc?.id === d.id ? "rgba(168,85,247,0.10)" : "transparent" }}
+                        onMouseEnter={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                        onMouseLeave={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button title="Download" className="p-1.5 rounded transition-colors"
@@ -2096,7 +2347,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <Download className="w-3.5 h-3.5" />
                       </button>
                       {isAdmin && !d.archived && category === "w9" && (
-                        <button title="Archive" onClick={() => archiveDoc(d.id)}
+                        <button title="Archive" onClick={() => requestArchive(d)}
                           className="p-1.5 rounded transition-colors"
                           style={{ color: c.muted }}
                           onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
@@ -2105,7 +2356,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         </button>
                       )}
                       {isAdmin && (d.archived || category !== "w9") && (
-                        <button title="Delete" onClick={() => removeDoc(d.id)}
+                        <button title="Delete" onClick={() => requestTrash(d)}
                           className="p-1.5 rounded transition-colors"
                           style={{ color: c.muted }}
                           onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#EF4444"; }}
@@ -2126,108 +2377,496 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </div>
           );
 
-          return (
-            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-4">
-              {/* ImageRight sync strip */}
-              <div className="flex items-center gap-2 px-5 py-2 mb-4 rounded-lg text-[12px] flex-shrink-0"
-                style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
-                <RefreshCw className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
-                <span>Synced from <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
-                <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
-                  className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                  style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Sync now
-                </button>
+          // Row used by All / Archive / Trash flat-list views.
+          const FlatRow = ({ d }: { d: AgencyDoc }) => (
+            <div className="flex items-center gap-3 px-5 py-2.5"
+              style={{ borderBottom: `1px solid ${c.border}` }}>
+              <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>{d.name}</span>
+                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)" }}>{CAT_LABEL[d.category]}</span>
+                  {d.category === "w9" && !d.archived && !d.trashed && (
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
+                  )}
+                  {d.archived && !d.trashed && (
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>{d.category === "w9" ? "Replaced" : "Archived"}</span>
+                  )}
+                </div>
+                <div className="text-[11px]" style={{ ...font, color: c.muted }}>{d.date}</div>
               </div>
-
-              {/* Trigger banners */}
-              {w9Drift && (
-                <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
-                  style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                    <defs>
-                      <linearGradient id="w9-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#5C2ED4" />
-                        <stop offset="100%" stopColor="#A614C3" />
-                      </linearGradient>
-                    </defs>
-                    <circle cx="8" cy="8" r="7" stroke="url(#w9-alert-grad)" strokeWidth="1.5" />
-                    <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#w9-alert-grad)" />
-                    <circle cx="8" cy="11.5" r="0.9" fill="url(#w9-alert-grad)" />
-                  </svg>
-                  <span>Agency information changed — please upload an updated <strong>W-9</strong>.</span>
-                  <button onClick={() => handleUpload("w9")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                    style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    Upload W-9
-                  </button>
-                </div>
-              )}
-              {licenseDrift && (
-                <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
-                  style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                    <defs>
-                      <linearGradient id="lic-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#5C2ED4" />
-                        <stop offset="100%" stopColor="#A614C3" />
-                      </linearGradient>
-                    </defs>
-                    <circle cx="8" cy="8" r="7" stroke="url(#lic-alert-grad)" strokeWidth="1.5" />
-                    <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#lic-alert-grad)" />
-                    <circle cx="8" cy="11.5" r="0.9" fill="url(#lic-alert-grad)" />
-                  </svg>
-                  <span>License number changed — please upload the updated <strong>license copy</strong>.</span>
-                  <button onClick={() => handleUpload("license")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                    style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    Upload License
-                  </button>
-                </div>
-              )}
-
-              {/* Sections */}
-              <Section category="bor"       title="Broker of Record" count={String(docsByCat("bor").length)} />
-              <Section category="w9"        title="W-9"              count={`${docsByCat("w9").filter(d => !d.archived).length} current · ${docsByCat("w9").filter(d => d.archived).length} archived`} hint="Required when name, entity type, address, or TIN changes." />
-              <Section category="license"   title="License"          count={String(docsByCat("license").length)} hint="Required when license number changes." />
-              <Section category="agreement" title="Agreements"       count={String(docsByCat("agreement").length)} />
-
-              {/* E&O (read-only) */}
-              <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
-                <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4" style={{ color: "#A855F7" }} />
-                    <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>E&amp;O Certificate</span>
-                  </div>
-                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>
-                    <Lock className="w-3 h-3" />Read-only
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 px-5 py-2.5">
-                  <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px]" style={{ ...font, color: c.text }}>EO-Certificate.pdf</div>
-                    <div className="text-[11px]" style={{ ...font, color: c.muted }}>Expires {eoExpiry}</div>
-                  </div>
-                  <button title="View" className="p-1.5 rounded transition-colors"
-                    style={{ color: c.muted }}
-                    onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+              {!d.trashed && (
+                <>
+                  <button title="View" onClick={() => setPreviewDoc(d)} className="p-1.5 rounded transition-colors"
+                    style={{ color: previewDoc?.id === d.id ? "#A855F7" : c.muted, background: previewDoc?.id === d.id ? "rgba(168,85,247,0.10)" : "transparent" }}
+                    onMouseEnter={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                    onMouseLeave={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
                     <Eye className="w-3.5 h-3.5" />
                   </button>
-                  <button title="Download" className="p-1.5 rounded transition-colors"
-                    style={{ color: c.muted }}
+                  <button title="Download" className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
                     onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
                     <Download className="w-3.5 h-3.5" />
                   </button>
+                </>
+              )}
+              {isAdmin && d.trashed && (
+                <>
+                  <button title="Restore" onClick={() => handleRestore(d)}
+                    className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(16,185,129,0.10)"; e.currentTarget.style.color = "#10B981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                  <button title="Delete permanently" onClick={() => requestPurge(d)}
+                    className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.10)"; e.currentTarget.style.color = "#EF4444"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+              {isAdmin && d.archived && !d.trashed && (
+                <button title="Unarchive" onClick={() => handleUnarchive(d)}
+                  className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {isAdmin && !d.archived && !d.trashed && d.category === "w9" && (
+                <button title="Archive" onClick={() => requestArchive(d)}
+                  className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                  <Archive className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {isAdmin && !d.trashed && (
+                <button title="Move to Trash" onClick={() => requestTrash(d)}
+                  className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#EF4444"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          );
+
+          return (
+            <div className="flex flex-1 min-h-0 gap-4 pb-4" onClick={() => { setDocFilterOpen(false); setDocSortOpen(false); setDocUploadOpen(false); }}>
+            {/* Left panel */}
+            <div className="flex flex-col min-h-0 transition-all"
+              style={{ flex: previewDoc && !previewExpanded ? "0 0 38%" : "1 1 100%", minWidth: 0 }}>
+              {/* Toolbar */}
+              <div className="flex items-center justify-between mb-3 flex-shrink-0 min-w-0">
+                {(() => { const previewOpen = !!previewDoc && !previewExpanded; return (
+                <div className="flex items-center gap-0.5 min-w-0">
+                  {([["all","All Documents",List],["byType","By Type",LayoutGrid],["table","Table",Table2]] as [typeof docView, string, ({className}:{className?:string})=>React.ReactElement][]).map(([v, label, Icon]) => {
+                    const isActive = docView === v && !showDocArchived && !showDocTrashed;
+                    return (
+                      <button key={v} title={label} onClick={e => { e.stopPropagation(); setDocView(v); setShowDocArchived(false); setShowDocTrashed(false); }}
+                        className={`flex items-center ${previewOpen ? "px-1.5" : "gap-1.5 px-3"} py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap`}
+                        style={{ fontFamily: FONT, background: isActive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "transparent", color: isActive ? c.text : c.muted }}>
+                        <Icon className="w-3 h-3" />{!previewOpen && label}
+                      </button>
+                    );
+                  })}
+                  <div className="mx-1.5" style={{ width:1, height:16, background:c.border }} />
+                  <button title="Archive" onClick={e => { e.stopPropagation(); setShowDocArchived(true); setShowDocTrashed(false); }}
+                    className={`flex items-center ${previewOpen ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
+                    style={{ fontFamily: FONT, background: showDocArchived ? "rgba(245,158,11,0.10)" : "transparent", color: showDocArchived ? "#F59E0B" : c.muted }}>
+                    <Archive className="w-3 h-3" />{!previewOpen && "Archive"}
+                    {!previewOpen && archivedCount > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showDocArchived ? "rgba(245,158,11,0.25)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showDocArchived ? "#F59E0B" : c.muted }}>{archivedCount}</span>}
+                  </button>
+                  <button title="Trash" onClick={e => { e.stopPropagation(); setShowDocTrashed(true); setShowDocArchived(false); }}
+                    className={`flex items-center ${previewOpen ? "px-1.5" : "gap-1.5 px-2.5"} py-1.5 rounded-md text-[12px] font-medium transition-all`}
+                    style={{ fontFamily: FONT, background: showDocTrashed ? "rgba(239,68,68,0.10)" : "transparent", color: showDocTrashed ? "#EF4444" : c.muted }}>
+                    <Trash2 className="w-3 h-3" />{!previewOpen && "Trash"}
+                    {!previewOpen && trashedCount > 0 && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: showDocTrashed ? "rgba(239,68,68,0.20)" : (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"), color: showDocTrashed ? "#EF4444" : c.muted }}>{trashedCount}</span>}
+                  </button>
                 </div>
-                <div className="px-5 py-2.5 text-[11px] flex items-start gap-1.5" style={{ ...font, color: c.muted, borderTop: `1px solid ${c.border}` }}>
-                  <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                  <span>E&amp;O must remain active per agreement clause — contact compliance to update.</span>
+                ); })()}
+                <div className="flex items-center gap-1">
+                  {/* Filter */}
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => { setDocFilterOpen(p => !p); setDocSortOpen(false); setDocUploadOpen(false); }}
+                      className="p-1.5 rounded-md transition-all"
+                      style={{ color: docFilterCat !== "All" ? "#A855F7" : c.muted, background: docFilterCat !== "All" ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5L9.5 10v5l-3-1.5V10L1 4.5V3z"/></svg>
+                    </button>
+                    {docFilterOpen && (
+                      <div className="absolute right-0 top-8 z-30 w-52 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Category</p>
+                        {(["All","bor","w9","license","agreement"] as const).map(t => (
+                          <button key={t} onClick={() => { setDocFilterCat(t as typeof docFilterCat); }}
+                            className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                            style={{ fontFamily: FONT, color: docFilterCat === t ? "#A614C3" : c.text, background: docFilterCat === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                            {t === "All" ? "All Categories" : CAT_LABEL[t]}
+                            {docFilterCat === t && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Sort */}
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => { setDocSortOpen(p => !p); setDocFilterOpen(false); setDocUploadOpen(false); }}
+                      className="p-1.5 rounded-md transition-all" style={{ color: c.muted }}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2V4zm2 3.5h8V9H4V7.5zm2 3.5h4v1.5H6V11z"/></svg>
+                    </button>
+                    {docSortOpen && (
+                      <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide px-3 pt-2 pb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Date</p>
+                        {([["desc","Newest first"],["asc","Oldest first"]] as const).map(([d, label]) => (
+                          <button key={d} onClick={() => { setDocSortDir(d); setDocSortOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-[12px] flex items-center justify-between"
+                            style={{ fontFamily: FONT, color: docSortDir === d ? "#A614C3" : c.text, background: docSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                            <span>{label}</span>{docSortDir === d && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Search */}
+                  <div className="flex items-center transition-all overflow-hidden" style={{ width: docSearchOpen ? 160 : 28 }}>
+                    <button onClick={e => { e.stopPropagation(); setDocSearchOpen(p => !p); if (docSearchOpen) setDocSearch(""); }}
+                      className="p-1.5 rounded-md flex-shrink-0" style={{ color: docSearch ? "#A855F7" : c.muted }}>
+                      <Search className="w-3.5 h-3.5" />
+                    </button>
+                    {docSearchOpen && (
+                      <input autoFocus value={docSearch} onChange={e => setDocSearch(e.target.value)}
+                        onClick={e => e.stopPropagation()} placeholder="Search documents…"
+                        className="outline-none text-[12px] flex-1 min-w-0"
+                        style={{ fontFamily: FONT, color: c.text, background: "transparent", borderBottom: `1px solid ${c.border}` }} />
+                    )}
+                  </div>
+                  {/* Upload — hidden in archive/trash */}
+                  {!showDocArchived && !showDocTrashed && isAdmin && (
+                    <div className="relative ml-1" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center rounded-lg overflow-hidden" style={{ background: btnGrad }}>
+                        <button onClick={() => setDocUploadOpen(p => !p)} className="px-3 py-1.5 text-[12px] font-semibold text-white flex items-center gap-1.5" style={{ fontFamily: FONT }}>
+                          <Upload className="w-3 h-3" />Upload
+                        </button>
+                        <div style={{ width:1, height:20, background:"rgba(255,255,255,0.2)" }} />
+                        <button onClick={() => setDocUploadOpen(p => !p)} className="px-2 py-1.5 text-white flex items-center"><ChevronDown className="w-3 h-3" /></button>
+                      </div>
+                      {docUploadOpen && (
+                        <div className="absolute right-0 top-9 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Upload to</p>
+                          {(["bor","w9","license","agreement"] as AgencyDocCategory[]).map(cat => (
+                            <button key={cat} onClick={() => { setDocUploadOpen(false); handleUpload(cat); }}
+                              className="w-full text-left px-3 py-1.5 text-[12px] flex items-center gap-2 transition-colors"
+                              style={{ fontFamily: FONT, color: c.text }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <FolderOpen className="w-3 h-3" style={{ color: "#A855F7" }} />{CAT_LABEL[cat]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Divider */}
+              <div className="flex-shrink-0 mb-3" style={{ height:1, background:c.border }} />
+
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {/* Sync strip + drift banners shown in main views only */}
+                {!showDocArchived && !showDocTrashed && (
+                  <>
+                    <div className="flex items-center gap-2 px-5 py-2 mb-4 rounded-lg text-[12px] flex-shrink-0"
+                      style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <RefreshCw className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                      <span>Synced from <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
+                      <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
+                        className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                        style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                        Sync now
+                      </button>
+                    </div>
+                    {w9Drift && (
+                      <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
+                        style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                          <defs>
+                            <linearGradient id="w9-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#5C2ED4" />
+                              <stop offset="100%" stopColor="#A614C3" />
+                            </linearGradient>
+                          </defs>
+                          <circle cx="8" cy="8" r="7" stroke="url(#w9-alert-grad)" strokeWidth="1.5" />
+                          <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#w9-alert-grad)" />
+                          <circle cx="8" cy="11.5" r="0.9" fill="url(#w9-alert-grad)" />
+                        </svg>
+                        <span>Agency information changed — please upload an updated <strong>W-9</strong>.</span>
+                        <button onClick={() => handleUpload("w9")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                          style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                          Upload W-9
+                        </button>
+                      </div>
+                    )}
+                    {licenseDrift && (
+                      <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
+                        style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                          <defs>
+                            <linearGradient id="lic-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#5C2ED4" />
+                              <stop offset="100%" stopColor="#A614C3" />
+                            </linearGradient>
+                          </defs>
+                          <circle cx="8" cy="8" r="7" stroke="url(#lic-alert-grad)" strokeWidth="1.5" />
+                          <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#lic-alert-grad)" />
+                          <circle cx="8" cy="11.5" r="0.9" fill="url(#lic-alert-grad)" />
+                        </svg>
+                        <span>License number changed — please upload the updated <strong>license copy</strong>.</span>
+                        <button onClick={() => handleUpload("license")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
+                          style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                          Upload License
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* By Type view (default) */}
+                {!showDocArchived && !showDocTrashed && docView === "byType" && (
+                  <>
+                    {(docFilterCat === "All" || docFilterCat === "bor")       && <Section category="bor"       title="Broker of Record" count={String(docsByCat("bor").length)} />}
+                    {(docFilterCat === "All" || docFilterCat === "w9")        && <Section category="w9"        title="W-9"              count={`${docsByCat("w9").filter(d => !d.archived).length} latest · ${docsByCat("w9").filter(d => d.archived).length} replaced`} hint="Uploading a new W-9 replaces the current one and moves the previous version to history." />}
+                    {(docFilterCat === "All" || docFilterCat === "license")   && <Section category="license"   title="License"          count={String(docsByCat("license").length)} hint="Required when license number changes." />}
+                    {(docFilterCat === "All" || docFilterCat === "agreement") && <Section category="agreement" title="Agreements"       count={String(docsByCat("agreement").length)} />}
+                    {/* E&O (read-only) — only when no category filter */}
+                    {docFilterCat === "All" && (
+                      <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                          <div className="flex items-center gap-2">
+                            <FileCheck className="w-4 h-4" style={{ color: "#A855F7" }} />
+                            <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>E&amp;O Certificate</span>
+                          </div>
+                          <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>
+                            <Lock className="w-3 h-3" />Read-only
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 px-5 py-2.5">
+                          <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px]" style={{ ...font, color: c.text }}>EO-Certificate.pdf</div>
+                            <div className="text-[11px]" style={{ ...font, color: c.muted }}>Expires {eoExpiry}</div>
+                          </div>
+                          <button title="View" onClick={() => setPreviewDoc({ id: "eo", category: "agreement", name: "EO-Certificate.pdf", date: `Expires ${eoExpiry}` })} className="p-1.5 rounded transition-colors"
+                            style={{ color: previewDoc?.id === "eo" ? "#A855F7" : c.muted, background: previewDoc?.id === "eo" ? "rgba(168,85,247,0.10)" : "transparent" }}
+                            onMouseEnter={e => { if (previewDoc?.id !== "eo") { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                            onMouseLeave={e => { if (previewDoc?.id !== "eo") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button title="Download" className="p-1.5 rounded transition-colors"
+                            style={{ color: c.muted }}
+                            onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="px-5 py-2.5 text-[11px] flex items-start gap-1.5" style={{ ...font, color: c.muted, borderTop: `1px solid ${c.border}` }}>
+                          <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                          <span>E&amp;O must remain active per agreement clause — contact compliance to update.</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* All / Archive / Trash list view */}
+                {(showDocArchived || showDocTrashed || docView === "all") && (
+                  <div className="rounded-xl" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                    {visibleDocs.length === 0 ? (
+                      <div className="px-5 py-10 text-center text-[12px]" style={{ ...font, color: c.muted }}>
+                        {showDocTrashed ? "Trash is empty." : showDocArchived ? "No archived documents." : "No documents match."}
+                      </div>
+                    ) : (
+                      visibleDocs.map(d => <FlatRow key={d.id} d={d} />)
+                    )}
+                  </div>
+                )}
+
+                {/* Table view */}
+                {!showDocArchived && !showDocTrashed && docView === "table" && (
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                    <div className="grid items-center px-5 py-2 text-[11px] font-semibold uppercase tracking-wider"
+                      style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) 140px" }}>
+                      <span className="text-left">Name</span>
+                      <span className="text-left">Category</span>
+                      <span className="text-left">Date</span>
+                      <span className="text-left">Status</span>
+                      <span className="text-right">Actions</span>
+                    </div>
+                    {visibleDocs.length === 0 ? (
+                      <div className="px-5 py-10 text-center text-[12px]" style={{ ...font, color: c.muted }}>No documents match.</div>
+                    ) : (
+                      visibleDocs.map(d => (
+                        <div key={d.id} className="grid items-center px-5 py-2.5 text-[12px]"
+                          style={{ ...font, color: c.text, borderTop: `1px solid ${c.border}`, gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) 140px" }}>
+                          <span className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                            <span className="truncate">{d.name}</span>
+                          </span>
+                          <span style={{ color: c.muted }}>{CAT_LABEL[d.category]}</span>
+                          <span style={{ color: c.muted }}>{d.date}</span>
+                          <span>
+                            {d.archived ? (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#F59E0B", background: "rgba(245,158,11,0.10)", letterSpacing: "0.04em" }}>{d.category === "w9" ? "Replaced" : "Archived"}</span>
+                            ) : d.category === "w9" ? (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
+                            ) : (
+                              <span style={{ color: c.muted }}>—</span>
+                            )}
+                          </span>
+                          <span className="flex items-center justify-end gap-1">
+                            <button title="View" onClick={() => setPreviewDoc(d)} className="p-1.5 rounded transition-colors"
+                              style={{ color: previewDoc?.id === d.id ? "#A855F7" : c.muted, background: previewDoc?.id === d.id ? "rgba(168,85,247,0.10)" : "transparent" }}
+                              onMouseEnter={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                              onMouseLeave={e => { if (previewDoc?.id !== d.id) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button title="Download" className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                              onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            {isAdmin && !d.archived && d.category === "w9" && (
+                              <button title="Archive" onClick={() => requestArchive(d)}
+                                className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                <Archive className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {isAdmin && (
+                              <button title="Move to Trash" onClick={() => requestTrash(d)}
+                                className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
+                                onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#EF4444"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Right panel: doc preview */}
+            {previewDoc && !previewExpanded && (
+              <div className="flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden transition-all"
+                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                onClick={e => e.stopPropagation()}>
+                {/* Top bar */}
+                <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+                  style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                    <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Documents</span>
+                    <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                    <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>{CAT_LABEL[previewDoc.category]}</span>
+                    <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                    <span className="text-[11px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>{previewDoc.name}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <button title="Download" className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                    <button title="Expand" onClick={() => setPreviewExpanded(true)} className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button title="Close" onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {/* Meta strip */}
+                <div className="flex items-center gap-4 px-5 py-3 flex-shrink-0 text-[12px]" style={{ ...font, color: c.muted, borderBottom: `1px solid ${c.border}` }}>
+                  <span className="flex items-center gap-1.5"><FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />{CAT_LABEL[previewDoc.category]}</span>
+                  <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{previewDoc.date}</span>
+                  {previewDoc.archived && <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#F59E0B", background: "rgba(245,158,11,0.10)", letterSpacing: "0.04em" }}>Archived</span>}
+                  {previewDoc.trashed && <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#EF4444", background: "rgba(239,68,68,0.10)", letterSpacing: "0.04em" }}>In Trash</span>}
+                </div>
+                {/* PDF placeholder */}
+                <div className="flex-1 min-h-0 overflow-auto p-6" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+                  <div className="mx-auto rounded shadow-sm flex flex-col items-center justify-center"
+                    style={{ background: "#FFFFFF", border: `1px solid ${c.border}`, aspectRatio: "8.5 / 11", maxWidth: 520, minHeight: 520, fontFamily: FONT }}>
+                    <FileText className="w-16 h-16 mb-3" style={{ color: "#D1D5DB" }} />
+                    <div className="text-[13px] font-semibold mb-1" style={{ color: "#374151" }}>{previewDoc.name}</div>
+                    <div className="text-[11px]" style={{ color: "#9CA3AF" }}>Preview not available in demo</div>
+                  </div>
+                </div>
+              </div>
+            )}
             </div>
           );
         })()}
+        {/* Expanded preview drawer (right side, matches Notes expanded pattern) */}
+        {previewDoc && previewExpanded && detailTab === "documents" && (() => {
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements" };
+          return (
+          <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width: "58vw" }}>
+            <div className="flex-1 cursor-pointer" onClick={() => setPreviewExpanded(false)} style={{ background: "rgba(0,0,0,0.25)" }} />
+            <div className="flex flex-col h-full shadow-2xl" style={{ width: "100%", background: c.cardBg, borderLeft: `1px solid ${c.border}` }}>
+              {/* Top bar */}
+              <div className="flex items-center justify-between px-6 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                  <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Documents</span>
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                  <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>{CAT_LABEL[previewDoc.category]}</span>
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                  <span className="text-[12px] font-semibold truncate max-w-[420px]" style={{ fontFamily: FONT, color: c.text }}>{previewDoc.name}</span>
+                  {previewDoc.archived && <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ fontFamily: FONT, color: "#F59E0B", background: "rgba(245,158,11,0.10)", letterSpacing: "0.04em" }}>{previewDoc.category === "w9" ? "Replaced" : "Archived"}</span>}
+                  {previewDoc.trashed && <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ fontFamily: FONT, color: "#EF4444", background: "rgba(239,68,68,0.10)", letterSpacing: "0.04em" }}>In Trash</span>}
+                </div>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button title="Download" className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  <button title="Collapse" onClick={() => setPreviewExpanded(false)} className="p-1.5 rounded-md transition-colors">
+                    <Minimize2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                  </button>
+                  <button title="Close" onClick={() => { setPreviewExpanded(false); setPreviewDoc(null); }} className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                    onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+              {/* Meta strip */}
+              <div className="flex items-center gap-4 px-6 py-3 flex-shrink-0 text-[12px]" style={{ ...font, color: c.muted, borderBottom: `1px solid ${c.border}` }}>
+                <span className="flex items-center gap-1.5"><FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />{CAT_LABEL[previewDoc.category]}</span>
+                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{previewDoc.date}</span>
+              </div>
+              {/* PDF placeholder */}
+              <div className="flex-1 min-h-0 overflow-auto p-8" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+                <div className="mx-auto rounded shadow-sm flex flex-col items-center justify-center"
+                  style={{ background: "#FFFFFF", border: `1px solid ${c.border}`, aspectRatio: "8.5 / 11", maxWidth: 720, minHeight: 720, fontFamily: FONT }}>
+                  <FileText className="w-20 h-20 mb-3" style={{ color: "#D1D5DB" }} />
+                  <div className="text-[14px] font-semibold mb-1" style={{ color: "#374151" }}>{previewDoc.name}</div>
+                  <div className="text-[12px]" style={{ color: "#9CA3AF" }}>Preview not available in demo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ); })()}
 
         {/* ── Notes tab ── */}
         {detailTab === "notes" && (
@@ -3382,7 +4021,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Users tab ── */}
         {detailTab === "users" && (
-          <div className="flex flex-col flex-1 min-h-0" onClick={() => { setUserMenuId(null); setJobTitleOpen(false); }}>
+          <div className="flex flex-col flex-1 min-h-0" onClick={() => { setUserMenuId(null); setUserMenuPos(null); setJobTitleOpen(false); }}>
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-stretch overflow-hidden transition-all"
@@ -3444,15 +4083,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             {/* Table */}
             <div className="rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ border:`1px solid ${c.border}` }}>
               {/* Header */}
-              <div className="flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#FAFAFA", borderBottom:`1px solid ${c.border}` }}>
-                <div className="grid items-center px-6" style={{ gridTemplateColumns:"150px 290px 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:44 }}>
+              <div className="flex-shrink-0" style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#FAFAFA", borderBottom:`1px solid ${c.border}`, overflow: "hidden", scrollbarGutter: "stable" }}>
+                <div className="grid items-center px-6" style={{ gridTemplateColumns:"minmax(0,1.1fr) minmax(0,2.75fr) minmax(0,1.7fr) minmax(0,1.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap:16, height:44 }}>
                   {[
                     { label:"NAME", sort:true, filter:false },
-                    { label:"ADMIN", sort:false, filter:false },
+                    { label:"ADMIN", sort:true, filter:false },
                     { label:"JOB TITLE", sort:false, filter:true },
                     { label:"EMAIL", sort:false, filter:false },
                     { label:"PHONE", sort:false, filter:false },
                     { label:"EXT", sort:false, filter:false },
+                    { label:"STATUS", sort:true, filter:false },
                     { label:"ACTION", sort:false, filter:false },
                   ].map(({ label, sort, filter }) => (
                     filter ? (
@@ -3460,7 +4100,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <button onClick={() => setJobTitleOpen(p => !p)}
                           className="flex items-center gap-1 select-none cursor-pointer"
                           style={{ color: jobTitleFilter.size > 0 ? "#A614C3" : c.muted }}>
-                          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily:FONT }}>{label}</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ fontFamily:FONT }}>{label}</span>
                           <ChevronDown className="w-3 h-3" />
                         </button>
                         {jobTitleOpen && (
@@ -3496,12 +4136,30 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div key={label} className={`flex items-center gap-1 select-none ${label === "ADMIN" ? "justify-center" : "justify-start"}`} style={{ cursor: sort ? "pointer" : "default" }}>
-                        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily:FONT, color:c.muted }}>{label}</span>
-                        {sort && <span className="inline-flex opacity-60"><svg width="6" height="9" viewBox="0 0 6 9" fill="none"><path d="M3 1L1 3.5H5L3 1Z" fill={sub}/><path d="M3 8L1 5.5H5L3 8Z" fill={sub}/></svg></span>}
+                    ) : (() => {
+                      const sortKey = label === "NAME" ? "name" : label === "ADMIN" ? "admin" : label === "STATUS" ? "status" : null;
+                      const isActive = sortKey && userSort.key === sortKey;
+                      const ascStroke = isActive && userSort.dir === "asc" ? c.text : sub;
+                      const descStroke = isActive && userSort.dir === "desc" ? c.text : sub;
+                      const onClick = sort && sortKey
+                        ? () => setUserSort(prev => prev.key === sortKey ? { key: sortKey, dir: prev.dir === "asc" ? "desc" : "asc" } : { key: sortKey, dir: "asc" })
+                        : undefined;
+                      return (
+                      <div key={label} className={`flex items-center gap-1 select-none ${label === "ADMIN" || label === "EXT" || label === "ACTION" || label === "STATUS" ? "justify-center" : "justify-start"}`} style={{ cursor: sort ? "pointer" : "default" }} onClick={onClick}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ fontFamily:FONT, color:c.muted }}>{label}</span>
+                        {sort && (
+                          <span className="inline-flex items-center ml-1 flex-shrink-0" style={{ verticalAlign: "middle", gap: 1 }}>
+                            <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                              <path d="M3.5 9V2M3.5 2L1.5 4M3.5 2L5.5 4" stroke={ascStroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                              <path d="M3.5 1V8M3.5 8L1.5 6M3.5 8L5.5 6" stroke={descStroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </span>
+                        )}
                       </div>
-                    )
+                      );
+                    })()
                   ))}
                 </div>
               </div>
@@ -3531,7 +4189,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               })()}
 
               {/* Rows */}
-              <div className="overflow-y-auto flex-1" style={{ background: c.cardBg }}>
+              <div className="overflow-y-auto flex-1" style={{ background: c.cardBg, scrollbarGutter: "stable" }}>
                 {agencyUsers.length === 0 ? (() => {
                   // When search has 0 active matches, check if any inactive users would match the same query
                   // and offer to surface them with a one-click "Show inactive" affordance.
@@ -3570,7 +4228,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   return (
                     <div key={u.id}
                       className="grid items-center px-6 cursor-pointer transition-colors relative"
-                      style={{ gridTemplateColumns:"150px 290px 1fr 1.8fr 1.3fr 0.4fr 44px", gap:16, height:60,
+                      style={{ gridTemplateColumns:"minmax(0,1.1fr) minmax(0,2.75fr) minmax(0,1.7fr) minmax(0,1.9fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap:16, height:60,
                         borderBottom: i !== arr.length-1 ? `1px solid ${c.border}` : "none" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                       onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
@@ -3586,12 +4244,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {/* Name */}
                       <div className="min-w-0 flex items-center gap-2">
                         <div className="text-[13px] font-semibold truncate" style={{ fontFamily:FONT, color:c.text }}>{u.name}</div>
-                        {isInactive && (
-                          <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                            style={{ fontFamily:FONT, background:"rgba(245,158,11,0.12)", color:"#F59E0B", letterSpacing: "0.04em" }}>
-                            Inactive
-                          </span>
-                        )}
                       </div>
 
                       {/* Admin — render gear icon when the user has admin permissions (including auto-grants from Principal reassignment). */}
@@ -3608,10 +4260,25 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       <div className="text-[13px] truncate text-left" style={{ fontFamily:FONT, color:c.muted }}>{u.email}</div>
 
                       {/* Phone */}
-                      <div className="text-[13px] text-left" style={{ fontFamily:FONT, color:c.text }}>{u.phone || "—"}</div>
+                      <div className="text-[13px] text-left whitespace-nowrap" style={{ fontFamily:FONT, color:c.text }}>{u.phone || "—"}</div>
 
                       {/* Ext */}
-                      <div className="text-[13px] text-left" style={{ fontFamily:FONT, color:c.muted }}>{u.ext || "—"}</div>
+                      <div className="text-[13px] text-center" style={{ fontFamily:FONT, color:c.muted }}>{u.ext || "—"}</div>
+
+                      {/* Status — Inactive (whether status-only or archived) shows greyed; Active is green. */}
+                      {(() => {
+                        const showInactive = isInactive || statusInactiveUserIds.has(u.id);
+                        const bg = showInactive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "rgba(115,201,183,0.15)";
+                        const fg = showInactive ? c.muted : "#10B981";
+                        return (
+                          <div className="flex items-center justify-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                              style={{ fontFamily:FONT, background: bg, color: fg, letterSpacing: "0.04em" }}>
+                              {showInactive ? "Inactive" : "Active"}
+                            </span>
+                          </div>
+                        );
+                      })()}
 
                       {/* Action */}
                       <div className="relative flex justify-center" onClick={e=>e.stopPropagation()}>
@@ -3619,17 +4286,24 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           style={{ color:c.muted }}
                           onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                           onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
-                          onClick={()=>setUserMenuId(userMenuId===u.id?null:u.id)}>
+                          onClick={(e) => {
+                            if (userMenuId === u.id) { setUserMenuId(null); setUserMenuPos(null); return; }
+                            const r = e.currentTarget.getBoundingClientRect();
+                            setUserMenuId(u.id);
+                            setUserMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+                          }}>
                           <MoreVertical className="w-4 h-4"/>
                         </button>
-                        {userMenuId === u.id && (() => {
+                        {userMenuId === u.id && userMenuPos && (() => {
                           const isInactive = inactiveUserIds.has(u.id);
-                          const base = ["Edit User", "Reset Password"];
-                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Deactivate", "Remove"];
-                          const actions = currentUserIsAdmin ? [...base, ...adminOnly] : base;
+                          const isLocked = lockedUserIds.has(u.id);
+                          const base = isInactive ? [] : ["Edit User", "Reset Password", "Reassign Accounts", "Unlock User"];
+                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Deactivate"];
+                          // Read-only admin sees no menu items — only full Admin can operate.
+                          const actions = currentUserIsReadOnlyAdmin ? [] : currentUserIsAdmin ? [...base, ...adminOnly] : [];
                           return (
-                          <div className="absolute right-0 top-9 z-20 rounded-xl shadow-xl overflow-hidden min-w-[150px]"
-                            style={{ background:isDark?"#1E2240":"#FFFFFF", border:`1px solid ${c.border}` }}>
+                          <div className="fixed rounded-xl shadow-xl overflow-hidden"
+                            style={{ background:isDark?"#1E2240":"#FFFFFF", border:`1px solid ${c.border}`, top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000, width: 170 }}>
                             {actions.map(action => (
                               <button key={action} className="w-full text-left px-4 py-2 text-[12px] transition-colors"
                                 style={{ fontFamily:FONT, color:action==="Remove"?"#EF4444":action==="Reactivate"?"#10B981":c.text }}
@@ -3643,7 +4317,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     setAuIsAdmin(u.isAdmin);
                                     setAuAdminLevel("");
                                     setAuJobTitle(u.jobTitle);
-                                    setAuStatus("Active");
+                                    setAuStatus((inactiveUserIds.has(u.id) || statusInactiveUserIds.has(u.id)) ? "Inactive" : "Active");
                                     setAuPhone(u.phone);
                                     setAuExt(u.ext);
                                     setAuMobile("");
@@ -3654,6 +4328,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     setAuState("");
                                     setAuZip("");
                                     setEditUserId(u.id);
+                                  } else if (action === "Reassign Accounts") {
+                                    setReassignAccountsFrom({ userId: u.id, userName: u.name });
+                                    setReassignAccountsToId("");
+                                  } else if (action === "Unlock User") {
+                                    setLockedUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; });
+                                    showToast({
+                                      title: "Account unlocked",
+                                      description: `${u.name} can sign in again.`,
+                                      action: { label: "Undo", onClick: () => setLockedUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; }) },
+                                    });
                                   } else if (action === "Deactivate") {
                                     // If Principal or Agency Contact, require reassignment before deactivating.
                                     // Use effective role (honors a previous reassignment override).
@@ -3667,12 +4351,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                       setReassignPrincipalId("");
                                       setReassignContactId("");
                                     } else {
-                                      setInactiveUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; });
-                                      showToast({
-                                        title: "User deactivated",
-                                        description: `${u.name} moved to Inactive Users.`,
-                                        action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; }) },
-                                      });
+                                      setDeactivateUserConfirm({ id: u.id, name: u.name });
                                     }
                                   } else if (action === "Reactivate") {
                                     setInactiveUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; });
@@ -3694,6 +4373,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     }
                                   }
                                   setUserMenuId(null);
+                                  setUserMenuPos(null);
                                 }}>
                                 {action}
                               </button>
@@ -3955,7 +4635,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   style={{ fontFamily:FONT, background:btnGrad, padding:"10px 32px", borderRadius:"8px" }}
                   onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.12)")}
                   onMouseLeave={e=>(e.currentTarget.style.filter="none")}
-                  onClick={()=>{ closeModal(); closeAll(); }}>
+                  onClick={()=>{
+                    if (isEditMode && editUserId) {
+                      const wantInactive = auStatus === "Inactive";
+                      setStatusInactiveUserIds(prev => {
+                        const s = new Set(prev);
+                        if (wantInactive) s.add(editUserId); else s.delete(editUserId);
+                        return s;
+                      });
+                      showToast({ title: "User updated", description: `${auFirstName} ${auLastName} saved.` });
+                    }
+                    closeModal();
+                    closeAll();
+                  }}>
                   {isEditMode ? "Save Changes" : "Save"}
                 </button>
               </div>
@@ -4216,9 +4908,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           onMouseEnter={e => { if (!checked) e.currentTarget.style.background = c.hoverBg; }}
                           onMouseLeave={e => { if (!checked) e.currentTarget.style.background = "transparent"; }}>
                           <div onClick={() => setReassignSelection(u.id)}
-                            className="w-[16px] h-[16px] rounded flex items-center justify-center flex-shrink-0"
+                            className="w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0"
                             style={{ background: checked ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : c.cardBg, border: checked ? "none" : `1.5px solid ${c.borderStrong}` }}>
-                            {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            {checked && <div className="w-[6px] h-[6px] rounded-full" style={{ background: "#FFFFFF" }} />}
                           </div>
                           <input type="radio" checked={checked} onChange={() => setReassignSelection(u.id)} className="sr-only" />
                           <div className="flex-1 min-w-0">
@@ -5230,6 +5922,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const ALL_JOB_TITLES = ["Principal", "Producer", "CSR", "Accounting", "Account Manager"];
   // Lifted from AgencyDetailView so deactivations propagate to the All Users tab in the main view.
   const [inactiveUserIds, setInactiveUserIds] = useState<Set<string>>(new Set());
+  const [statusInactiveUserIds, setStatusInactiveUserIds] = useState<Set<string>>(new Set());
   const [removedUserIds,  setRemovedUserIds]  = useState<Set<string>>(new Set());
   const [allUsersShowInactive, setAllUsersShowInactive] = useState(false);
   // Book Roll state: maps source agency id to the target agency code + effective date.
@@ -5726,6 +6419,8 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         onToggleStar={toggleStar}
         inactiveUserIds={inactiveUserIds}
         setInactiveUserIds={setInactiveUserIds}
+        statusInactiveUserIds={statusInactiveUserIds}
+        setStatusInactiveUserIds={setStatusInactiveUserIds}
         removedUserIds={removedUserIds}
         setRemovedUserIds={setRemovedUserIds}
         bookRolled={bookRolled}
@@ -6257,7 +6952,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       {tab === "agencies" && (
       <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); setViewOpen(false); }}>
         <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-          <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
+          <thead className="sticky top-0 z-10" style={{ background: isDark ? "#121628" : c.cardBg }}>
             <tr style={{ borderBottom: `1px solid ${c.border}` }}>
               {([
                 ["name",       "Agency Name", "15%",  true ],
@@ -6669,7 +7364,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   </div>
                   <div className="flex-1 overflow-auto" style={{ scrollbarGutter: "stable" }}>
                     <table className="text-left border-collapse" style={{ minWidth: "100%" }}>
-                      <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
+                      <thead className="sticky top-0 z-10" style={{ background: isDark ? "#121628" : c.cardBg }}>
                         <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                           <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 whitespace-nowrap"
                             style={{ fontFamily: FONT, color: c.muted, paddingLeft: 24 }}>Agency Name</th>
@@ -6758,14 +7453,13 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               <div className="px-[52px] py-2.5 flex items-center gap-2 text-[12px]"
                 style={{ fontFamily: FONT, color: c.text, background: c.cardBg, borderBottom: `1px solid ${c.border}` }}>
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3" }} />
-                <span>Showing {userRowsAll.length} active {userRowsAll.length === 1 ? "user" : "users"} · {inactiveMatchCount} inactive also {inactiveMatchCount === 1 ? "matches" : "match"}</span>
-                <button onClick={() => setAllUsersShowInactive(true)}
-                  className="font-semibold transition-colors ml-auto"
-                  style={{ color: "#A614C3" }}>Show inactive</button>
+                <span>Showing {userRowsAll.length} active {userRowsAll.length === 1 ? "user" : "users"} · <button onClick={() => setAllUsersShowInactive(true)}
+                  className="font-semibold transition-colors underline underline-offset-2"
+                  style={{ color: "#A614C3" }}>{inactiveMatchCount} inactive also {inactiveMatchCount === 1 ? "matches" : "match"}</button></span>
               </div>
             )}
             <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-              <thead className="sticky top-0 z-10" style={{ background: isDark ? "rgba(30,34,64,0.25)" : "rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}>
+              <thead className="sticky top-0 z-10" style={{ background: isDark ? "#121628" : c.cardBg }}>
                 <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                   {/* NAME (sortable) */}
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 cursor-pointer select-none whitespace-nowrap"
@@ -6857,15 +7551,6 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                     <td colSpan={7 - usersHiddenCols.size} className="py-16 text-center" style={{ fontFamily: FONT }}>
                       <div className="flex flex-col items-center justify-center gap-3">
                         <span className="text-[13px]" style={{ color: c.muted }}>No users found</span>
-                        {inactiveMatchCount > 0 && (
-                          <button onClick={() => setAllUsersShowInactive(true)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                            style={{ background: "rgba(245,158,11,0.10)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.25)" }}
-                            onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.16)")}
-                            onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.10)")}>
-                            {inactiveMatchCount} inactive {inactiveMatchCount === 1 ? "user" : "users"} also match — Show inactive
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>

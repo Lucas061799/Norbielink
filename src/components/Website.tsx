@@ -22,7 +22,7 @@ export default function Website({ isDark = false }: WebsiteProps) {
     text:    isDark ? "#F9FAFB" : "#1F2937",
     muted:   isDark ? "#8B8FA8" : "#6B7280",
     cardBg:  isDark ? "#191D35" : "#fff",
-    border:  isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB",
+    border:  isDark ? "rgba(255,255,255,0.22)" : "#D1D5DB",
     inputBg: isDark ? "rgba(255,255,255,0.05)" : "#fff",
   };
   const font = { fontFamily: FONT } as React.CSSProperties;
@@ -43,7 +43,7 @@ export default function Website({ isDark = false }: WebsiteProps) {
   };
   const labelStyle: React.CSSProperties = {
     fontFamily: FONT,
-    color: c.muted,
+    color: "#6B7280",
     fontSize: 13,
     fontWeight: 500,
     marginBottom: 6,
@@ -327,7 +327,7 @@ function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
               fontFamily: FONT,
               aspectRatio: "1 / 1",
               borderRadius: 10,
-              border: `1px solid ${d ? "#A614C3" : c.border}`,
+              border: `1px solid ${c.border}`,
               background: c.cardBg,
               color: c.text,
               fontSize: 22,
@@ -336,10 +336,12 @@ function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
               padding: 0,
             }}
             onFocus={e => {
-              if (!d) e.currentTarget.style.borderColor = "#A614C3";
+              e.currentTarget.style.border = "1px solid transparent";
+              e.currentTarget.style.background = `linear-gradient(${c.cardBg},${c.cardBg}) padding-box, ${btnGrad} border-box`;
             }}
             onBlur={e => {
-              if (!d) e.currentTarget.style.borderColor = c.border;
+              e.currentTarget.style.border = `1px solid ${c.border}`;
+              e.currentTarget.style.background = c.cardBg;
             }}
           />
         ))}
@@ -478,7 +480,7 @@ function CreateView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad,
       <div
         className="rounded-2xl px-6 py-5 mb-7"
         style={{
-          background: c.cardBg,
+          background: isDark ? "rgba(255,255,255,0.03)" : "rgba(249,250,251,0.5)",
           border: `1px solid ${c.border}`,
         }}
       >

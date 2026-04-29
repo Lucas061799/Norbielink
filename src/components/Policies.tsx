@@ -94,7 +94,7 @@ export default function Policies({ isDark }: { isDark: boolean }) {
     muted:        isDark ? "#8B8FA8" : "#6B7280",
     sub:          isDark ? "#6B7280" : "#9CA3AF",
     cardBg:       isDark ? "#191D35" : "#fff",
-    border:       isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC",
+    border:       isDark ? "rgba(255,255,255,0.08)" : "#D1D5DB",
     borderStrong: isDark ? "rgba(255,255,255,0.18)" : "#D1D5DB",
     mutedBg:      isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB",
     hoverBg:      isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",

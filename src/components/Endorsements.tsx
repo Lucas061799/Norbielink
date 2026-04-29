@@ -214,7 +214,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
     muted:        isDark ? "#8B8FA8" : "#6B7280",
     sub:          isDark ? "#6B7280" : "#9CA3AF",
     cardBg:       isDark ? "#191D35" : "#fff",
-    border:       isDark ? "rgba(255,255,255,0.08)" : "#E9EAEC",
+    border:       isDark ? "rgba(255,255,255,0.08)" : "#D1D5DB",
     borderStrong: isDark ? "rgba(255,255,255,0.18)" : "#D1D5DB",
     mutedBg:      isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB",
     hoverBg:      isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
@@ -292,7 +292,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
           <div className="flex flex-col gap-6">
           <div className="rounded-2xl"
             style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: isDark ? "none" : "0 1px 3px rgba(15,23,42,0.04)" }}>
-            <div style={{ height: 4, background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)", borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+            <div style={{ height: 4, background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)", borderRadius: 9999, margin: "8px 16px 0" }} />
             <div className="px-8 py-8">
               <div className="text-[15px] font-semibold mb-1" style={{ color: c.text }}>Find a policy to endorse</div>
               <div className="text-[13px] mb-6" style={{ color: c.muted }}>Search by policy number, submission ID, or insured name.</div>
@@ -442,7 +442,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
                   ? "0 8px 24px -12px rgba(166,20,195,0.35)"
                   : "0 1px 3px rgba(15,23,42,0.04), 0 8px 24px -16px rgba(166,20,195,0.22)",
               }}>
-              <div style={{ height: 4, background: btnGrad, borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
+              <div style={{ height: 4, background: btnGrad, borderRadius: 9999, margin: "8px 16px 0" }} />
               <div className="flex items-start gap-3 px-7 py-6">
                 <div className="flex-shrink-0 flex items-center justify-center"
                   style={{
