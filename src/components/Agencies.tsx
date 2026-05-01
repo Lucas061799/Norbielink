@@ -1570,15 +1570,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             <span className="text-[12px]" style={{ color: c.text, fontFamily: FONT }}><strong>{r.label}</strong> required</span>
                             <span className="ml-auto text-[11px]" style={{ color: c.muted, fontFamily: FONT }}>{r.hint}</span>
                           </div>
-                          {fileName ? (() => {
-                            // Build a clean suggested filename based on the doc type and current year.
-                            const ext = (fileName.match(/\.[^.]+$/)?.[0]) ?? ".pdf";
-                            const yr = new Date().getFullYear();
-                            const suggested = r.key === "w9"
-                              ? `W9-${yr}${ext}`
-                              : `${(agency.state || "License").toUpperCase()}-License-${yr}${ext}`;
-                            const isMessy = fileName !== suggested;
-                            return (
+                          {fileName ? (
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
                                 style={{ background: "rgba(115,201,183,0.10)", border: "1px solid rgba(115,201,183,0.35)", fontFamily: FONT }}>
                                 <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#73C9B7" }} />
@@ -1588,18 +1580,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                   style={{ color: c.text, fontFamily: FONT }}
                                   spellCheck={false}
                                   title="Rename before uploading" />
-                                {isMessy && (
-                                  <button onClick={() => setDocModalUploads(p => ({ ...p, [r.key]: suggested }))}
-                                    title={`Use suggested name: ${suggested}`}
-                                    className="text-[11px] font-medium transition-opacity hover:opacity-80 flex-shrink-0"
-                                    style={{ color: "#A855F7" }}>Suggest</button>
-                                )}
                                 <button onClick={() => setDocModalUploads(p => { const n = { ...p }; delete n[r.key]; return n; })}
                                   className="text-[11px] font-medium transition-opacity hover:opacity-70 flex-shrink-0"
                                   style={{ color: c.muted }}>Replace</button>
                               </div>
-                            );
-                          })() : (
+                            ) : (
                             <label className="flex flex-col items-center justify-center cursor-pointer transition-colors rounded-lg py-5"
                               style={{ background: isOver ? "rgba(168,85,247,0.08)" : c.hoverBg, border: `1.5px dashed ${isOver ? "#A614C3" : c.borderStrong}`, fontFamily: FONT }}
                               onDragOver={e => { e.preventDefault(); setDocModalDragOver(r.key); }}
@@ -3027,20 +3012,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           </div>
                           <div className="px-6 pb-4 flex flex-col gap-3">
                             {/* Drag-and-drop zone */}
-                            {docUploadModalFile ? (() => {
-                              // Suggested name only available once a category is chosen — otherwise we can't
-                              // know the right pattern (W-9 vs License vs BOR vs Agreement).
-                              const ext = (docUploadModalFile.match(/\.[^.]+$/)?.[0]) ?? ".pdf";
-                              const yr = new Date().getFullYear();
-                              const cat = docUploadModalCat as AgencyDocCategory | "";
-                              const suggested =
-                                cat === "w9"        ? `W9-${yr}${ext}`
-                              : cat === "license"   ? `${(agency.state || "License").toUpperCase()}-License-${yr}${ext}`
-                              : cat === "bor"       ? `BOR-${yr}${ext}`
-                              : cat === "agreement" ? `Agreement-${yr}${ext}`
-                              : "";
-                              const canSuggest = !!suggested && docUploadModalFile !== suggested;
-                              return (
+                            {docUploadModalFile ? (
                                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
                                   style={{ background: "rgba(115,201,183,0.10)", border: "1px solid rgba(115,201,183,0.35)" }}>
                                   <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#73C9B7" }} />
@@ -3050,24 +3022,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     style={{ color: c.text, fontFamily: FONT }}
                                     spellCheck={false}
                                     title="Rename before uploading" />
-                                  {canSuggest && (
-                                    <button onClick={() => setDocUploadModalFile(suggested)}
-                                      title={`Use suggested name: ${suggested}`}
-                                      className="text-[11px] font-medium transition-opacity hover:opacity-80 flex-shrink-0"
-                                      style={{ color: "#A855F7" }}>Suggest</button>
-                                  )}
-                                  {!cat && (
-                                    <span title="Pick a category below to enable name suggestions"
-                                      className="text-[11px] flex-shrink-0" style={{ color: c.muted, fontStyle: "italic" }}>
-                                      Pick category for suggestion
-                                    </span>
-                                  )}
                                   <button onClick={() => setDocUploadModalFile(null)}
                                     className="text-[11px] font-medium transition-opacity hover:opacity-70 flex-shrink-0"
                                     style={{ color: c.muted }}>Replace</button>
                                 </div>
-                              );
-                            })() : (
+                              ) : (
                               <label className="flex flex-col items-center justify-center cursor-pointer transition-colors rounded-lg py-6"
                                 style={{ background: docUploadModalDrag ? "rgba(168,85,247,0.08)" : c.hoverBg, border: `1.5px dashed ${docUploadModalDrag ? "#A614C3" : c.borderStrong}` }}
                                 onDragOver={e => { e.preventDefault(); setDocUploadModalDrag(true); }}

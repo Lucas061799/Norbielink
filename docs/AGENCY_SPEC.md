@@ -126,11 +126,7 @@ The Documents tab is the most complex surface. It manages all agency-related fil
 ### 5.5 Document Upload modal
 - Drag-and-drop OR click to pick a file (PDF, JPG, PNG, max 10 MB).
 - Category picker (required) — uses our branded dropdown.
-- **Suggest filename** — when category is picked, a "Suggest" button generates a canonical filename:
-  - W-9 → `W9-{YYYY}.pdf`
-  - License → `{state}-License-{YYYY}.pdf`
-  - BOR → `BOR-{YYYY}.pdf`
-  - Agreement → `Agreement-{YYYY}.pdf`
+- Filename is editable inline with a Replace action to swap files.
 
 ### 5.6 Documents Required modal (compliance gate)
 - Triggered when user edits Agency Info and the change requires re-upload (e.g. tax ID change → new W-9; license expiry change → new license).
