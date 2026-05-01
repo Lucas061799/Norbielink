@@ -244,7 +244,133 @@ When a real backend is wired up, these become regular DB writes — but the fron
 
 ---
 
-## 11. Open questions for backend
+## 11. Agency creation & onboarding flow
+
+This section answers the dev's clarification questions about communication and access provisioning.
+
+### 11.1 Roles model (current)
+
+Norbielink has **two permission tiers**, set per user:
+
+| Role | `isAdmin` | What they can do |
+| --- | --- | --- |
+| **Admin** | `true`  | Add/remove/archive users, edit agency info, upload documents, run Book Roll |
+| **Non-Admin** | `false` | View their own dashboard, work policies/quotes assigned to them |
+
+`jobTitle` (Principal / Producer / CSR / Account Manager / Accounting) is a **label only** — it does not grant permissions. The mapping from job title → admin status is a convention, not a rule:
+
+- **Principal** → Admin (always; this is the agency owner)
+- Producer / Account Manager → can be either, defaults Non-Admin
+- CSR / Accounting → typically Non-Admin
+
+### 11.2 Who receives the initial invite email
+
+**Only the Primary Contact** entered in the Add Agency form.
+
+That person becomes the agency's **Principal** user, with `isAdmin: true`, and they own the relationship from there. After they finish onboarding, they invite the rest of their team themselves from the Users tab. We do **not** invite other contacts (Inspection / Accounting / Claims contacts on the Client side, or any secondary agency contact) — those are reference contacts only, not user accounts.
+
+### 11.3 Primary Contact role assignment
+
+The Add Agency form's Primary Contact section currently collects name + phone + email but does not surface a role picker. **The Primary Contact is always created as Admin (Principal).** Reasoning:
+
+- They need to add the rest of their team — only Admins can do that.
+- They need to maintain agency info, upload the W-9 / license / BOR, etc.
+- They are the legally accountable party (Principal of the agency).
+- Every Principal in our existing data is `isAdmin: true` — there is no precedent for a non-admin Principal.
+
+Dev: **no role-picker UI is needed** at agency creation. The first user is always the Principal (admin). Additional users get their role chosen by the Principal later via Add User.
+
+### 11.4 Approval before granting access
+
+**No approval step in MVP.** The internal admin who creates the agency in Norbielink is the approver — that's why agency creation is gated behind admin permissions. We send the invite email **immediately on agency creation**.
+
+If compliance later requires a "review before activation" gate, we can add an `Approved` boolean and a queue, but it is not in scope today.
+
+### 11.5 End-to-end onboarding workflow
+
+```
+1. Internal admin opens Add Agency form
+   ├── Fills agency info (name, address, agency type, EIN, etc.)
+   ├── Fills Primary Contact (name, email, phone)
+   ├── Clicks Create Code (or enters one manually)
+   └── Submits
+
+2. System creates:
+   ├── Agency record (status: Appointed; appointed date = today)
+   ├── Principal user (isAdmin: true, jobTitle: "Principal")
+   │   ├── Account status: Pending Activation
+   │   └── Password: not yet set
+   └── Activation token (single-use, 7-day expiry)
+
+3. System sends invite email
+   ├── To: Primary Contact email
+   ├── Subject: "Welcome to Norbielink — activate your account"
+   ├── Body: Greeting · Agency Name + Agency Code · CTA button
+   └── CTA links to: /verify?token=<activation-token>
+
+4. Principal clicks email link
+   ├── Lands on the existing "Verify your Code" page
+   ├── Enters the verification code from the email
+   ├── Sets a password (existing Create Password page)
+   └── First login → lands on their agency dashboard
+
+5. Principal is now active
+   ├── Account status: Active
+   ├── Can use Users tab to invite team members
+   └── Can upload required docs (W-9, License, Agreements)
+```
+
+### 11.6 Email template (recommended copy — to be designed)
+
+We do **not** have a template yet. Suggested baseline for the dev to wire up; final copy belongs to design / marketing.
+
+```
+Subject: Welcome to Norbielink — activate your account
+
+Hi {{firstName}},
+
+{{adminName}} at Norbielink has set up an account for {{agencyName}}
+(Agency Code: {{agencyCode}}).
+
+Click below to verify your email and create your password. The link
+expires in 7 days.
+
+[ Activate account ]   ← CTA button, links to /verify?token=...
+
+If the button doesn't work, paste this into your browser:
+https://app.norbielink.com/verify?token={{token}}
+
+Need help? Reply to this email and we'll get back to you.
+
+— The Norbielink team
+```
+
+**Variables required from the backend:**
+- `firstName` — first name of Primary Contact
+- `adminName` — internal admin who created the agency (for accountability)
+- `agencyName`, `agencyCode`
+- `token` — single-use activation token, 7-day TTL
+
+**Token rules:**
+- Single use (consumed on first verify)
+- 7-day TTL
+- If expired, a logged-in admin can re-issue from the Users tab → user row → "Resend invite"
+- Re-issue invalidates any prior outstanding token for the same user
+
+### 11.7 What if the Principal never activates
+
+After 7 days the activation token expires. Suggested handling:
+- User row in Users tab shows status = **Pending** (vs Active / Inactive).
+- Admin can click "Resend invite" to issue a new token.
+- We do NOT auto-archive — the agency relationship is real even if the Principal hasn't logged in.
+
+### 11.8 Multi-Principal / Principal handover
+
+Out of scope for MVP. If a Principal leaves, the existing **Archive User flow** (Section 6.3) forces an account reassignment to another user, who then becomes the effective Principal. We don't currently let two users hold the Principal title simultaneously.
+
+---
+
+## 12. Open questions for backend
 
 - What is the source of truth for `apptDate` (used for NEW indicator)?
 - What is the threshold for "Dormant"? Currently 12 months of no login — confirm.
