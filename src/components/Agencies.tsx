@@ -8,7 +8,7 @@ import {
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter,
+  MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter, Paperclip,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -245,26 +245,30 @@ function getAgencyTimeStatus(apptDate?: string, lastLogin?: string): "new" | "do
   return null;
 }
 
-function TimeStatusBadge({ status }: { status: "new" | "dormant" | null }) {
+function TimeStatusBadge({ status, isDark = false }: { status: "new" | "dormant" | null; isDark?: boolean }) {
   if (!status) return null;
-  if (status === "new") {
-    return (
-      <span title="New agency · onboarded within the last 12 months"
-        className="inline-flex items-center justify-center rounded-full flex-shrink-0"
-        style={{ width: 22, height: 22, background: "rgba(166,20,195,0.10)" }}>
-        <svg width="14" height="14" viewBox="0 -960 960 960" fill="#A614C3" aria-hidden="true">
-          <path d="M440-120v-319q-64 0-123-24.5T213-533q-45-45-69-104t-24-123v-80h80q63 0 122 24.5T426-746q31 31 51.5 68t31.5 79q5-7 11-13.5t13-13.5q45-45 104-69.5T760-720h80v80q0 64-24.5 123T746-413q-45 45-103.5 69T520-320v200h-80Zm0-400q0-48-18.5-91.5T369-689q-34-34-77.5-52.5T200-760q0 48 18 92t52 78q34 34 78 52t92 18Zm80 120q48 0 91.5-18t77.5-52q34-34 52.5-78t18.5-92q-48 0-92 18.5T590-569q-34 34-52 77.5T520-400Zm0 0Zm-80-120Z"/>
-        </svg>
-      </span>
-    );
-  }
+  const isNew = status === "new";
   return (
-    <span title="Dormant agency · no login activity for over 12 months"
-      className="inline-flex items-center justify-center rounded-full flex-shrink-0"
-      style={{ width: 22, height: 22, background: "rgba(100,116,139,0.12)" }}>
-      <svg width="14" height="14" viewBox="0 -960 960 960" fill="#64748B" aria-hidden="true">
-        <path d="M440-80v-166L310-118l-56-56 186-186v-80h-80L174-254l-56-56 128-130H80v-80h166L118-650l56-56 186 186h80v-80L254-786l56-56 130 128v-166h80v166l130-128 56 56-186 186v80h80l186-186 56 56-128 130h166v80H714l128 130-56 56-186-186h-80v80l186 186-56 56-130-128v166h-80Z"/>
-      </svg>
+    <span title={isNew ? "New agency · onboarded within the last 12 months" : "Dormant agency · no login activity for over 12 months"}
+      className="inline-flex items-center justify-center rounded-full flex-shrink-0 align-middle"
+      style={{ width: 18, height: 18, background: isNew
+        ? (isDark ? "rgba(168,85,247,0.32)" : "rgba(166,20,195,0.10)")
+        : (isDark ? "rgba(148,163,184,0.30)" : "rgba(100,116,139,0.12)") }}>
+      {isNew ? (
+        <svg width="12" height="12" viewBox="0 -960 960 960" aria-hidden="true" style={{ display: "block" }}>
+          <defs>
+            <linearGradient id={`tsb-new-grad-${isDark ? "d" : "l"}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={isDark ? "#A855F7" : "#5C2ED4"} />
+              <stop offset="100%" stopColor={isDark ? "#D946EF" : "#A614C3"} />
+            </linearGradient>
+          </defs>
+          <path fill={`url(#tsb-new-grad-${isDark ? "d" : "l"})`} d="M440-120v-319q-64 0-123-24.5T213-533q-45-45-69-104t-24-123v-80h80q63 0 122 24.5T426-746q31 31 51.5 68t31.5 79q5-7 11-13.5t13-13.5q45-45 104-69.5T760-720h80v80q0 64-24.5 123T746-413q-45 45-103.5 69T520-320v200h-80Zm0-400q0-48-18.5-91.5T369-689q-34-34-77.5-52.5T200-760q0 48 18 92t52 78q34 34 78 52t92 18Zm80 120q48 0 91.5-18t77.5-52q34-34 52.5-78t18.5-92q-48 0-92 18.5T590-569q-34 34-52 77.5T520-400Zm0 0Zm-80-120Z"/>
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 1024 1024" fill={isDark ? "#94A3B8" : "#64748B"} aria-hidden="true" style={{ display: "block" }}>
+          <path d="M927.892105 480.285694c-0.005117 0-0.005117 0-0.010233 0-17.652032 0-31.968086 14.305821-31.973202 31.961946-0.025583 66.875107-17.822924 133.022643-51.467185 191.295837-51.232848 88.73702-133.953851 152.21475-232.927003 178.733731-98.978269 26.508747-202.354708 12.905938-291.086611-38.32691-88.73702-51.232848-152.209634-133.953851-178.728614-232.927003s-12.911054-202.348568 38.321794-291.085588c63.815421-110.531396 178.041976-181.90291 305.542858-190.916191 17.615193-1.248434 30.885428-16.537651 29.641087-34.147728-1.249457-17.615193-16.569374-30.848589-34.147728-29.641087-148.722206 10.517541-281.963837 93.779873-356.416526 222.732827C64.87045 391.496485 48.992831 512.102331 79.930447 627.577319c30.942733 115.469871 104.999402 211.981972 208.526267 271.753287 68.962651 39.814798 145.495722 60.151985 223.050052 60.151985 38.868239 0 78.006632-5.110391 116.562762-15.439644 115.469871-30.942733 211.980949-104.994286 271.753287-208.526267 39.242769-67.973114 60.001559-145.168264 60.032258-223.24755C959.860191 494.611981 945.549254 480.290811 927.892105 480.285694zM614.243639 149.879566l205.200522 0L593.302701 345.894891c-10.085706 8.742105-13.681604 22.829961-9.013281 35.33988 4.663206 12.504802 16.60519 20.794605 29.954219 20.794605l290.904463 0c17.657148 0 31.973202-14.316054 31.973202-31.973202 0-17.657148-14.316054-31.973202-31.973202-31.973202L699.946556 338.082972l226.14146-196.015326c10.084683-8.742105 13.681604-22.829961 9.013281-35.33988-4.663206-12.504802-16.60519-20.794605-29.954219-20.794605L614.243639 85.933161c-17.657148 0-31.973202 14.316054-31.973202 31.973202S596.58649 149.879566 614.243639 149.879566zM355.527273 498.609015l0 31.165814c0 17.657148 14.316054 31.973202 31.973202 31.973202s31.973202-14.316054 31.973202-31.973202L419.473677 498.609015c0-17.657148-14.316054-31.973202-31.973202-31.973202S355.527273 480.951867 355.527273 498.609015zM604.872201 498.609015l0 31.165814c0 17.657148 14.316054 31.973202 31.973202 31.973202 17.657148 0 31.973202-14.316054 31.973202-31.973202L668.818605 498.609015c0-17.657148-14.316054-31.973202-31.973202-31.973202C619.188254 466.635813 604.872201 480.951867 604.872201 498.609015zM479.33402 613.901855c-9.392928-14.763239-28.939099-19.234063-43.837414-9.986445-15.002692 9.320273-19.608593 29.03222-10.288321 44.029796 11.276834 18.151405 42.219567 48.864918 86.660732 48.864918 44.212968 0 75.534324-30.479175 87.072101-48.490388 9.434883-14.732539 5.157463-34.127262-9.450233-43.754526-14.602579-9.617032-34.366715-5.542226-44.181245 8.93551-0.135076 0.192382-13.368472 19.364023-33.440623 19.364023C492.375034 632.864742 480.18234 615.166661 479.33402 613.901855z"/>
+        </svg>
+      )}
     </span>
   );
 }
@@ -308,13 +312,13 @@ interface AgencyDetail extends Agency {
   agencyType: "Retail" | "Wholesale";
   affiliations: string[];
   workersComp: string[];
-  badge?: string;
+  badges?: string[];
 }
 
 const mockDetails: Record<string, Partial<AgencyDetail>> = {
-  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badge: "Strategic Partner" },
-  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badge: "" },
-  "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badge: "" },
+  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badges: ["Strategic Partner", "VIP"] },
+  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badges: ["DreamTeam"] },
+  "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badges: [] },
 };
 
 function getDetail(a: Agency): AgencyDetail {
@@ -342,7 +346,7 @@ function getDetail(a: Agency): AgencyDetail {
     agencyType:    d.agencyType    ?? "Retail",
     affiliations:  d.affiliations  ?? ["AAA/ACG (AC364)"],
     workersComp:   d.workersComp   ?? ["AIG"],
-    badge:         d.badge         ?? "",
+    badges:        d.badges        ?? [],
   };
 }
 
@@ -491,7 +495,7 @@ const mockAgencyUsers: AgencyUser[] = [
 /* ─── Agency Detail View ─────────────────────────────────────────────────── */
 type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes";
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies }: {
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -508,13 +512,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   bookRolled: Map<string, { targetCode: string; date: string }>;
   setBookRolled: React.Dispatch<React.SetStateAction<Map<string, { targetCode: string; date: string }>>>;
   allAgencies: Agency[];
+  initialTab?: DetailTab;
+  onNavigateToAgency?: (targetCode: string, tab?: DetailTab) => void;
 }) {
-  const [detailTab, setDetailTab] = useState<DetailTab>("overview");
+  const [detailTab, setDetailTab] = useState<DetailTab>(initialTab ?? "overview");
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
   const [contactCardEditing, setContactCardEditing] = useState(false);
   const [contactMode, setContactMode] = useState<"edit"|"reassign"|"new">("edit");
   const [reassignSelection, setReassignSelection] = useState<string>("");
+  const [reassignSearch,    setReassignSearch]    = useState<string>("");
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
@@ -563,6 +570,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [ePremFin,    setEPremFin]    = useState(agency.premiumFin);
   const [eAffil,      setEAffil]      = useState<Set<string>>(new Set(agency.affiliations));
   const [eWC,         setEWC]         = useState<Set<string>>(new Set(agency.workersComp));
+  const [eBadges,     setEBadges]     = useState<Set<string>>(new Set(agency.badges ?? []));
+  // Persisted badges override — set after Save Changes so the read-only Overview reflects edits.
+  const [badgesOverride, setBadgesOverride] = useState<string[] | null>(null);
+  const effectiveBadges = badgesOverride ?? agency.badges ?? [];
   const [eStatusOpen, setEStatusOpen] = useState(false);
   const [eBizTypeOpen, setEBizTypeOpen] = useState(false);
   const [eReason, setEReason] = useState("");
@@ -694,7 +705,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [jobTitleOpen,    setJobTitleOpen]    = useState(false);
   const [jobTitleSearch,  setJobTitleSearch]  = useState("");
   const [userMenuId,      setUserMenuId]      = useState<string|null>(null);
-  const [userMenuPos,     setUserMenuPos]     = useState<{top: number; right: number} | null>(null);
+  const [userMenuPos,     setUserMenuPos]     = useState<{top?: number; bottom?: number; right: number} | null>(null);
   // inactiveUserIds and removedUserIds are now lifted to the parent Agencies component
   // so the All Users tab in the main view can also respect deactivation/removal state.
   const [usersView,       setUsersView]       = useState<"active"|"inactive">("active");
@@ -713,36 +724,49 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   } | null>(null);
   const [reassignPrincipalId, setReassignPrincipalId] = useState("");
   const [reassignContactId, setReassignContactId] = useState("");
-  const [reassignAccountsFrom, setReassignAccountsFrom] = useState<{userId: string; userName: string} | null>(null);
+  const [reassignAccountsFrom, setReassignAccountsFrom] = useState<{userId: string; userName: string; andArchive?: boolean} | null>(null);
   const [reassignAccountsToId, setReassignAccountsToId] = useState("");
+  const [reassignAccountsConfirm, setReassignAccountsConfirm] = useState<{ toName: string } | null>(null);
   // Optional overrides applied after a reassign — used to reflect the new Principal / Contact in the UI.
   const [principalOverride, setPrincipalOverride] = useState<{ oldId: string; newId: string } | null>(null);
   const [agencyContactOverride, setAgencyContactOverride] = useState<string | null>(null);
   // Track users granted admin permissions via the Principal-reassign flow (Principal implies admin).
   const [adminGrantOverrides, setAdminGrantOverrides] = useState<Set<string>>(new Set());
   // ── Documents tab state (demo only — files are mock entries; uploads add rows but don't store anything). ──
-  type AgencyDocCategory = "bor" | "w9" | "license" | "agreement";
-  type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean; trashed?: boolean };
+  type AgencyDocCategory = "bor" | "w9" | "license" | "agreement" | "other";
+  type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; size?: string; archived?: boolean; trashed?: boolean };
   const [agencyDocs, setAgencyDocs] = useState<AgencyDoc[]>([
-    { id: "d1", category: "bor",       name: "BOR Request - 2025.pdf",      date: "Mar 15, 2025" },
-    { id: "d2", category: "bor",       name: "BOR Letter Signed.pdf",       date: "Mar 20, 2025" },
-    { id: "d3", category: "w9",        name: "W9-2025.pdf",                  date: "Feb 1, 2025" },
-    { id: "d4", category: "w9",        name: "W9-2024.pdf",                  date: "Feb 1, 2024",  archived: true },
-    { id: "d5", category: "license",   name: `${agency.state || "NY"}-License.pdf`, date: "Jan 10, 2025" },
-    { id: "d6", category: "agreement", name: "Appointment Letter.pdf",      date: agency.apptDate || "Mar 24, 2026" },
-    { id: "d7", category: "agreement", name: "Producer Agreement.pdf",      date: agency.apptDate || "Mar 24, 2026" },
+    { id: "d1", category: "bor",       name: "BOR Request - 2025.pdf",      date: "Mar 15, 2025", size: "1.4 MB" },
+    { id: "d2", category: "bor",       name: "BOR Letter Signed.pdf",       date: "Mar 20, 2025", size: "0.9 MB" },
+    { id: "d3", category: "w9",        name: "W9-2025.pdf",                  date: "Feb 1, 2025", size: "0.2 MB" },
+    { id: "d4", category: "w9",        name: "W9-2024.pdf",                  date: "Feb 1, 2024", size: "0.2 MB", archived: true },
+    { id: "d5", category: "license",   name: `${agency.state || "NY"}-License.pdf`, date: "Jan 10, 2025", size: "0.6 MB" },
+    { id: "d6", category: "agreement", name: "Appointment Letter.pdf",      date: agency.apptDate || "Mar 24, 2026", size: "0.5 MB" },
+    { id: "d7", category: "agreement", name: "Producer Agreement.pdf",      date: agency.apptDate || "Mar 24, 2026", size: "1.1 MB" },
   ]);
   // Documents toolbar state
   const [docView,        setDocView]        = useState<"all"|"byType"|"table">("byType");
   const [docSearch,      setDocSearch]      = useState("");
   const [docSearchOpen,  setDocSearchOpen]  = useState(false);
   const [docSortDir,     setDocSortDir]     = useState<"asc"|"desc">("desc");
-  const [docFilterCat,   setDocFilterCat]   = useState<"All"|AgencyDocCategory>("All");
+  const [docSortKey,     setDocSortKey]     = useState<"name"|"category"|"date">("date");
+  // Multi-select category filter — empty set means "All Categories".
+  const [docFilterCats,  setDocFilterCats]  = useState<Set<AgencyDocCategory>>(new Set());
+  const toggleDocFilterCat = (t: AgencyDocCategory) =>
+    setDocFilterCats(prev => { const s = new Set(prev); s.has(t) ? s.delete(t) : s.add(t); return s; });
   const [docFilterOpen,  setDocFilterOpen]  = useState(false);
+  // Separate state for the inline By-Type-view category picker so it doesn't open in tandem with the toolbar filter icon.
+  const [docByTypeFilterOpen, setDocByTypeFilterOpen] = useState(false);
   const [docSortOpen,    setDocSortOpen]    = useState(false);
   const [showDocArchived,setShowDocArchived]= useState(false);
   const [showDocTrashed, setShowDocTrashed] = useState(false);
   const [docUploadOpen,  setDocUploadOpen]  = useState(false);
+  // Drag-and-drop upload modal (replaces the old "Upload to" picklist dropdown).
+  const [docUploadModalOpen, setDocUploadModalOpen] = useState(false);
+  const [docUploadModalFile, setDocUploadModalFile] = useState<string | null>(null);
+  const [docUploadModalCat,  setDocUploadModalCat]  = useState<AgencyDocCategory | "">("");
+  const [docUploadModalCatOpen, setDocUploadModalCatOpen] = useState(false);
+  const [docUploadModalDrag, setDocUploadModalDrag] = useState(false);
   const [docConfirm,     setDocConfirm]     = useState<{
     title: string;
     body: React.ReactNode;
@@ -754,21 +778,32 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   type PreviewDoc = { id: string; category: AgencyDocCategory; name: string; date: string; archived?: boolean; trashed?: boolean };
   const [previewDoc,     setPreviewDoc]     = useState<PreviewDoc | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
+  // Multi-select for bulk download (toggleable from toolbar — matches Notes pattern)
+  const [isDocSelectMode, setIsDocSelectMode] = useState(false);
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  const toggleDocSelected = (id: string) =>
+    setSelectedDocIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const clearDocSelection = () => setSelectedDocIds(new Set());
   const [imageRightSyncMins, setImageRightSyncMins] = useState(5);
   // Users-tab export (preview + format selector, mirrors main Agencies export)
   const [userExportFormat,    setUserExportFormat]    = useState<"csv"|"xlsx">("csv");
   const [userExportFormatOpen,setUserExportFormatOpen]= useState(false);
   // After saving Agency Info edits, prompt the user to upload fresh docs if W-9/license-relevant fields drifted.
   const [docUpdateModal, setDocUpdateModal] = useState<{ w9: boolean; license: boolean } | null>(null);
+  // Files queued in the doc-update modal — Save Changes is gated on these.
+  const [docModalUploads, setDocModalUploads] = useState<{ w9?: string; license?: string }>({});
+  const [docModalDragOver, setDocModalDragOver] = useState<"w9" | "license" | null>(null);
 
   // Book Roll modal — admin sells the entire policy book to another agency.
   const [bookRollOpen, setBookRollOpen] = useState(false);
   const [bookRollTargetId, setBookRollTargetId] = useState("");
+  const [bookRollTargetOpen, setBookRollTargetOpen] = useState(false);
   const [bookRollDate, setBookRollDate] = useState(() => {
     const d = new Date();
     return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
   });
   const [bookRollConfirmText, setBookRollConfirmText] = useState("");
+  const [bookRollStep, setBookRollStep] = useState<"form" | "confirm">("form");
   // "Assign Principal" modal — fired when an agency has no Principal at all.
   const [assignPrincipalOpen, setAssignPrincipalOpen] = useState(false);
   const [assignPrincipalChoice, setAssignPrincipalChoice] = useState("");
@@ -871,11 +906,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
   };
 
-  const Radio = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
-    <button onClick={onClick} className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 transition-all"
+  // Note: rendered as <span> not <button> because Radio is typically nested inside a parent
+  // <button> (e.g. the Agency Type toggle), and HTML disallows nested buttons.
+  const Radio = ({ checked, onClick }: { checked: boolean; onClick?: () => void }) => (
+    <span onClick={onClick} role="radio" aria-checked={checked}
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 transition-all cursor-pointer"
       style={{ border: `2px solid ${checked ? "#A855F7" : c.borderStrong}`, background: "transparent" }}>
-      {checked && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#A855F7" }} />}
-    </button>
+      {checked && <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#A855F7" }} />}
+    </span>
   );
 
   const Checkbox = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
@@ -915,7 +953,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     ["policies",  "Policies",  <Shield     className="w-[15px] h-[15px]" />],
     ["users",     "Users",     <Users      className="w-[15px] h-[15px]" />],
     ["documents", "Documents", <FolderOpen className="w-[15px] h-[15px]" />],
-    ["notes",     "Notes",     <FileText   className="w-[15px] h-[15px]" />],
+    ["notes",     "Notes",     <CopyPlus   className="w-[15px] h-[15px]" />],
   ];
 
   /* ── helpers ── */
@@ -927,13 +965,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   const AppointedBadge = () => (
     <span className="inline-flex items-center justify-center w-fit"
-      style={{ fontFamily: FONT, background: "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", borderRadius: 9999, padding: "3px 10px" }}>
-      <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>Appointed</span>
+      style={{ fontFamily: FONT, background: isDark
+        ? "rgba(168,85,247,0.22)"
+        : "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", borderRadius: 9999, padding: "3px 10px" }}>
+      <span style={{ backgroundImage: isDark
+          ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)"
+          : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+        backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>Appointed</span>
     </span>
   );
   const UnapptBadge = () => (
-    <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold"
-      style={{ fontFamily: FONT, color: "#73C9B7", background: "rgba(115,201,183,0.10)" }}>Unappointed</span>
+    <span className="inline-flex items-center px-[10px] py-[3px] rounded-full"
+      style={{ fontFamily: FONT, color: "#73C9B7", background: isDark ? "rgba(115,201,183,0.22)" : "rgba(115,201,183,0.10)", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>Unappointed</span>
   );
 
   return (
@@ -963,7 +1006,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         const targetCandidates = allAgencies.filter(a => a.id !== agency.id);
         const target = targetCandidates.find(a => a.id === bookRollTargetId);
         const policyCount = rawPolicies.length;
+        const canContinue = !!target && !!bookRollDate.trim();
         const canConfirm = !!target && bookRollConfirmText.trim().toUpperCase() === agency.code.toUpperCase();
+        const closeModal = () => {
+          setBookRollOpen(false);
+          setBookRollStep("form");
+          setBookRollConfirmText("");
+          setBookRollTargetOpen(false);
+        };
         const proceed = () => {
           if (!canConfirm || !target) return;
           // 1. Track the book-roll mapping (source → target).
@@ -986,67 +1036,127 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           setEReason("Sold");
           // 4. Toast.
           showToast({ title: "Book rolled", description: `${policyCount} ${policyCount === 1 ? "policy" : "policies"} transferred to ${target.name}. Agency unappointed.` }, 5000);
-          setBookRollOpen(false);
+          closeModal();
         };
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
             style={{ background: "rgba(0,0,0,0.45)" }}
-            onClick={() => setBookRollOpen(false)}>
+            onClick={closeModal}>
             <div className="rounded-2xl overflow-hidden flex flex-col"
               style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(540px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
               onClick={e => e.stopPropagation()}>
               <div className="px-6 pt-5 pb-4">
-                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>Book Roll</h3>
-                <p className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>
-                  Transfer <strong style={{ color: c.text }}>{agency.name}</strong>&apos;s entire policy book to another agency. This action <strong style={{ color: "#EF4444" }}>cannot be undone</strong>.
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily: FONT, color: c.text }}>{bookRollStep === "form" ? "Book Roll" : "Confirm Book Roll"}</h3>
+                <p className="text-[13px] flex items-start gap-1.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  {bookRollStep === "form"
+                    ? <span>Transfer this agency&apos;s entire book to another agency.</span>
+                    : <>
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#EF4444" }} />
+                        <span>This action <strong style={{ color: "#EF4444" }}>cannot be undone</strong>. Type the agency code to verify.</span>
+                      </>}
                 </p>
               </div>
-              <div className="px-6 pb-4 flex flex-col gap-3">
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Target Agency</label>
-                  <select value={bookRollTargetId} onChange={e => setBookRollTargetId(e.target.value)}
-                    className="w-full pl-3 pr-10 py-2 rounded-lg text-[13px] outline-none appearance-none cursor-pointer"
-                    style={{ fontFamily: FONT, background: `${c.cardBg} url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") no-repeat right 12px center`, border: `1px solid ${c.border}`, color: c.text }}>
-                    <option value="">Select an agency…</option>
-                    {targetCandidates.map(a => (
-                      <option key={a.id} value={a.id}>{a.name} · {a.code}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Effective Date</label>
-                  <input value={bookRollDate} onChange={e => setBookRollDate(e.target.value)}
-                    placeholder="MM/DD/YYYY"
-                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
-                </div>
-                <div className="px-3 py-2.5 rounded-lg text-[12px] flex items-start gap-2"
-                  style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.08) 63.88%)", border: "1px solid rgba(166,20,195,0.18)", color: c.text, fontFamily: FONT }}>
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#A614C3" }} />
+              {bookRollStep === "form" ? (
+                <div className="px-6 pb-4 flex flex-col gap-3">
                   <div>
-                    <strong>{policyCount}</strong> {policyCount === 1 ? "policy" : "policies"} will be transferred. {agency.name} will be unappointed (reason: Sold).
-                    Quotes, clients, and users stay with the source agency.
+                    <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Agency Transferring To</label>
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      <button type="button" onClick={() => setBookRollTargetOpen(o => !o)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                        style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${bookRollTargetOpen ? "#A614C3" : c.border}`, color: target ? c.text : c.muted, cursor: "pointer" }}>
+                        <span className="truncate">{target ? `${target.name} · ${target.code}` : "Select an agency…"}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${bookRollTargetOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                      </button>
+                      {bookRollTargetOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg overflow-hidden"
+                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 260, overflowY: "auto" }}>
+                          {targetCandidates.map(a => {
+                            const active = bookRollTargetId === a.id;
+                            return (
+                              <button key={a.id} type="button"
+                                onClick={() => { setBookRollTargetId(a.id); setBookRollTargetOpen(false); }}
+                                className="w-full flex items-center justify-between px-3 py-2 text-[13px] text-left transition-colors"
+                                style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                                onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                                <span className="truncate">{a.name} <span style={{ color: c.muted }}>· {a.code}</span></span>
+                                {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Effective Date</label>
+                    <input value={bookRollDate} onChange={e => setBookRollDate(e.target.value)}
+                      placeholder="MM/DD/YYYY"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
+                  <div className="px-3 py-2.5 rounded-lg text-[12px] flex items-start gap-2"
+                    style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.08) 63.88%)", border: "1px solid rgba(166,20,195,0.18)", color: c.text, fontFamily: FONT }}>
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#A614C3" }} />
+                    <div>
+                      Transfers <strong>{policyCount}</strong> {policyCount === 1 ? "policy" : "policies"} and marks this agency Unappointed (Sold).
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Type <span style={{ color: "#A614C3" }}>{agency.code}</span> to confirm</label>
-                  <input value={bookRollConfirmText} onChange={e => setBookRollConfirmText(e.target.value)}
-                    placeholder={agency.code}
-                    className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
+              ) : (
+                <div className="px-6 pb-4 flex flex-col gap-3">
+                  <div className="px-3 py-2.5 rounded-lg text-[12px]"
+                    style={{ background: c.hoverBg, border: `1px solid ${c.border}`, color: c.text, fontFamily: FONT }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ color: c.muted }}>Transferring to</span>
+                      <span style={{ fontWeight: 600 }}>{target?.name} · {target?.code}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ color: c.muted }}>Effective Date</span>
+                      <span style={{ fontWeight: 600 }}>{bookRollDate}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span style={{ color: c.muted }}>Policies transferred</span>
+                      <span style={{ fontWeight: 600 }}>{policyCount}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Type <span style={{ color: "#A614C3" }}>{agency.code}</span> to confirm</label>
+                    <input autoFocus value={bookRollConfirmText} onChange={e => setBookRollConfirmText(e.target.value)}
+                      placeholder={agency.code}
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                      style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }} />
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
-                <button onClick={() => setBookRollOpen(false)}
-                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
-                  Cancel
-                </button>
-                <button onClick={proceed} disabled={!canConfirm}
-                  className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                  style={{ fontFamily: FONT, background: btnGrad, opacity: canConfirm ? 1 : 0.5, cursor: canConfirm ? "pointer" : "not-allowed", boxShadow: canConfirm ? "0 4px 14px rgba(166,20,195,0.25)" : "none" }}>
-                  Confirm Book Roll
-                </button>
+                {bookRollStep === "form" ? (
+                  <>
+                    <button onClick={closeModal}
+                      className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                      Cancel
+                    </button>
+                    <button onClick={() => canContinue && setBookRollStep("confirm")} disabled={!canContinue}
+                      className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                      style={{ fontFamily: FONT, background: btnGrad, opacity: canContinue ? 1 : 0.5, cursor: canContinue ? "pointer" : "not-allowed" }}>
+                      Continue
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => { setBookRollStep("form"); setBookRollConfirmText(""); }}
+                      className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                      style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                      Back
+                    </button>
+                    <button onClick={proceed} disabled={!canConfirm}
+                      className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                      style={{ fontFamily: FONT, background: btnGrad, opacity: canConfirm ? 1 : 0.5, cursor: canConfirm ? "pointer" : "not-allowed", boxShadow: canConfirm ? "0 4px 14px rgba(166,20,195,0.25)" : "none" }}>
+                      Confirm Book Roll
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1158,9 +1268,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             const name = roleReassign.userName;
             setInactiveUserIds(prev => { const s = new Set(prev); s.add(id); return s; });
             showToast({
-              title: "User deactivated",
-              description: `${name} moved to Inactive Users.`,
-              action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(id); return s; }) },
+              title: "User archived",
+              description: `${name} moved to the archive.`,
             });
           } else if (roleReassign.action === "remove") {
             setRemoveUserConfirm({ id: roleReassign.userId, name: roleReassign.userName });
@@ -1178,7 +1287,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="px-6 pt-5 pb-4">
                 <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Reassign {rolesText} first</h3>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
-                  <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{roleReassign.userName}</strong> is the {rolesText}. Choose {roleReassign.needsPrincipal && roleReassign.needsContact ? "replacements" : "a replacement"} before {roleReassign.action === "deactivate" ? "deactivating" : "removing"} them.
+                  This user is the {rolesText}. Choose {roleReassign.needsPrincipal && roleReassign.needsContact ? "replacements" : "a replacement"} before {roleReassign.action === "deactivate" ? "archiving" : "removing"} them.
                 </p>
               </div>
               <div className="px-6 pb-4 flex flex-col gap-3">
@@ -1237,7 +1346,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <button onClick={proceed} disabled={!canConfirm || candidates.length === 0}
                   className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
                   style={{ fontFamily: FONT, background: btnGrad, opacity: canConfirm && candidates.length > 0 ? 1 : 0.5, cursor: canConfirm && candidates.length > 0 ? "pointer" : "not-allowed" }}>
-                  Reassign & {roleReassign.action === "deactivate" ? "Deactivate" : "Continue"}
+                  Reassign & {roleReassign.action === "deactivate" ? "Archive" : "Continue"}
                 </button>
               </div>
             </div>
@@ -1254,9 +1363,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         const picked = candidates.find(u => u.id === reassignAccountsToId);
         const proceed = () => {
           if (!picked) return;
-          showToast({ title: "Accounts reassigned", description: `${reassignAccountsFrom.userName}'s accounts transferred to ${picked.name}.` });
-          setReassignAccountsFrom(null);
-          setReassignAccountsToId("");
+          // Reassign is permanent (no Undo) — require explicit confirmation before executing.
+          setReassignAccountsConfirm({ toName: picked.name });
         };
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
@@ -1266,9 +1374,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)" }}
               onClick={e => e.stopPropagation()}>
               <div className="px-6 pt-5 pb-4">
-                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>Reassign Accounts</h3>
+                <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>
+                  {reassignAccountsFrom.andArchive ? "Archive User" : "Reassign Accounts"}
+                </h3>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
-                  Transfer all accounts owned by <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{reassignAccountsFrom.userName}</strong> to another active user in this agency.
+                  {reassignAccountsFrom.andArchive
+                    ? "Pick another active user to take over this user's accounts before archiving."
+                    : "Transfer this user's accounts to another active user in this agency."}
                 </p>
               </div>
               <div className="px-6 pb-4 flex flex-col gap-3">
@@ -1299,13 +1411,71 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <button onClick={proceed} disabled={!picked}
                   className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
                   style={{ fontFamily: FONT, background: btnGrad, opacity: picked ? 1 : 0.5, cursor: picked ? "pointer" : "not-allowed" }}>
-                  Reassign Accounts
+                  Continue
                 </button>
               </div>
             </div>
           </div>
         );
       })()}
+      {reassignAccountsFrom && reassignAccountsConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6"
+          onClick={() => setReassignAccountsConfirm(null)}
+          style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-[440px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,158,11,0.12)" }}>
+                <AlertCircle className="w-6 h-6" style={{ color: "#F59E0B" }} />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>
+                  {reassignAccountsFrom.andArchive ? "Archive this user?" : "Reassign all accounts?"}
+                </h3>
+                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
+                  {reassignAccountsFrom.andArchive
+                    ? "All accounts will be transferred to the selected user, and this user will be moved to the archive."
+                    : "All accounts will be transferred to the selected user."}
+                </p>
+                <p className="text-[12px] leading-relaxed mt-2 font-semibold" style={{ color: "#B45309" }}>
+                  This action can&apos;t be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setReassignAccountsConfirm(null)}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                  const fromName = reassignAccountsFrom.userName;
+                  const toName = reassignAccountsConfirm.toName;
+                  const fromUserId = reassignAccountsFrom.userId;
+                  const archiveToo = !!reassignAccountsFrom.andArchive;
+                  if (archiveToo) {
+                    setInactiveUserIds(prev => { const s = new Set(prev); s.add(fromUserId); return s; });
+                    showToast({
+                      title: "User archived",
+                      description: `Their accounts went to ${toName}.`,
+                    });
+                  } else {
+                    showToast({ title: "Accounts reassigned", description: `${fromName}'s accounts transferred to ${toName}.` });
+                  }
+                  setReassignAccountsConfirm(null);
+                  setReassignAccountsFrom(null);
+                  setReassignAccountsToId("");
+                }}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                style={{ background: btnGrad }}>
+                {reassignAccountsFrom.andArchive ? "Reassign & Archive" : "Yes, reassign"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {deactivateUserConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
           onClick={() => setDeactivateUserConfirm(null)}
@@ -1317,9 +1487,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Archive className="w-6 h-6" style={{ color: "#A614C3" }} />
               </div>
               <div>
-                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Deactivate {deactivateUserConfirm.name}?</h3>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Archive this user?</h3>
                 <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
-                  This will immediately disable <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{deactivateUserConfirm.name}</strong>&apos;s access — they won&apos;t be able to log in or submit applications. You can <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong> them later from Inactive Users.
+                  This will immediately disable their access — they won&apos;t be able to log in or submit applications. You can <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong> them later from the archive.
                 </p>
               </div>
             </div>
@@ -1336,9 +1506,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   const name = deactivateUserConfirm.name;
                   setInactiveUserIds(prev => { const s = new Set(prev); s.add(id); return s; });
                   showToast({
-                    title: "User deactivated",
-                    description: `${name} moved to Inactive Users.`,
-                    action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.delete(id); return s; }) },
+                    title: "User archived",
+                    description: `${name} moved to the archive.`,
                   });
                   setDeactivateUserConfirm(null);
                 }}
@@ -1352,18 +1521,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
       )}
       {docUpdateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          onClick={() => setDocUpdateModal(null)}
           style={{ background: "rgba(0,0,0,0.45)" }}>
           <div className="w-[460px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
             style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
             <div className="flex items-start gap-4 mb-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "linear-gradient(88.54deg, rgba(92,46,212,0.12) 0.1%, rgba(166,20,195,0.12) 63.88%)" }}>
+                style={{ background: isDark
+                  ? "linear-gradient(88.54deg, rgba(168,85,247,0.25) 0.1%, rgba(217,70,239,0.25) 63.88%)"
+                  : "linear-gradient(88.54deg, rgba(92,46,212,0.12) 0.1%, rgba(166,20,195,0.12) 63.88%)" }}>
                 <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
                   <defs>
                     <linearGradient id="doc-modal-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#5C2ED4" />
-                      <stop offset="100%" stopColor="#A614C3" />
+                      <stop offset="0%" stopColor={isDark ? "#A855F7" : "#5C2ED4"} />
+                      <stop offset="100%" stopColor={isDark ? "#D946EF" : "#A614C3"} />
                     </linearGradient>
                   </defs>
                   <circle cx="8" cy="8" r="7" stroke="url(#doc-modal-grad)" strokeWidth="1.5" />
@@ -1372,47 +1542,123 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-[16px] font-bold mb-1.5" style={{ color: c.text }}>Documents need an update</h3>
+                <h3 className="text-[16px] font-bold mb-1.5" style={{ color: c.text }}>Documents required</h3>
                 <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
-                  Agency information was changed. Per compliance, please upload an updated copy of the affected document{docUpdateModal.w9 && docUpdateModal.license ? "s" : ""}.
+                  The change in agency information requires the following document{docUpdateModal.w9 && docUpdateModal.license ? "s" : ""}.
                 </p>
               </div>
             </div>
-            <div className="rounded-lg p-3 mb-5"
-              style={{ background: "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", border: "1px solid rgba(166,20,195,0.18)" }}>
-              <ul className="text-[12px] space-y-1.5" style={{ color: c.text }}>
-                {docUpdateModal.w9 && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />
-                    <span>New <strong>W-9</strong> required</span>
-                    <span className="ml-auto text-[11px]" style={{ color: c.muted }}>name · entity · address · TIN</span>
-                  </li>
-                )}
-                {docUpdateModal.license && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />
-                    <span>New <strong>License copy</strong> required</span>
-                    <span className="ml-auto text-[11px]" style={{ color: c.muted }}>license number changed</span>
-                  </li>
-                )}
-              </ul>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDocUpdateModal(null)}
-                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                Later
-              </button>
-              <button onClick={() => { setDetailTab("documents"); setDocUpdateModal(null); }}
-                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                style={{ background: btnGrad }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                Go to Documents
-              </button>
-            </div>
+            {(() => {
+              const required: Array<{ key: "w9" | "license"; label: string; hint: string }> = [];
+              if (docUpdateModal.w9)      required.push({ key: "w9",      label: "New W-9",          hint: "Name · Entity · Address · TIN" });
+              if (docUpdateModal.license) required.push({ key: "license", label: "New License copy", hint: "License number changed" });
+              const allUploaded = required.every(r => docModalUploads[r.key]);
+              const onPickFile = (key: "w9" | "license", file: File | null | undefined) => {
+                if (!file) return;
+                setDocModalUploads(p => ({ ...p, [key]: file.name }));
+              };
+              return (
+                <>
+                  <div className="space-y-3 mb-5">
+                    {required.map(r => {
+                      const fileName = docModalUploads[r.key];
+                      const isOver = docModalDragOver === r.key;
+                      return (
+                        <div key={r.key}>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }} />
+                            <span className="text-[12px]" style={{ color: c.text, fontFamily: FONT }}><strong>{r.label}</strong> required</span>
+                            <span className="ml-auto text-[11px]" style={{ color: c.muted, fontFamily: FONT }}>{r.hint}</span>
+                          </div>
+                          {fileName ? (() => {
+                            // Build a clean suggested filename based on the doc type and current year.
+                            const ext = (fileName.match(/\.[^.]+$/)?.[0]) ?? ".pdf";
+                            const yr = new Date().getFullYear();
+                            const suggested = r.key === "w9"
+                              ? `W9-${yr}${ext}`
+                              : `${(agency.state || "License").toUpperCase()}-License-${yr}${ext}`;
+                            const isMessy = fileName !== suggested;
+                            return (
+                              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
+                                style={{ background: "rgba(115,201,183,0.10)", border: "1px solid rgba(115,201,183,0.35)", fontFamily: FONT }}>
+                                <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#73C9B7" }} />
+                                <input value={fileName}
+                                  onChange={e => setDocModalUploads(p => ({ ...p, [r.key]: e.target.value }))}
+                                  className="text-[12px] flex-1 outline-none bg-transparent min-w-0"
+                                  style={{ color: c.text, fontFamily: FONT }}
+                                  spellCheck={false}
+                                  title="Rename before uploading" />
+                                {isMessy && (
+                                  <button onClick={() => setDocModalUploads(p => ({ ...p, [r.key]: suggested }))}
+                                    title={`Use suggested name: ${suggested}`}
+                                    className="text-[11px] font-medium transition-opacity hover:opacity-80 flex-shrink-0"
+                                    style={{ color: "#A855F7" }}>Suggest</button>
+                                )}
+                                <button onClick={() => setDocModalUploads(p => { const n = { ...p }; delete n[r.key]; return n; })}
+                                  className="text-[11px] font-medium transition-opacity hover:opacity-70 flex-shrink-0"
+                                  style={{ color: c.muted }}>Replace</button>
+                              </div>
+                            );
+                          })() : (
+                            <label className="flex flex-col items-center justify-center cursor-pointer transition-colors rounded-lg py-5"
+                              style={{ background: isOver ? "rgba(168,85,247,0.08)" : c.hoverBg, border: `1.5px dashed ${isOver ? "#A614C3" : c.borderStrong}`, fontFamily: FONT }}
+                              onDragOver={e => { e.preventDefault(); setDocModalDragOver(r.key); }}
+                              onDragLeave={() => setDocModalDragOver(null)}
+                              onDrop={e => { e.preventDefault(); setDocModalDragOver(null); onPickFile(r.key, e.dataTransfer.files?.[0]); }}>
+                              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={e => onPickFile(r.key, e.target.files?.[0])} />
+                              <Paperclip className="w-5 h-5 mb-1.5" style={{ color: "#A614C3" }} />
+                              <span className="text-[12px] font-medium" style={{ color: c.text }}>Drag &amp; Drop or Click to Browse</span>
+                              <span className="text-[11px] mt-0.5" style={{ color: c.muted }}>PDF, JPG, PNG · Max 10MB</span>
+                            </label>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <button onClick={() => { setDocUpdateModal(null); setDocModalUploads({}); }}
+                      className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                      style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      Cancel Changes
+                    </button>
+                    <button onClick={() => {
+                        if (!allUploaded) return;
+                        // Persist new docs into the agency's documents list (mock).
+                        const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                        setAgencyDocs(prev => {
+                          const next = [...prev];
+                          if (docUpdateModal.w9 && docModalUploads.w9) {
+                            // Archive the previous current W-9.
+                            for (let i = 0; i < next.length; i++) {
+                              if (next[i].category === "w9" && !next[i].archived) next[i] = { ...next[i], archived: true };
+                            }
+                            next.unshift({ id: `d${Date.now()}-w9`, category: "w9", name: docModalUploads.w9, date: today });
+                          }
+                          if (docUpdateModal.license && docModalUploads.license) {
+                            next.unshift({ id: `d${Date.now()}-lic`, category: "license", name: docModalUploads.license, date: today });
+                          }
+                          return next;
+                        });
+                        showToast({ title: "Changes saved", description: "Updated documents uploaded successfully." });
+                        setBadgesOverride(Array.from(eBadges));
+                        setIsEditing(false);
+                        setDocUpdateModal(null);
+                        setDocModalUploads({});
+                      }}
+                      disabled={!allUploaded}
+                      className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                      style={{ background: btnGrad, opacity: allUploaded ? 1 : 0.5, cursor: allUploaded ? "pointer" : "not-allowed" }}
+                      onMouseEnter={e => { if (allUploaded) e.currentTarget.style.filter = "brightness(1.10)"; }}
+                      onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                      Upload Document{required.length > 1 ? "s" : ""}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1427,9 +1673,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Trash2 className="w-6 h-6" style={{ color: "#EF4444" }} />
               </div>
               <div>
-                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Remove {removeUserConfirm.name}?</h3>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Remove this user?</h3>
                 <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
-                  This action <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>cannot be undone</strong>. <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>{removeUserConfirm.name}</strong> will be permanently removed from this agency. To restore access instead, choose <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong>.
+                  This action <strong style={{ color: "#EF4444", fontWeight: 700 }}>cannot be undone</strong>. They will be permanently removed from this agency. To restore access instead, choose <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 }}>Reactivate</strong>.
                 </p>
               </div>
             </div>
@@ -1520,18 +1766,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Star className="w-5 h-5" style={{ color: "#F59E0B", fill: isStarred ? "#F59E0B" : "none" }} />
               </button>
               <h2 className="text-[24px] font-bold" style={{ ...font, color: c.text }}>{agency.name}</h2>
-              <TimeStatusBadge status={getAgencyTimeStatus(agency.apptDate, agency.lastLogin)} />
-              {agency.badge && (
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap"
-                  style={{ background: "rgba(168,85,247,0.10)" }}>
-                  <span style={{
-                    backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}>{agency.badge}</span>
-                </span>
-              )}
+              <TimeStatusBadge status={getAgencyTimeStatus(agency.apptDate, agency.lastLogin)} isDark={isDark} />
             </div>
             {/* Subtitle indented to sit under the title text */}
             <p className="text-[12px] mt-0.5 ml-[29px]" style={{ ...font, color: c.muted }}>Agency Code: {agency.code}</p>
@@ -1625,26 +1860,35 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" className="w-3.5 h-3.5" aria-hidden="true"><path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" /></svg>Book Roll
               </button>
             )}
-            {bookRolled.has(agency.id) && (
-              <span className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold"
-                style={{ ...font, backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.10) 63.88%)", border: "1px solid rgba(166,20,195,0.22)" }}>
-                {/* Gradient-stroked archive icon */}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <defs>
-                    <linearGradient id={`soldArchiveGrad-${agency.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#5C2ED4" />
-                      <stop offset="100%" stopColor="#A614C3" />
-                    </linearGradient>
-                  </defs>
-                  <g stroke={`url(#soldArchiveGrad-${agency.id})`}>
-                    <rect width="20" height="5" x="2" y="3" rx="1" />
-                    <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
-                    <path d="M10 12h4" />
-                  </g>
-                </svg>
-                <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Sold to {bookRolled.get(agency.id)!.targetCode}</span>
-              </span>
-            )}
+            {bookRolled.has(agency.id) && (() => {
+              const sold = bookRolled.get(agency.id)!;
+              const targetAgency = allAgencies.find(a => a.code === sold.targetCode);
+              return (
+                <button
+                  onClick={() => onNavigateToAgency?.(sold.targetCode, "policies")}
+                  title={targetAgency ? `View ${targetAgency.name}'s policies` : `Sold on ${sold.date}`}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all cursor-pointer"
+                  style={{ ...font, backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.10) 63.88%)", border: "1px solid rgba(166,20,195,0.22)" }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = "brightness(0.96)"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(166,20,195,0.18)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = "none"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+                  {/* Gradient-stroked archive icon */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <defs>
+                      <linearGradient id={`soldArchiveGrad-${agency.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#5C2ED4" />
+                        <stop offset="100%" stopColor="#A614C3" />
+                      </linearGradient>
+                    </defs>
+                    <g stroke={`url(#soldArchiveGrad-${agency.id})`}>
+                      <rect width="20" height="5" x="2" y="3" rx="1" />
+                      <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                      <path d="M10 12h4" />
+                    </g>
+                  </svg>
+                  <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Sold to {sold.targetCode}</span>
+                </button>
+              );
+            })()}
           </div>
         </div>
 
@@ -1681,7 +1925,27 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <p className="text-[12px]" style={{ ...font, color: c.muted }}>{eEmail}</p>
           </div>
           <InfoCard title="Agency Status" icon={<Building2 className="w-5 h-5" style={{ color: "#A855F7" }} />}>
-            {bookRolled.has(agency.id) || eStatus === "Unappointed" ? <UnapptBadge /> : <AppointedBadge />}
+            <div className="flex flex-col items-start gap-1.5">
+              {bookRolled.has(agency.id) || eStatus === "Unappointed" ? <UnapptBadge /> : <AppointedBadge />}
+              {effectiveBadges.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {effectiveBadges.map(b => (
+                    <span key={b} className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                      style={{ background: isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)", padding: "3px 10px" }}>
+                      <span style={{
+                        backgroundImage: isDark
+                          ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)"
+                          : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        fontSize: 11, fontWeight: 600, lineHeight: "16px",
+                      }}>{b}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </InfoCard>
           {/* Appointed Date card swaps to "Sold Date" when the agency has been book-rolled. */}
           {bookRolled.has(agency.id) ? (
@@ -1810,7 +2074,29 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
                 <div className="space-y-1">{agency.workersComp.map(w => <p key={w} className="text-[13px]" style={{ ...font, color: c.text }}>{w}</p>)}</div>
               </div>
-              <div />
+              <div>
+                <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Tags</p>
+                {effectiveBadges.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {effectiveBadges.map(b => (
+                      <span key={b} className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                        style={{ background: isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)", padding: "3px 10px" }}>
+                        <span style={{
+                          backgroundImage: isDark
+                            ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)"
+                            : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                          backgroundClip: "text",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          fontSize: 11, fontWeight: 600, lineHeight: "16px",
+                        }}>{b}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[13px]" style={{ ...font, color: c.muted, fontStyle: "italic" }}>None — add a tag in Edit.</p>
+                )}
+              </div>
             </div>
           </div>
           </div>
@@ -1859,7 +2145,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                     <RefreshCw className="w-3 h-3" style={{ color: "#7C3AED" }} />
-                    <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
+                    <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
                   </button>
                 </div>
               </div>
@@ -1882,7 +2168,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         }}>
                         <Radio checked={active} onClick={() => setEType(t)} />
                         {active
-                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
+                          ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
                           : <span style={{ color: c.muted }}>{t}</span>
                         }
                       </button>
@@ -2155,17 +2441,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <button key={opt} onClick={() => set(bool)}
                           className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
                           style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                            border: "1.65px solid transparent",
+                            border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                            background: active ? undefined : c.cardBg,
                             backgroundImage: active
                               ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                              : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
-                            backgroundOrigin: "padding-box, padding-box, border-box",
-                            backgroundClip: "padding-box, padding-box, border-box",
+                              : undefined,
+                            backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                            backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
                           }}>
                           <Radio checked={active} onClick={() => set(bool)} />
                           {active
-                            ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
-                            : <span style={{ color: "#6B7280" }}>{opt}</span>
+                            ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
+                            : <span style={{ color: c.muted }}>{opt}</span>
                           }
                         </button>
                       );
@@ -2201,6 +2488,30 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </label>
               ))}
             </div>
+
+            {/* Tags */}
+            <SectionDivider title="Tags" />
+            <p className="text-[12px] mb-3" style={{ ...font, color: c.muted }}>Shown on the Agency Status card. Pick any that apply.</p>
+            <div className="grid grid-cols-4 gap-x-6 gap-y-3">
+              {AGENCY_BADGES.map(b => {
+                const checked = eBadges.has(b);
+                return (
+                  <label key={b} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                    <div className="flex-shrink-0">
+                      <Checkbox checked={checked} onClick={() => toggleSet(eBadges, b, setEBadges)} />
+                    </div>
+                    <span className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                      style={{ background: checked ? (isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)") : (isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"), padding: "3px 10px" }}>
+                      {checked ? (
+                        <span style={{ backgroundImage: isDark ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)" : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
+                      ) : (
+                        <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
         {/* Footer buttons */}
@@ -2221,8 +2532,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   || eTaxId !== agency.taxId
                 );
                 const licChanged = eLicNo !== agency.licenseNo;
+                if (w9Changed || licChanged) {
+                  // Block save — modal will require new docs to be uploaded before allowing it.
+                  setDocModalUploads({});
+                  setDocUpdateModal({ w9: w9Changed, license: licChanged });
+                  return;
+                }
+                setBadgesOverride(Array.from(eBadges));
                 setIsEditing(false);
-                if (w9Changed || licChanged) setDocUpdateModal({ w9: w9Changed, license: licChanged });
               }}
               className="text-[13px] font-semibold text-white transition-all"
               style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
@@ -2238,20 +2555,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Documents tab ── */}
         {detailTab === "documents" && (() => {
-          // Smart triggers — fire when source-of-truth fields drift from current agency baseline.
-          const w9Drift = (
-            eName !== agency.name
-            || eType !== agency.agencyType
-            || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
-            || eTaxId !== agency.taxId
-          );
-          const licenseDrift = eLicNo !== agency.licenseNo;
           const docsByCat = (cat: AgencyDocCategory) => agencyDocs.filter(d => d.category === cat && !d.trashed);
           const archivedDocs = agencyDocs.filter(d => d.archived && !d.trashed);
           const trashedDocs  = agencyDocs.filter(d => d.trashed);
           const archivedCount = archivedDocs.length;
           const trashedCount  = trashedDocs.length;
-          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements" };
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other" };
           const parseDate = (s: string) => { const t = Date.parse(s); return isNaN(t) ? 0 : t; };
           const baseDocs: AgencyDoc[] = showDocTrashed
             ? trashedDocs
@@ -2259,9 +2568,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               ? archivedDocs
               : agencyDocs.filter(d => !d.trashed && !d.archived);
           const visibleDocs = baseDocs
-            .filter(d => docFilterCat === "All" || d.category === docFilterCat)
+            .filter(d => docFilterCats.size === 0 || docFilterCats.has(d.category))
             .filter(d => !docSearch || d.name.toLowerCase().includes(docSearch.toLowerCase()) || CAT_LABEL[d.category].toLowerCase().includes(docSearch.toLowerCase()))
-            .sort((a, b) => docSortDir === "desc" ? parseDate(b.date) - parseDate(a.date) : parseDate(a.date) - parseDate(b.date));
+            .sort((a, b) => {
+              const dir = docSortDir === "desc" ? -1 : 1;
+              if (docSortKey === "name")     return dir * a.name.localeCompare(b.name);
+              if (docSortKey === "category") return dir * CAT_LABEL[a.category].localeCompare(CAT_LABEL[b.category]);
+              return dir * (parseDate(a.date) - parseDate(b.date));
+            });
           // Mock E&O record — read-only per agreement clause.
           const eoExpiry = agency.eoExp || "Mar 1, 2027";
           const isAdmin = currentUserIsAdmin;
@@ -2341,6 +2655,35 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             showToast({ title: "Document restored", description: `${d.name} restored.`, action: { label: "Undo", onClick: () => removeDoc(d.id) } });
           };
 
+          // Selectable file icon: when select mode is OFF → static FileText icon.
+          // When select mode is ON → empty/filled checkbox toggle. Triggered from the toolbar CheckSquare button.
+          const SelectableFileIcon = ({ id, size = "w-4 h-4" }: { id: string; size?: string }) => {
+            const checked = selectedDocIds.has(id);
+            if (!isDocSelectMode) {
+              return <FileText className={`${size} flex-shrink-0`} style={{ color: c.muted }} />;
+            }
+            return (
+              <button
+                type="button"
+                title={checked ? "Deselect" : "Select"}
+                onClick={(e) => { e.stopPropagation(); toggleDocSelected(id); }}
+                className={`relative flex items-center justify-center flex-shrink-0 rounded transition-colors ${size}`}
+                style={{ background: "transparent", padding: 0 }}>
+                {checked ? (
+                  <span className={`${size} inline-flex items-center justify-center rounded`}
+                    style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
+                    <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                      <path d="M1 3.5L3.5 6L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                ) : (
+                  <span className={`${size} inline-flex items-center justify-center rounded`}
+                    style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }} />
+                )}
+              </button>
+            );
+          };
+
           // Reusable section component
           const Section = ({ category, title, count, hint }: { category: AgencyDocCategory; title: string; count: string; hint?: string }) => (
             <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
@@ -2353,9 +2696,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 {isAdmin && (
                   <button onClick={() => handleUpload(category)}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors"
-                    style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.20)" }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.14)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}>
+                    style={{ ...font, color: isDark ? "#C87BE0" : "#A614C3", background: isDark ? "rgba(168,85,247,0.20)" : "rgba(168,85,247,0.08)", border: `1px solid ${isDark ? "rgba(168,85,247,0.35)" : "rgba(168,85,247,0.20)"}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.28)" : "rgba(168,85,247,0.14)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.20)" : "rgba(168,85,247,0.08)")}>
                     <Upload className="w-3 h-3" />Upload
                   </button>
                 )}
@@ -2369,16 +2712,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   {docsByCat(category).map((d, idx, arr) => (
                     <div key={d.id} className="flex items-center gap-3 px-5 py-2.5"
                       style={{ borderBottom: idx !== arr.length - 1 ? `1px solid ${c.border}` : "none" }}>
-                      <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+                      <SelectableFileIcon id={d.id} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>{d.name}</span>
-                          {category === "w9" && !d.archived && (
-                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
-                          )}
-                          {d.archived && (
-                            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>{category === "w9" ? "Replaced" : "Archived"}</span>
-                          )}
                         </div>
                         <div className="text-[11px]" style={{ ...font, color: c.muted }}>{d.date}</div>
                       </div>
@@ -2394,7 +2731,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
                         <Download className="w-3.5 h-3.5" />
                       </button>
-                      {isAdmin && !d.archived && category === "w9" && (
+                      {isAdmin && !d.archived && (
                         <button title="Archive" onClick={() => requestArchive(d)}
                           className="p-1.5 rounded transition-colors"
                           style={{ color: c.muted }}
@@ -2403,7 +2740,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           <Archive className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      {isAdmin && (d.archived || category !== "w9") && (
+                      {isAdmin && (
                         <button title="Delete" onClick={() => requestTrash(d)}
                           className="p-1.5 rounded transition-colors"
                           style={{ color: c.muted }}
@@ -2429,14 +2766,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           const FlatRow = ({ d }: { d: AgencyDoc }) => (
             <div className="flex items-center gap-3 px-5 py-2.5"
               style={{ borderBottom: `1px solid ${c.border}` }}>
-              <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+              <SelectableFileIcon id={d.id} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>{d.name}</span>
-                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)" }}>{CAT_LABEL[d.category]}</span>
-                  {d.category === "w9" && !d.archived && !d.trashed && (
-                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
-                  )}
+                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ ...font, color: isDark ? "#C87BE0" : "#A614C3", background: isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)" }}>{CAT_LABEL[d.category]}</span>
                   {d.archived && !d.trashed && (
                     <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>{d.category === "w9" ? "Replaced" : "Archived"}</span>
                   )}
@@ -2482,7 +2816,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
               )}
-              {isAdmin && !d.archived && !d.trashed && d.category === "w9" && (
+              {isAdmin && !d.archived && !d.trashed && (
                 <button title="Archive" onClick={() => requestArchive(d)}
                   className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
                   onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
@@ -2502,7 +2836,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           );
 
           return (
-            <div className="flex flex-1 min-h-0 gap-4 pb-4" onClick={() => { setDocFilterOpen(false); setDocSortOpen(false); setDocUploadOpen(false); }}>
+            <div className="flex flex-1 min-h-0 gap-4 pb-4" onClick={() => { setDocFilterOpen(false); setDocSortOpen(false); setDocUploadOpen(false); setDocByTypeFilterOpen(false); }}>
             {/* Left panel */}
             <div className="flex flex-col min-h-0 transition-all"
               style={{ flex: previewDoc && !previewExpanded ? "0 0 38%" : "1 1 100%", minWidth: 0 }}>
@@ -2512,6 +2846,62 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <div className="flex items-center gap-0.5 min-w-0">
                   {([["all","All Documents",List],["byType","By Type",LayoutGrid],["table","Table",Table2]] as [typeof docView, string, ({className}:{className?:string})=>React.ReactElement][]).map(([v, label, Icon]) => {
                     const isActive = docView === v && !showDocArchived && !showDocTrashed;
+                    // "By Type" doubles as a category picker — clicking it switches to that view AND opens the dropdown.
+                    if (v === "byType") {
+                      const selectedLabels = Array.from(docFilterCats).map(k => CAT_LABEL[k]);
+                      const filterLabel = selectedLabels.length === 0
+                        ? "By Type"
+                        : selectedLabels.length === 1
+                          ? selectedLabels[0]
+                          : `${selectedLabels.length} categories`;
+                      return (
+                        <div key={v} className="relative" onClick={e => e.stopPropagation()}>
+                          <button title={label}
+                            onClick={() => {
+                              if (!isActive) { setDocView("byType"); setShowDocArchived(false); setShowDocTrashed(false); }
+                              setDocByTypeFilterOpen(o => !o);
+                            }}
+                            className={`flex items-center ${previewOpen ? "px-1.5" : "gap-1.5 px-3"} py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap`}
+                            style={{ fontFamily: FONT, background: isActive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "transparent", color: isActive ? c.text : c.muted }}>
+                            <Icon className="w-3 h-3" />
+                            {!previewOpen && filterLabel}
+                            {!previewOpen && <ChevronDown className={`w-3 h-3 transition-transform ${docByTypeFilterOpen ? "rotate-180" : ""}`} />}
+                          </button>
+                          {docByTypeFilterOpen && (
+                            <div className="absolute left-0 top-full mt-1 z-30 rounded-lg overflow-hidden min-w-[220px]"
+                              style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                              {/* "All Categories" clears the multi-select. */}
+                              <button onClick={() => { setDocFilterCats(new Set()); }}
+                                className="w-full flex items-center justify-between px-3 py-2 text-[12px] text-left transition-colors"
+                                style={{ fontFamily: FONT, color: docFilterCats.size === 0 ? "#A614C3" : c.text, background: docFilterCats.size === 0 ? "rgba(168,85,247,0.08)" : "transparent" }}
+                                onMouseEnter={e => { if (docFilterCats.size > 0) e.currentTarget.style.background = c.hoverBg; }}
+                                onMouseLeave={e => { if (docFilterCats.size > 0) e.currentTarget.style.background = "transparent"; }}>
+                                <span className="flex items-center gap-2"><FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />All Categories</span>
+                                {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </button>
+                              <div style={{ height: 1, background: c.border }} />
+                              {(["bor","w9","license","agreement","other"] as AgencyDocCategory[]).map(t => {
+                                const checked = docFilterCats.has(t);
+                                return (
+                                  <button key={t} onClick={() => toggleDocFilterCat(t)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors"
+                                    style={{ fontFamily: FONT, color: c.text }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                    <span className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                      style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                    </span>
+                                    <FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                                    <span>{CAT_LABEL[t]}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
                     return (
                       <button key={v} title={label} onClick={e => { e.stopPropagation(); setDocView(v); setShowDocArchived(false); setShowDocTrashed(false); }}
                         className={`flex items-center ${previewOpen ? "px-1.5" : "gap-1.5 px-3"} py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap`}
@@ -2540,20 +2930,34 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <div className="relative" onClick={e => e.stopPropagation()}>
                     <button onClick={() => { setDocFilterOpen(p => !p); setDocSortOpen(false); setDocUploadOpen(false); }}
                       className="p-1.5 rounded-md transition-all"
-                      style={{ color: docFilterCat !== "All" ? "#A855F7" : c.muted, background: docFilterCat !== "All" ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                      style={{ color: docFilterCats.size > 0 ? "#A855F7" : c.muted, background: docFilterCats.size > 0 ? "rgba(168,85,247,0.10)" : "transparent" }}>
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5L9.5 10v5l-3-1.5V10L1 4.5V3z"/></svg>
                     </button>
                     {docFilterOpen && (
                       <div className="absolute right-0 top-8 z-30 w-52 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                         <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Filter by Category</p>
-                        {(["All","bor","w9","license","agreement"] as const).map(t => (
-                          <button key={t} onClick={() => { setDocFilterCat(t as typeof docFilterCat); }}
-                            className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
-                            style={{ fontFamily: FONT, color: docFilterCat === t ? "#A614C3" : c.text, background: docFilterCat === t ? "rgba(168,85,247,0.08)" : "transparent" }}>
-                            {t === "All" ? "All Categories" : CAT_LABEL[t]}
-                            {docFilterCat === t && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                          </button>
-                        ))}
+                        <button onClick={() => setDocFilterCats(new Set())}
+                          className="w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between transition-colors"
+                          style={{ fontFamily: FONT, color: docFilterCats.size === 0 ? "#A614C3" : c.text, background: docFilterCats.size === 0 ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                          All Categories
+                          {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </button>
+                        {(["bor","w9","license","agreement","other"] as AgencyDocCategory[]).map(t => {
+                          const checked = docFilterCats.has(t);
+                          return (
+                            <button key={t} onClick={() => toggleDocFilterCat(t)}
+                              className="w-full text-left px-3 py-1.5 text-[12px] flex items-center gap-2.5 transition-colors"
+                              style={{ fontFamily: FONT, color: c.text }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              <span className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                                style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                                {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </span>
+                              <span>{CAT_LABEL[t]}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -2589,37 +2993,208 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         style={{ fontFamily: FONT, color: c.text, background: "transparent", borderBottom: `1px solid ${c.border}` }} />
                     )}
                   </div>
+                  {/* Select toggle — matches Notes pattern */}
+                  <button title={isDocSelectMode ? "Exit selection" : "Select documents"}
+                    onClick={e => { e.stopPropagation(); setIsDocSelectMode(p => { if (p) clearDocSelection(); return !p; }); }}
+                    className="p-1.5 rounded-md transition-all"
+                    style={{ color: isDocSelectMode ? "#A855F7" : c.muted, background: isDocSelectMode ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                    <CheckSquare className="w-3.5 h-3.5" />
+                  </button>
                   {/* Upload — hidden in archive/trash */}
                   {!showDocArchived && !showDocTrashed && isAdmin && (
-                    <div className="relative ml-1" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center rounded-lg overflow-hidden" style={{ background: btnGrad }}>
-                        <button onClick={() => setDocUploadOpen(p => !p)} className="px-3 py-1.5 text-[12px] font-semibold text-white flex items-center gap-1.5" style={{ fontFamily: FONT }}>
-                          <Upload className="w-3 h-3" />Upload
-                        </button>
-                        <div style={{ width:1, height:20, background:"rgba(255,255,255,0.2)" }} />
-                        <button onClick={() => setDocUploadOpen(p => !p)} className="px-2 py-1.5 text-white flex items-center"><ChevronDown className="w-3 h-3" /></button>
-                      </div>
-                      {docUploadOpen && (
-                        <div className="absolute right-0 top-9 z-30 w-44 rounded-xl shadow-xl py-1.5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                          <p className="text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5" style={{ fontFamily: FONT, color: c.muted }}>Upload to</p>
-                          {(["bor","w9","license","agreement"] as AgencyDocCategory[]).map(cat => (
-                            <button key={cat} onClick={() => { setDocUploadOpen(false); handleUpload(cat); }}
-                              className="w-full text-left px-3 py-1.5 text-[12px] flex items-center gap-2 transition-colors"
-                              style={{ fontFamily: FONT, color: c.text }}
-                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                              <FolderOpen className="w-3 h-3" style={{ color: "#A855F7" }} />{CAT_LABEL[cat]}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <button onClick={() => { setDocUploadModalOpen(true); setDocUploadModalFile(null); setDocUploadModalCat(""); }}
+                      className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all"
+                      style={{ background: btnGrad, fontFamily: FONT }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                      onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                      <Upload className="w-3 h-3" />Upload
+                    </button>
                   )}
+                  {docUploadModalOpen && (() => {
+                    const closeModal = () => { setDocUploadModalOpen(false); setDocUploadModalFile(null); setDocUploadModalCat(""); setDocUploadModalCatOpen(false); setDocUploadModalDrag(false); };
+                    const onPick = (f?: File | null) => { if (f) setDocUploadModalFile(f.name); };
+                    const canUpload = !!docUploadModalFile && !!docUploadModalCat;
+                    return (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+                        style={{ background: "rgba(0,0,0,0.45)" }}
+                        onClick={closeModal}>
+                        <div className="rounded-2xl flex flex-col"
+                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.20)", fontFamily: FONT }}
+                          onClick={e => { e.stopPropagation(); setDocUploadModalCatOpen(false); }}>
+                          <div className="px-6 pt-5 pb-4">
+                            <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Upload document</h3>
+                            <p className="text-[13px]" style={{ color: c.muted }}>Drop a file and pick its category to add it to this agency&apos;s documents.</p>
+                          </div>
+                          <div className="px-6 pb-4 flex flex-col gap-3">
+                            {/* Drag-and-drop zone */}
+                            {docUploadModalFile ? (() => {
+                              // Suggested name only available once a category is chosen — otherwise we can't
+                              // know the right pattern (W-9 vs License vs BOR vs Agreement).
+                              const ext = (docUploadModalFile.match(/\.[^.]+$/)?.[0]) ?? ".pdf";
+                              const yr = new Date().getFullYear();
+                              const cat = docUploadModalCat as AgencyDocCategory | "";
+                              const suggested =
+                                cat === "w9"        ? `W9-${yr}${ext}`
+                              : cat === "license"   ? `${(agency.state || "License").toUpperCase()}-License-${yr}${ext}`
+                              : cat === "bor"       ? `BOR-${yr}${ext}`
+                              : cat === "agreement" ? `Agreement-${yr}${ext}`
+                              : "";
+                              const canSuggest = !!suggested && docUploadModalFile !== suggested;
+                              return (
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
+                                  style={{ background: "rgba(115,201,183,0.10)", border: "1px solid rgba(115,201,183,0.35)" }}>
+                                  <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#73C9B7" }} />
+                                  <input value={docUploadModalFile}
+                                    onChange={e => setDocUploadModalFile(e.target.value)}
+                                    className="text-[12px] flex-1 outline-none bg-transparent min-w-0"
+                                    style={{ color: c.text, fontFamily: FONT }}
+                                    spellCheck={false}
+                                    title="Rename before uploading" />
+                                  {canSuggest && (
+                                    <button onClick={() => setDocUploadModalFile(suggested)}
+                                      title={`Use suggested name: ${suggested}`}
+                                      className="text-[11px] font-medium transition-opacity hover:opacity-80 flex-shrink-0"
+                                      style={{ color: "#A855F7" }}>Suggest</button>
+                                  )}
+                                  {!cat && (
+                                    <span title="Pick a category below to enable name suggestions"
+                                      className="text-[11px] flex-shrink-0" style={{ color: c.muted, fontStyle: "italic" }}>
+                                      Pick category for suggestion
+                                    </span>
+                                  )}
+                                  <button onClick={() => setDocUploadModalFile(null)}
+                                    className="text-[11px] font-medium transition-opacity hover:opacity-70 flex-shrink-0"
+                                    style={{ color: c.muted }}>Replace</button>
+                                </div>
+                              );
+                            })() : (
+                              <label className="flex flex-col items-center justify-center cursor-pointer transition-colors rounded-lg py-6"
+                                style={{ background: docUploadModalDrag ? "rgba(168,85,247,0.08)" : c.hoverBg, border: `1.5px dashed ${docUploadModalDrag ? "#A614C3" : c.borderStrong}` }}
+                                onDragOver={e => { e.preventDefault(); setDocUploadModalDrag(true); }}
+                                onDragLeave={() => setDocUploadModalDrag(false)}
+                                onDrop={e => { e.preventDefault(); setDocUploadModalDrag(false); onPick(e.dataTransfer.files?.[0]); }}>
+                                <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                                  onChange={e => onPick(e.target.files?.[0])} />
+                                <Paperclip className="w-5 h-5 mb-1.5" style={{ color: "#A614C3" }} />
+                                <span className="text-[12px] font-medium" style={{ color: c.text }}>Drag &amp; Drop or Click to Browse</span>
+                                <span className="text-[11px] mt-0.5" style={{ color: c.muted }}>PDF, JPG, PNG · Max 10MB</span>
+                              </label>
+                            )}
+                            {/* Category picker */}
+                            <div>
+                              <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: c.muted, letterSpacing: "0.06em" }}>Category</label>
+                              <div className="relative" onClick={e => e.stopPropagation()}>
+                                <button type="button" onClick={() => setDocUploadModalCatOpen(o => !o)}
+                                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                                  style={{ background: c.cardBg, border: `1px solid ${docUploadModalCatOpen ? "#A614C3" : c.border}`, color: docUploadModalCat ? c.text : c.muted, cursor: "pointer" }}>
+                                  <span className="truncate">{docUploadModalCat ? CAT_LABEL[docUploadModalCat as AgencyDocCategory] : "Select a category…"}</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${docUploadModalCatOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                                </button>
+                                {docUploadModalCatOpen && (
+                                  <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg overflow-hidden"
+                                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                                    {(["bor","w9","license","agreement","other"] as AgencyDocCategory[]).map(cat => {
+                                      const active = docUploadModalCat === cat;
+                                      return (
+                                        <button key={cat} type="button"
+                                          onClick={() => { setDocUploadModalCat(cat); setDocUploadModalCatOpen(false); }}
+                                          className="w-full flex items-center justify-between px-3 py-2 text-[13px] text-left transition-colors"
+                                          style={{ color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                                          onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                                          onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                                          <span className="flex items-center gap-2"><FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />{CAT_LABEL[cat]}</span>
+                                          {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="px-6 py-3 flex justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                            <button onClick={closeModal}
+                              className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                              style={{ border: `1px solid ${c.border}`, color: c.text, background: c.cardBg }}>
+                              Cancel
+                            </button>
+                            <button disabled={!canUpload}
+                              onClick={() => {
+                                if (!canUpload) return;
+                                const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                                setAgencyDocs(prev => {
+                                  if (docUploadModalCat === "w9") {
+                                    return [
+                                      { id: `d${Date.now()}`, category: "w9", name: docUploadModalFile!, date: today },
+                                      ...prev.map(d => d.category === "w9" && !d.archived ? { ...d, archived: true } : d),
+                                    ];
+                                  }
+                                  return [{ id: `d${Date.now()}`, category: docUploadModalCat as AgencyDocCategory, name: docUploadModalFile!, date: today }, ...prev];
+                                });
+                                showToast({ title: "Document uploaded", description: `${docUploadModalFile} added to ${CAT_LABEL[docUploadModalCat as AgencyDocCategory]}.` });
+                                closeModal();
+                              }}
+                              className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                              style={{ background: btnGrad, opacity: canUpload ? 1 : 0.5, cursor: canUpload ? "pointer" : "not-allowed" }}>
+                              Upload
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* Divider */}
               <div className="flex-shrink-0 mb-3" style={{ height:1, background:c.border }} />
+
+              {/* Bulk-select action bar (shown whenever select mode is on) */}
+              {isDocSelectMode && (
+                <div className="flex items-center justify-between px-4 py-2 mb-3 rounded-lg flex-shrink-0"
+                  style={{ background: isDark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.06)", border: `1px solid ${isDark ? "rgba(168,85,247,0.30)" : "rgba(168,85,247,0.20)"}` }}>
+                  <div className="flex items-center gap-2 text-[12px]" style={{ ...font, color: c.text }}>
+                    {selectedDocIds.size > 0 ? (
+                      <>
+                        <span className="inline-flex items-center justify-center rounded"
+                          style={{ width: 18, height: 18, background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
+                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                            <path d="M1 3.5L3.5 6L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </span>
+                        <span className="font-semibold">{selectedDocIds.size}</span>
+                        <span style={{ color: c.muted }}>{selectedDocIds.size === 1 ? "document selected" : "documents selected"}</span>
+                      </>
+                    ) : (
+                      <span style={{ color: c.muted }}>Select documents to download</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {selectedDocIds.size > 0 && (
+                      <button onClick={() => {
+                          const names = agencyDocs.filter(d => selectedDocIds.has(d.id)).map(d => d.name);
+                          showToast({ title: `Downloading ${names.length} ${names.length === 1 ? "document" : "documents"}`, description: names.length <= 3 ? names.join(", ") : `${names.slice(0,2).join(", ")} and ${names.length - 2} more` });
+                          clearDocSelection();
+                          setIsDocSelectMode(false);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all"
+                        style={{ ...font, background: btnGrad }}
+                        onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                        onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                        <Download className="w-3 h-3" />
+                        Download {selectedDocIds.size}
+                      </button>
+                    )}
+                    <button onClick={() => { clearDocSelection(); setIsDocSelectMode(false); }}
+                      className="px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-colors"
+                      style={{ ...font, color: c.muted, background: "transparent" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1 min-h-0 overflow-y-auto">
                 {/* Sync strip + drift banners shown in main views only */}
@@ -2627,77 +3202,55 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <>
                     <div className="flex items-center gap-2 px-5 py-2 mb-4 rounded-lg text-[12px] flex-shrink-0"
                       style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
-                      <RefreshCw className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
-                      <span>Synced from <strong style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
+                      <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
+                        title="Sync now" className="flex-shrink-0 transition-transform hover:rotate-180" style={{ transitionDuration: "400ms" }}>
+                        <RefreshCw className="w-3.5 h-3.5" style={{ color: isDark ? "#74C3B7" : "#A855F7" }} />
+                      </button>
+                      <span>Synced from <strong style={isDark
+                          ? { color: "#74C3B7" }
+                          : { background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
                       <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
                         className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                        style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                        style={isDark
+                          ? { color: "#74C3B7" }
+                          : { background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                         Sync now
                       </button>
                     </div>
-                    {w9Drift && (
-                      <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
-                        style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                          <defs>
-                            <linearGradient id="w9-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#5C2ED4" />
-                              <stop offset="100%" stopColor="#A614C3" />
-                            </linearGradient>
-                          </defs>
-                          <circle cx="8" cy="8" r="7" stroke="url(#w9-alert-grad)" strokeWidth="1.5" />
-                          <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#w9-alert-grad)" />
-                          <circle cx="8" cy="11.5" r="0.9" fill="url(#w9-alert-grad)" />
-                        </svg>
-                        <span>Agency information changed — please upload an updated <strong>W-9</strong>.</span>
-                        <button onClick={() => handleUpload("w9")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                          style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                          Upload W-9
-                        </button>
-                      </div>
-                    )}
-                    {licenseDrift && (
-                      <div className="flex items-center gap-2.5 px-4 py-2 mb-3 rounded-lg text-[12px] flex-shrink-0 relative overflow-hidden"
-                        style={{ ...font, color: c.text, background: isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.05)", border: `1px solid rgba(166,20,195,${isDark ? "0.35" : "0.22"})` }}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                          <defs>
-                            <linearGradient id="lic-alert-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#5C2ED4" />
-                              <stop offset="100%" stopColor="#A614C3" />
-                            </linearGradient>
-                          </defs>
-                          <circle cx="8" cy="8" r="7" stroke="url(#lic-alert-grad)" strokeWidth="1.5" />
-                          <rect x="7.25" y="3.5" width="1.5" height="5.5" rx="0.75" fill="url(#lic-alert-grad)" />
-                          <circle cx="8" cy="11.5" r="0.9" fill="url(#lic-alert-grad)" />
-                        </svg>
-                        <span>License number changed — please upload the updated <strong>license copy</strong>.</span>
-                        <button onClick={() => handleUpload("license")} className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                          style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                          Upload License
-                        </button>
-                      </div>
-                    )}
                   </>
                 )}
 
-                {/* By Type view (default) */}
+                {/* By Type view — grouped by category so each type is visually separated. */}
                 {!showDocArchived && !showDocTrashed && docView === "byType" && (
                   <>
-                    {(docFilterCat === "All" || docFilterCat === "bor")       && <Section category="bor"       title="Broker of Record" count={String(docsByCat("bor").length)} />}
-                    {(docFilterCat === "All" || docFilterCat === "w9")        && <Section category="w9"        title="W-9"              count={`${docsByCat("w9").filter(d => !d.archived).length} latest · ${docsByCat("w9").filter(d => d.archived).length} replaced`} hint="Uploading a new W-9 replaces the current one and moves the previous version to history." />}
-                    {(docFilterCat === "All" || docFilterCat === "license")   && <Section category="license"   title="License"          count={String(docsByCat("license").length)} hint="Required when license number changes." />}
-                    {(docFilterCat === "All" || docFilterCat === "agreement") && <Section category="agreement" title="Agreements"       count={String(docsByCat("agreement").length)} />}
+                    {visibleDocs.length === 0 ? (
+                      <div className="rounded-xl overflow-hidden mb-3 px-5 py-10 text-center text-[12px]" style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        No documents in this category yet.
+                      </div>
+                    ) : (() => {
+                      const ORDER: AgencyDocCategory[] = ["bor","w9","license","agreement","other"];
+                      const groups = ORDER
+                        .map(cat => ({ cat, docs: visibleDocs.filter(d => d.category === cat) }))
+                        .filter(g => g.docs.length > 0);
+                      return groups.map(g => (
+                        <div key={g.cat} className="rounded-xl overflow-hidden mb-3" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                          <div className="flex items-center gap-2 px-5 py-2.5" style={{ borderBottom: `1px solid ${c.border}`, background: c.hoverBg }}>
+                            <FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                            <span className="text-[12px] font-semibold" style={{ ...font, color: c.text }}>{CAT_LABEL[g.cat]}</span>
+                            <span className="text-[11px]" style={{ ...font, color: c.muted }}>({g.docs.length})</span>
+                          </div>
+                          {g.docs.map(d => <FlatRow key={d.id} d={d} />)}
+                        </div>
+                      ));
+                    })()}
                     {/* E&O (read-only) — only when no category filter */}
-                    {docFilterCat === "All" && (
+                    {docFilterCats.size === 0 && (
                       <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
                         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
                           <div className="flex items-center gap-2">
                             <FileCheck className="w-4 h-4" style={{ color: "#A855F7" }} />
                             <span className="text-[13px] font-bold" style={{ ...font, color: c.text }}>E&amp;O Certificate</span>
                           </div>
-                          <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em" }}>
-                            <Lock className="w-3 h-3" />Read-only
-                          </span>
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2.5">
                           <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
@@ -2745,10 +3298,33 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
                     <div className="grid items-center px-5 py-2 text-[11px] font-semibold uppercase tracking-wider"
                       style={{ ...font, color: c.muted, background: c.hoverBg, letterSpacing: "0.04em", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) 140px" }}>
-                      <span className="text-left">Name</span>
-                      <span className="text-left">Category</span>
-                      <span className="text-left">Date</span>
-                      <span className="text-left">Status</span>
+                      {(["name","category","date"] as const).map(k => {
+                        const label = k === "name" ? "Name" : k === "category" ? "Category" : "Date";
+                        const active = docSortKey === k;
+                        const sub = isDark ? "#6B7280" : "#9CA3AF";
+                        const upColor   = active && docSortDir === "asc"  ? c.text : sub;
+                        const downColor = active && docSortDir === "desc" ? c.text : sub;
+                        return (
+                          <button key={k}
+                            onClick={() => {
+                              if (docSortKey === k) setDocSortDir(d => d === "asc" ? "desc" : "asc");
+                              else { setDocSortKey(k); setDocSortDir("asc"); }
+                            }}
+                            className="flex items-center gap-1 select-none cursor-pointer text-[11px] font-semibold uppercase tracking-wider"
+                            style={{ ...font, color: active ? c.text : c.muted, letterSpacing: "0.04em", justifyContent: "flex-start" }}>
+                            {label}
+                            <span className="inline-flex items-center ml-1 flex-shrink-0" style={{ verticalAlign: "middle", gap: 1 }}>
+                              <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                                <path d="M3.5 9V2M3.5 2L1.5 4M3.5 2L5.5 4" stroke={upColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <svg width="7" height="10" viewBox="0 0 7 10" fill="none">
+                                <path d="M3.5 1V8M3.5 8L1.5 6M3.5 8L5.5 6" stroke={downColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </span>
+                          </button>
+                        );
+                      })}
+                      <span className="text-left">State</span>
                       <span className="text-right">Actions</span>
                     </div>
                     {visibleDocs.length === 0 ? (
@@ -2758,16 +3334,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <div key={d.id} className="grid items-center px-5 py-2.5 text-[12px]"
                           style={{ ...font, color: c.text, borderTop: `1px solid ${c.border}`, gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) 140px" }}>
                           <span className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                            <SelectableFileIcon id={d.id} size="w-3.5 h-3.5" />
                             <span className="truncate">{d.name}</span>
                           </span>
-                          <span style={{ color: c.muted }}>{CAT_LABEL[d.category]}</span>
+                          <span>
+                            <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                              style={{ fontFamily: FONT, color: isDark ? "#C87BE0" : "#A614C3", background: isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)" }}>
+                              {CAT_LABEL[d.category]}
+                            </span>
+                          </span>
                           <span style={{ color: c.muted }}>{d.date}</span>
                           <span>
                             {d.archived ? (
                               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#F59E0B", background: "rgba(245,158,11,0.10)", letterSpacing: "0.04em" }}>{d.category === "w9" ? "Replaced" : "Archived"}</span>
-                            ) : d.category === "w9" ? (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: "#A614C3", background: "rgba(168,85,247,0.10)", letterSpacing: "0.04em" }}>Upload Needed</span>
                             ) : (
                               <span style={{ color: c.muted }}>—</span>
                             )}
@@ -2784,14 +3363,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
                               <Download className="w-3.5 h-3.5" />
                             </button>
-                            {isAdmin && !d.archived && d.category === "w9" && (
-                              <button title="Archive" onClick={() => requestArchive(d)}
-                                className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
-                                onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
-                                <Archive className="w-3.5 h-3.5" />
-                              </button>
-                            )}
                             {isAdmin && (
                               <button title="Move to Trash" onClick={() => requestTrash(d)}
                                 className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
@@ -2865,7 +3436,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         })()}
         {/* Expanded preview drawer (right side, matches Notes expanded pattern) */}
         {previewDoc && previewExpanded && detailTab === "documents" && (() => {
-          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements" };
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other" };
           return (
           <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width: "58vw" }}>
             <div className="flex-1 cursor-pointer" onClick={() => setPreviewExpanded(false)} style={{ background: "rgba(0,0,0,0.25)" }} />
@@ -3702,8 +4273,29 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         )}
 
         {/* ── Policies tab ── */}
-        {detailTab === "policies" && (
-          <div className="flex flex-col flex-1 min-h-0">
+        {detailTab === "policies" && (() => {
+          const isSold = bookRolled.has(agency.id);
+          const sold = isSold ? bookRolled.get(agency.id)! : null;
+          const soldTargetName = sold ? (allAgencies.find(a => a.code === sold.targetCode)?.name ?? sold.targetCode) : "";
+          const soldTooltip = sold ? `Sold on ${sold.date} — policies transferred to ${soldTargetName}.` : undefined;
+          return (
+          <div className="flex flex-col flex-1 min-h-0 relative">
+            {isSold && (
+              <div className="mb-3 flex items-start gap-2 px-3 py-2.5 rounded-lg flex-shrink-0"
+                style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.08) 63.88%)", border: "1px solid rgba(166,20,195,0.18)", color: c.text, fontFamily: FONT, fontSize: 12 }}>
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#A614C3" }} />
+                <div className="flex-1">
+                  These policies were transferred to{" "}
+                  <button onClick={() => onNavigateToAgency?.(sold!.targetCode, "policies")}
+                    className="font-semibold transition-opacity hover:opacity-80"
+                    style={{ background: "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%) text", WebkitTextFillColor: "transparent" }}>
+                    {soldTargetName} · {sold!.targetCode}
+                  </button>
+                  {" "}on {sold!.date}.
+                </div>
+              </div>
+            )}
+            <div style={isSold ? { opacity: 0.65, filter: "grayscale(0.3)" } : undefined} title={soldTooltip}>
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-stretch overflow-hidden transition-all"
                 style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius:10 }}
@@ -3869,7 +4461,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       style={{ gridTemplateColumns:qpGridTemplate, borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isRenewal?"rgba(116,195,183,0.08)":"transparent", borderLeft:isRenewal?"3px solid #74C3B7":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.14)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isRenewal?"rgba(116,195,183,0.08)":"transparent")}>
                       {!qpHiddenCols.has("created")      && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.createdDate).toLocaleDateString()}</div>}
-                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{p.policyNumber}</div>}
+                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#74C3B7" : "#A614C3" }}>{p.policyNumber}</div>}
                       {!qpHiddenCols.has("applicant")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.applicant}</div>}
                       {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba||"—"}</div>}
                       {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>}
@@ -3881,8 +4473,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 })}
               </div>
             </div>
+            </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── Quotes tab ── */}
         {detailTab === "quotes" && (
@@ -4052,7 +4646,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       style={{ gridTemplateColumns:qpGridTemplate, borderBottom:i!==arr.length-1?`1px solid ${c.border}`:"none", background:isIncomplete?"rgba(245,158,11,0.06)":"transparent", borderLeft:isIncomplete?"3px solid #F59E0B":"3px solid transparent" }}
                       onMouseEnter={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.10)":c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background=isIncomplete?"rgba(245,158,11,0.06)":"transparent")}>
                       {!qpHiddenCols.has("created")      && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(q.createdDate).toLocaleDateString()}</div>}
-                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{q.quoteId}</div>}
+                      {!qpHiddenCols.has("policyNumber") && <div className="text-[12px] font-semibold" style={{ fontFamily:FONT, color: isDark ? "#74C3B7" : "#A614C3" }}>{q.quoteId}</div>}
                       {!qpHiddenCols.has("applicant")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.applicant}</div>}
                       {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba||"—"}</div>}
                       {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate?new Date(q.effectiveDate).toLocaleDateString():"—"}</div>}
@@ -4331,12 +4925,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
                       onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
 
-                      {/* Principal indicator — absolute so it doesn't shift grid */}
-                      {isPrincipal && !isInactive && (
+                      {/* Principal pin — preserved for archived principals so the role marker stays visible.
+                          Non-principal archived users get no left bar. */}
+                      {isPrincipal && (
                         <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:"#A614C3" }} />
-                      )}
-                      {isInactive && (
-                        <div className="absolute left-0 top-0 bottom-0 rounded-l-sm" style={{ width:3, background:"#F59E0B" }} />
                       )}
 
                       {/* Name */}
@@ -4363,11 +4955,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {/* Ext */}
                       <div className="text-[13px] text-center" style={{ fontFamily:FONT, color:c.muted }}>{u.ext || "—"}</div>
 
-                      {/* Status — Inactive (whether status-only or archived) shows greyed; Active is green. */}
+                      {/* Status — Inactive (whether status-only or archived) shows greyed; Active uses the brand teal. */}
                       {(() => {
                         const showInactive = isInactive || statusInactiveUserIds.has(u.id);
-                        const bg = showInactive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "rgba(115,201,183,0.15)";
-                        const fg = showInactive ? c.muted : "#10B981";
+                        const bg = showInactive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : (isDark ? "rgba(115,201,183,0.22)" : "rgba(115,201,183,0.15)");
+                        const fg = showInactive ? c.muted : (isDark ? "#4ECDC4" : "#73C9B7");
                         return (
                           <div className="flex items-center justify-center">
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
@@ -4387,8 +4979,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           onClick={(e) => {
                             if (userMenuId === u.id) { setUserMenuId(null); setUserMenuPos(null); return; }
                             const r = e.currentTarget.getBoundingClientRect();
+                            // Estimate menu height (≈ row count × 33px + padding) and flip upward when there
+                            // isn't enough room below — keeps the menu visible even for the bottom-most user.
+                            const estHeight = 220;
+                            const flipUp = r.bottom + estHeight > window.innerHeight - 8;
                             setUserMenuId(u.id);
-                            setUserMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+                            setUserMenuPos(flipUp
+                              ? { bottom: window.innerHeight - r.top + 4, right: window.innerWidth - r.right }
+                              : { top: r.bottom + 4, right: window.innerWidth - r.right });
                           }}>
                           <MoreVertical className="w-4 h-4"/>
                         </button>
@@ -4396,18 +4994,28 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           const isInactive = inactiveUserIds.has(u.id);
                           const isLocked = lockedUserIds.has(u.id);
                           const base = isInactive ? [] : ["Edit User", "Reset Password", "Reassign Accounts", "Unlock User"];
-                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Deactivate"];
+                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Archive User"];
                           // Read-only admin sees no menu items — only full Admin can operate.
                           const actions = currentUserIsReadOnlyAdmin ? [] : currentUserIsAdmin ? [...base, ...adminOnly] : [];
                           return (
                           <div className="fixed rounded-xl shadow-xl overflow-hidden"
-                            style={{ background:isDark?"#1E2240":"#FFFFFF", border:`1px solid ${c.border}`, top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000, width: 170 }}>
-                            {actions.map(action => (
+                            style={{ background:isDark?"#1E2240":"#FFFFFF", border:`1px solid ${c.border}`, top: userMenuPos.top, bottom: userMenuPos.bottom, right: userMenuPos.right, zIndex: 1000, width: 170 }}>
+                            {actions.map(action => {
+                              // "Unlock User" is only meaningful when the account is actually locked.
+                              // Render it disabled (gray) with a tooltip when the user is unlocked already.
+                              const isUnlockDisabled = action === "Unlock User" && !isLocked;
+                              return (
                               <button key={action} className="w-full text-left px-4 py-2 text-[12px] transition-colors"
-                                style={{ fontFamily:FONT, color:action==="Remove"?"#EF4444":action==="Reactivate"?"#10B981":c.text }}
-                                onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
+                                disabled={isUnlockDisabled}
+                                title={isUnlockDisabled ? "Account is currently active — nothing to unlock." : undefined}
+                                style={{ fontFamily:FONT,
+                                  color: isUnlockDisabled ? c.muted : action==="Remove"?"#EF4444":action==="Reactivate"?"#10B981":c.text,
+                                  cursor: isUnlockDisabled ? "not-allowed" : "pointer",
+                                  opacity: isUnlockDisabled ? 0.55 : 1 }}
+                                onMouseEnter={e=>{ if (!isUnlockDisabled) e.currentTarget.style.background=c.hoverBg; }}
                                 onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
                                 onClick={() => {
+                                  if (isUnlockDisabled) return;
                                   if (action === "Edit User") {
                                     const parts = u.name.trim().split(/\s+/);
                                     setAuFirstName(parts[0] || "");
@@ -4426,6 +5034,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     setAuState("");
                                     setAuZip("");
                                     setEditUserId(u.id);
+                                  } else if (action === "Reset Password") {
+                                    showToast({
+                                      title: "Password reset link sent",
+                                      description: "A reset email has been sent to this user.",
+                                    });
                                   } else if (action === "Reassign Accounts") {
                                     setReassignAccountsFrom({ userId: u.id, userName: u.name });
                                     setReassignAccountsToId("");
@@ -4433,41 +5046,37 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                     setLockedUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; });
                                     showToast({
                                       title: "Account unlocked",
-                                      description: `${u.name} can sign in again.`,
+                                      description: "This user can sign in again.",
                                       action: { label: "Undo", onClick: () => setLockedUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; }) },
                                     });
-                                  } else if (action === "Deactivate") {
-                                    // If Principal or Agency Contact, require reassignment before deactivating.
-                                    // Use effective role (honors a previous reassignment override).
-                                    const isPrin = principalOverride
-                                      ? u.id === principalOverride.newId
-                                      : u.jobTitle === "Principal";
-                                    const currentContactName = agencyContactOverride ?? agency.contact;
-                                    const isCon = u.name === currentContactName;
-                                    if (isPrin || isCon) {
-                                      setRoleReassign({ userId: u.id, userName: u.name, action: "deactivate", needsPrincipal: isPrin, needsContact: isCon });
-                                      setReassignPrincipalId("");
-                                      setReassignContactId("");
-                                    } else {
-                                      setDeactivateUserConfirm({ id: u.id, name: u.name });
-                                    }
+                                  } else if (action === "Archive User") {
+                                    // Archiving any user always requires reassigning their book of business
+                                    // to another active user — same pattern as archiving a Principal.
+                                    setReassignAccountsFrom({ userId: u.id, userName: u.name, andArchive: true });
+                                    setReassignAccountsToId("");
                                   } else if (action === "Reactivate") {
                                     setInactiveUserIds(prev => { const s = new Set(prev); s.delete(u.id); return s; });
                                     showToast({
                                       title: "User reactivated",
-                                      description: `${u.name} is active again.`,
+                                      description: "This user is active again.",
                                       action: { label: "Undo", onClick: () => setInactiveUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; }) },
                                     });
                                   } else if (action === "Remove") {
-                                    const isPrin = u.jobTitle === "Principal" && !(principalOverride && principalOverride.oldId === u.id);
-                                    const currentContactName = agencyContactOverride ?? agency.contact;
-                                    const isCon = u.name === currentContactName;
-                                    if (isPrin || isCon) {
-                                      setRoleReassign({ userId: u.id, userName: u.name, action: "remove", needsPrincipal: isPrin, needsContact: isCon });
-                                      setReassignPrincipalId("");
-                                      setReassignContactId("");
-                                    } else {
+                                    // For archived users we already reassigned their book during archive,
+                                    // so skip the role-reassign modal — just confirm + remove.
+                                    if (isInactive) {
                                       setRemoveUserConfirm({ id: u.id, name: u.name });
+                                    } else {
+                                      const isPrin = u.jobTitle === "Principal" && !(principalOverride && principalOverride.oldId === u.id);
+                                      const currentContactName = agencyContactOverride ?? agency.contact;
+                                      const isCon = u.name === currentContactName;
+                                      if (isPrin || isCon) {
+                                        setRoleReassign({ userId: u.id, userName: u.name, action: "remove", needsPrincipal: isPrin, needsContact: isCon });
+                                        setReassignPrincipalId("");
+                                        setReassignContactId("");
+                                      } else {
+                                        setRemoveUserConfirm({ id: u.id, name: u.name });
+                                      }
                                     }
                                   }
                                   setUserMenuId(null);
@@ -4475,7 +5084,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 }}>
                                 {action}
                               </button>
-                            ))}
+                              );
+                            })}
                           </div>
                           );
                         })()}
@@ -4905,7 +5515,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         const eligibleUsers = mockAgencyUsers
           .filter(u => u.agencyId === agency.id)
           .filter(u => !inactiveUserIds.has(u.id) && !removedUserIds.has(u.id));
-        const closeModal = () => { setContactCardEditing(false); setContactMode("edit"); setReassignSelection(""); setNewContactName(""); setNewContactPhone(""); setNewContactEmail(""); };
+        const closeModal = () => { setContactCardEditing(false); setContactMode("edit"); setReassignSelection(""); setReassignSearch(""); setNewContactName(""); setNewContactPhone(""); setNewContactEmail(""); };
         const canSave =
           contactMode === "edit" ? eContact.trim().length > 0 :
           contactMode === "reassign" ? reassignSelection !== "" :
@@ -4991,40 +5601,111 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <p className="text-[11px] mt-2" style={{ fontFamily: FONT, color: c.muted }}>Use this to fix typos. To change who the contact is, switch to <strong style={{ color: c.text }}>Reassign</strong>.</p>
                 </div>
               )}
-              {contactMode === "reassign" && (
+              {contactMode === "reassign" && (() => {
+                const q = reassignSearch.trim().toLowerCase();
+                // Match on word prefixes only — "T" should match "Tom Garfield" (name starts with T)
+                // but NOT "Jason Smith" (has T mid-word) or "Diane Kim" (jobTitle "Accounting").
+                const matches = q
+                  ? eligibleUsers.filter(u => {
+                      const nameWords = u.name.toLowerCase().split(/\s+/);
+                      const emailLocal = u.email.toLowerCase().split("@")[0];
+                      return nameWords.some(w => w.startsWith(q)) || emailLocal.startsWith(q);
+                    })
+                  : [];
+                const selectedUser = eligibleUsers.find(u => u.id === reassignSelection);
+                const visibleMatches = matches.slice(0, 6);
+                return (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Existing Users</p>
-                  <div className="space-y-1.5">
-                    {eligibleUsers.length === 0 && (
-                      <p className="text-[12px] py-3" style={{ fontFamily: FONT, color: c.muted }}>No active users for this agency.</p>
-                    )}
-                    {eligibleUsers.map(u => {
-                      const checked = reassignSelection === u.id;
-                      return (
-                        <label key={u.id} className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-                          style={{ border: `1px solid ${checked ? "rgba(168,85,247,0.35)" : c.border}`, background: checked ? "rgba(168,85,247,0.06)" : "transparent" }}
-                          onMouseEnter={e => { if (!checked) e.currentTarget.style.background = c.hoverBg; }}
-                          onMouseLeave={e => { if (!checked) e.currentTarget.style.background = "transparent"; }}>
-                          <div onClick={() => setReassignSelection(u.id)}
-                            className="w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ background: checked ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : c.cardBg, border: checked ? "none" : `1.5px solid ${c.borderStrong}` }}>
-                            {checked && <div className="w-[6px] h-[6px] rounded-full" style={{ background: "#FFFFFF" }} />}
-                          </div>
-                          <input type="radio" checked={checked} onChange={() => setReassignSelection(u.id)} className="sr-only" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{u.name}</span>
-                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
-                                style={{ fontFamily: FONT, background: "rgba(168,85,247,0.10)", color: "#A855F7" }}>{u.jobTitle}</span>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ fontFamily: FONT, color: c.muted }}>Search User</p>
+                  {eligibleUsers.length === 0 ? (
+                    <p className="text-[12px] py-3" style={{ fontFamily: FONT, color: c.muted }}>No active users for this agency.</p>
+                  ) : (
+                    <>
+                      {/* Search input */}
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2"
+                        style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                        <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                        <input autoFocus value={reassignSearch} onChange={e => setReassignSearch(e.target.value)}
+                          placeholder="Search by name, email, or role…"
+                          className="flex-1 outline-none text-[13px] bg-transparent"
+                          style={{ fontFamily: FONT, color: c.text }} />
+                        {reassignSearch && (
+                          <button onClick={() => setReassignSearch("")}
+                            className="p-0.5 rounded transition-colors"
+                            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <X className="w-3 h-3" style={{ color: c.muted }} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Selected user (always visible once picked) */}
+                      {selectedUser && (
+                        <div className="mb-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Selected</p>
+                          <label className="flex items-center gap-3 p-3 rounded-lg"
+                            style={{ border: `1px solid rgba(168,85,247,0.35)`, background: "rgba(168,85,247,0.06)" }}>
+                            <div className="w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
+                              <div className="w-[6px] h-[6px] rounded-full" style={{ background: "#FFFFFF" }} />
                             </div>
-                            <div className="text-[11px] truncate mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{u.email}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{selectedUser.name}</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                                  style={{ fontFamily: FONT, background: "rgba(168,85,247,0.10)", color: "#A855F7" }}>{selectedUser.jobTitle}</span>
+                              </div>
+                              <div className="text-[11px] truncate mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{selectedUser.email}</div>
+                            </div>
+                            <button onClick={() => setReassignSelection("")}
+                              className="text-[11px] font-medium flex-shrink-0 transition-opacity hover:opacity-80"
+                              style={{ fontFamily: FONT, color: c.muted }}>Change</button>
+                          </label>
+                        </div>
+                      )}
+
+                      {/* Search results */}
+                      {q ? (
+                        matches.length === 0 ? (
+                          <p className="text-[12px] py-3 text-center" style={{ fontFamily: FONT, color: c.muted }}>No users match &ldquo;{reassignSearch}&rdquo;.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {visibleMatches.map(u => {
+                              const checked = reassignSelection === u.id;
+                              if (checked) return null;
+                              return (
+                                <label key={u.id} className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                                  style={{ border: `1px solid ${c.border}`, background: "transparent" }}
+                                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                  <div onClick={() => { setReassignSelection(u.id); setReassignSearch(""); }}
+                                    className="w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{ background: c.cardBg, border: `1.5px solid ${c.borderStrong}` }} />
+                                  <input type="radio" checked={false} onChange={() => { setReassignSelection(u.id); setReassignSearch(""); }} className="sr-only" />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{u.name}</span>
+                                      <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0"
+                                        style={{ fontFamily: FONT, background: "rgba(168,85,247,0.10)", color: "#A855F7" }}>{u.jobTitle}</span>
+                                    </div>
+                                    <div className="text-[11px] truncate mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>{u.email}</div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                            {matches.length > 6 && (
+                              <p className="text-[11px] text-center pt-1" style={{ fontFamily: FONT, color: c.muted }}>{matches.length - 6} more match — refine your search.</p>
+                            )}
                           </div>
-                        </label>
-                      );
-                    })}
-                  </div>
+                        )
+                      ) : !selectedUser && (
+                        <p className="text-[12px] py-3 text-center" style={{ fontFamily: FONT, color: c.muted }}>Start typing to find a user from {eligibleUsers.length} active {eligibleUsers.length === 1 ? "user" : "users"}.</p>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
+                );
+              })()}
               {contactMode === "new" && (
                 <div className="space-y-3">
                   <div>
@@ -5213,6 +5894,9 @@ const WORKERS_COMP = [
   "AIG","AmTrust","Clear Spring","CNA","CNA2.0","Cornerstone","Employers","Great American",
   "GUARD","ICW Group","LIBERTYMUTUAL","Pie","Travelers","Zenith",
 ];
+const AGENCY_BADGES = [
+  "Strategic Partner","VIP","Rising Star",
+];
 
 export type AgencyDraft = {
   agencyName: string; agencyCode: string; agencyType: "Retail"|"Wholesale";
@@ -5227,6 +5911,7 @@ export type AgencyDraft = {
   eoPolicyNo: string; eoExp: string;
   agencyBill: boolean; directBill: boolean; premiumFin: boolean;
   affiliations: string[]; workersComp: string[];
+  badges: string[];
 };
 
 function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btnGrad, FONT }: {
@@ -5266,6 +5951,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
   const [premiumFin, setPremiumFin]   = useState(initialDraft?.premiumFin ?? true);
   const [affiliations, setAffiliations] = useState<Set<string>>(new Set(initialDraft?.affiliations ?? ["AAA/ACG (AC364)"]));
   const [workersComp, setWorkersComp]   = useState<Set<string>>(new Set(initialDraft?.workersComp ?? ["AIG"]));
+  const [badges, setBadges]             = useState<Set<string>>(new Set(initialDraft?.badges ?? []));
 
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -5387,6 +6073,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
     licenseNo, licenseExp, eoPolicyNo, eoExp,
     agencyBill, directBill, premiumFin,
     affiliations: Array.from(affiliations), workersComp: Array.from(workersComp),
+    badges: Array.from(badges),
   });
 
   const font = { fontFamily: FONT };
@@ -5571,7 +6258,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                   <RefreshCw className="w-3 h-3" style={{ color: "#7C3AED" }} />
-                  <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
+                  <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Create Code</span>
                 </button>
               </div>
               <ErrMsg k="agencyCode" />
@@ -5595,7 +6282,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                       }}>
                       <Radio checked={active} onClick={() => setAgencyType(t)} />
                       {active
-                        ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
+                        ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
                         : <span style={{ color: c.muted }}>{t}</span>
                       }
                     </button>
@@ -5830,17 +6517,18 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                       <button key={opt} onClick={() => set(bool)}
                         className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
                         style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                          border: "1.65px solid transparent",
+                          border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                          background: active ? undefined : c.cardBg,
                           backgroundImage: active
                             ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                            : `linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(#E5E7EB, #E5E7EB)`,
-                          backgroundOrigin: "padding-box, padding-box, border-box",
-                          backgroundClip: "padding-box, padding-box, border-box",
+                            : undefined,
+                          backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                          backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
                         }}>
                         <Radio checked={active} onClick={() => set(bool)} />
                         {active
-                          ? <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
-                          : <span style={{ color: "#6B7280" }}>{opt}</span>
+                          ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
+                          : <span style={{ color: c.muted }}>{opt}</span>
                         }
                       </button>
                     );
@@ -5875,6 +6563,28 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             ))}
           </div>
 
+          {/* Tags */}
+          <SectionHeader title="Tags" />
+          <p className="text-[12px] mb-3" style={{ ...font, color: c.muted }}>Shown on the Agency Status card. Pick any that apply.</p>
+          <div className="grid grid-cols-4 gap-x-6 gap-y-3 mb-4">
+            {AGENCY_BADGES.map(b => {
+              const checked = badges.has(b);
+              return (
+                <label key={b} className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <Checkbox checked={checked} onClick={() => setBadges(prev => { const s = new Set(prev); s.has(b) ? s.delete(b) : s.add(b); return s; })} color="#73C9B7" />
+                  <span className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                    style={{ background: checked ? (isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)") : (isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"), padding: "3px 10px" }}>
+                    {checked ? (
+                      <span style={{ backgroundImage: isDark ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)" : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
+                    ) : (
+                      <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{b}</span>
+                    )}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
         </div>
         </form>
 
@@ -5892,7 +6602,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
             onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
             onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-            Save Changes
+            Submit
           </button>
         </div>
       </div>
@@ -5946,11 +6656,15 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const [perPageOpen, setPerPageOpen] = useState(false);
   const [tab, setTab]                 = useState<TabKey>("agencies");
   const [selectedAgency, setSelectedAgency] = useState<AgencyDetail | null>(null);
+  const [selectedAgencyTab, setSelectedAgencyTab] = useState<DetailTab | undefined>(undefined);
   const [stars, setStars]             = useState<Set<string>>(
     new Set(mockAgencies.filter(a => a.isStarred).map(a => a.id))
   );
   const [starLimitToast, setStarLimitToast] = useState(false);
-  const [agencyDraft, setAgencyDraft] = useState<AgencyDraft | null>(null);
+  type DraftEntry = { id: string; draft: AgencyDraft; savedAt: number };
+  const [agencyDrafts, setAgencyDrafts] = useState<DraftEntry[]>([]);
+  // When set, the AddAgencyForm is editing this specific draft — Save replaces it instead of inserting a new entry.
+  const [resumingDraftId, setResumingDraftId] = useState<string | null>(null);
   const [resumeDraftOpen, setResumeDraftOpen] = useState(false);
   const [saveForLaterToast, setSaveForLaterToast] = useState(false);
   const [resumeFromDraft, setResumeFromDraft] = useState(false);
@@ -5968,6 +6682,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
     { key: "phone",    label: "Phone"     },
     { key: "ext",      label: "Ext"       },
     { key: "agency",   label: "Agency"    },
+    { key: "status",   label: "Status"    },
   ];
   const AGENCIES_COLS: Array<{ key: string; label: string }> = [
     { key: "code",       label: "Agency Code"   },
@@ -6014,6 +6729,9 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const [affiliationOpen, setAffiliationOpen] = useState<number | null>(null);
   const [affiliationSearch, setAffiliationSearch] = useState("");
   const [agencyNameFilter, setAgencyNameFilter] = useState<Set<string>>(new Set());
+  type ActivityFilter = "all" | "new" | "active" | "dormant";
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  const [activityFilterOpen, setActivityFilterOpen] = useState(false);
   const [agencyNameOpen, setAgencyNameOpen] = useState(false);
   const [agencyNameSearch, setAgencyNameSearch] = useState("");
   const [allUsersSortDir, setAllUsersSortDir] = useState<"asc"|"desc">("asc");
@@ -6066,7 +6784,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const c = {
     text:        isDark ? "#F9FAFB" : "#1F2937",
     muted:       isDark ? "#8B8FA8" : "#6B7280",
-    border:      isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6",
+    border:      isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB",
     borderStrong:isDark ? "rgba(255,255,255,0.18)" : "#D1D5DB",
     cardBg:      isDark ? "#1E2240" : "#ffffff",
     hoverBg:     isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
@@ -6094,6 +6812,12 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   }).filter(a => {
     if (agencyNameFilter.size === 0) return true;
     return agencyNameFilter.has(a.name);
+  }).filter(a => {
+    if (activityFilter === "all") return true;
+    const s = getAgencyTimeStatus(getDetail(a).apptDate, a.lastLogin);
+    if (activityFilter === "new")     return s === "new";
+    if (activityFilter === "dormant") return s === "dormant";
+    /* active */                       return s === null;
   }).filter(a => {
     if (!search) return true;
     return (
@@ -6216,8 +6940,28 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         { key: "status",     label: "Status",              get: a => a.status },
         { key: "location",   label: "Location",            get: a => `${a.city || ""}${a.state ? `, ${a.state}` : ""}` },
       ];
-      const togglable = new Set(AFFILIATIONS_COLS.map(col => col.key));
-      const visible = allCols.filter(col => !togglable.has(col.key) || affVisibleCols.has(col.key));
+      // Map each export column to a "parent" toggleable table column (or "always" for
+      // primary identifier columns that should never be dropped). Hiding "location" in the
+      // table also hides its derived breakouts (address/city/state/zip) in the export.
+      const exportToParent: Record<string, string> = {
+        name: "always", otherAff1: "always", otherAff2: "always",
+        code: "code",
+        contact: "contact",
+        address: "location", city: "location", state: "location", zip: "location",
+        location: "location",
+        phone: "phone",
+        email: "email",
+        totalUsers: "totalUsers",
+        lastLogin: "lastLogin",
+        status: "status",
+      };
+      const isExportVisible = (key: string) => {
+        const parent = exportToParent[key];
+        if (!parent) return false;
+        if (parent === "always") return true;
+        return affVisibleCols.has(parent);
+      };
+      const visible = allCols.filter(col => isExportVisible(col.key));
       return {
         headers: visible.map(c => c.label),
         rows: target.agencies.map(a => visible.map(c => c.get(a))),
@@ -6243,6 +6987,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         { key: "phone",    label: "Phone",     get: u => u.phone },
         { key: "ext",      label: "Ext",       get: u => u.ext || "" },
         { key: "agency",   label: "Agency",    get: u => agencyById.get(u.agencyId)?.name ?? "" },
+        { key: "status",   label: "Status",    get: u => (inactiveUserIds.has(u.id) || statusInactiveUserIds.has(u.id)) ? "Inactive" : "Active" },
       ];
       const visible = allCols.filter(col => !usersHiddenCols.has(col.key));
       return {
@@ -6363,8 +7108,21 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         { key: "status",     label: "Status",       get: a => a.status },
         { key: "location",   label: "Location",     get: a => `${a.city || ""}${a.state ? `, ${a.state}` : ""}` },
       ];
-      const togglable = new Set(AFFILIATIONS_COLS.map(col => col.key));
-      const visibleCols = allCols.filter(col => !togglable.has(col.key) || affVisibleCols.has(col.key));
+      // Mirror the preview's visibility map so the downloaded CSV matches what the user sees.
+      const exportToParent: Record<string, string> = {
+        name: "always", otherAff1: "always", otherAff2: "always",
+        code: "code", contact: "contact",
+        address: "location", city: "location", state: "location", zip: "location", location: "location",
+        phone: "phone", email: "email",
+        totalUsers: "totalUsers", lastLogin: "lastLogin", status: "status",
+      };
+      const isExportVisible = (key: string) => {
+        const parent = exportToParent[key];
+        if (!parent) return false;
+        if (parent === "always") return true;
+        return affVisibleCols.has(parent);
+      };
+      const visibleCols = allCols.filter(col => isExportVisible(col.key));
       const headers = visibleCols.map(c => c.label);
       const rows = target.agencies.map(a => visibleCols.map(c => c.get(a)).map(escapeCsv).join(","));
       downloadCsv(`affiliation-${safe(target.name)}-${stamp}.csv`, headers, rows);
@@ -6445,28 +7203,46 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
   const StatusBadge = ({ status }: { status: Agency["status"] }) => (
     status === "Appointed"
       ? <span className="inline-flex items-center justify-center w-fit"
-          style={{ fontFamily: FONT, background: "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", borderRadius: 9999, padding: "3px 10px" }}>
-          <span style={{ backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px", whiteSpace: "nowrap" }}>
+          style={{ fontFamily: FONT, background: isDark
+            ? "linear-gradient(88.54deg, rgba(92,46,212,0.20) 0.1%, rgba(166,20,195,0.20) 63.88%)"
+            : "linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%)", borderRadius: 9999, padding: "3px 10px" }}>
+          <span style={{ backgroundImage: isDark
+              ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)"
+              : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+            backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px", whiteSpace: "nowrap" }}>
             Appointed
           </span>
         </span>
-      : <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit whitespace-nowrap"
-          style={{ fontFamily: FONT, color: "#73C9B7", background: "rgba(115,201,183,0.10)" }}>
+      : <span className="inline-flex items-center px-[10px] py-[3px] rounded-full w-fit whitespace-nowrap"
+          style={{ fontFamily: FONT, color: "#73C9B7", background: isDark ? "rgba(115,201,183,0.22)" : "rgba(115,201,183,0.10)", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>
           Unappointed
         </span>
   );
 
   const filterPill = (label: FilterStatus) => {
     const active = filterStatus === label;
+    const inactiveBg = isDark ? "rgba(255,255,255,0.04)" : "transparent";
+    const inactiveHoverBg = isDark ? "rgba(255,255,255,0.08)" : "#F5F5F5";
     return (
       <button key={label} onClick={() => { setFilterStatus(label); setPage(1); }}
         className="flex-shrink-0 transition-all"
-        style={{ fontFamily: FONT, background: active ? "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)" : "transparent", padding: active ? 1 : 0, borderRadius: 12, border: active ? "none" : `1px solid ${c.border}` }}
-        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; } }}
-        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ fontFamily: FONT, background: active ? `linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%), ${isDark ? "#0F1120" : "#ffffff"}` : "transparent", borderRadius: 11, padding: "5px 15px" }}>
+        style={{ fontFamily: FONT, background: active
+          ? (isDark ? "linear-gradient(88.54deg,#A855F7 0.1%,#D946EF 63.88%)" : "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)")
+          : inactiveBg, padding: active ? 1 : 0, borderRadius: 12, border: active ? "none" : `1px solid ${c.border}` }}
+        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = inactiveHoverBg; } }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = inactiveBg; }}>
+        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ fontFamily: FONT, background: active
+            ? (isDark
+              ? `linear-gradient(88.54deg, rgba(168,85,247,0.20) 0.1%, rgba(217,70,239,0.20) 63.88%), #0F1120`
+              : `linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%), #ffffff`)
+            : "transparent", borderRadius: 11, padding: "5px 15px" }}>
           {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
-          <span style={active ? { backgroundImage: "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" } : { color: c.muted }}>{label}</span>
+          <span style={active
+            ? { backgroundImage: isDark
+                ? "linear-gradient(88.54deg,#A855F7 0.1%,#D946EF 63.88%)"
+                : "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)",
+              backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" }
+            : { color: c.muted }}>{label}</span>
         </span>
       </button>
     );
@@ -6486,18 +7262,29 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         {sectionTitle}
         <AddAgencyForm
           isDark={isDark}
-          initialDraft={resumeFromDraft ? agencyDraft : null}
+          initialDraft={resumingDraftId ? (agencyDrafts.find(e => e.id === resumingDraftId)?.draft ?? null) : null}
           onSaveForLater={(d) => {
-            setAgencyDraft(d);
+            const now = Date.now();
+            if (resumingDraftId) {
+              setAgencyDrafts(prev => prev.map(e => e.id === resumingDraftId ? { ...e, draft: d, savedAt: now } : e));
+            } else {
+              const id = `draft-${now}-${Math.random().toString(36).slice(2, 7)}`;
+              setAgencyDrafts(prev => [...prev, { id, draft: d, savedAt: now }]);
+            }
             setAddOpen(false);
+            setResumingDraftId(null);
             setResumeFromDraft(false);
             setSaveForLaterToast(true);
             setTimeout(() => setSaveForLaterToast(false), 2400);
           }}
           onDiscard={() => {
             setAddOpen(false);
+            // Discard removes the draft being resumed (if any). Fresh entries are not in the list yet, so nothing to clean up.
+            if (resumingDraftId) {
+              setAgencyDrafts(prev => prev.filter(e => e.id !== resumingDraftId));
+            }
+            setResumingDraftId(null);
             setResumeFromDraft(false);
-            setAgencyDraft(null);
           }}
           c={c} btnGrad={btnGrad} FONT={FONT}
         />
@@ -6510,7 +7297,8 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
       <AgencyDetailView
         agency={selectedAgency}
         isDark={isDark}
-        onBack={() => setSelectedAgency(null)}
+        initialTab={selectedAgencyTab}
+        onBack={() => { setSelectedAgency(null); setSelectedAgencyTab(undefined); }}
         c={c}
         btnGrad={btnGrad}
         stars={stars}
@@ -6524,6 +7312,12 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         bookRolled={bookRolled}
         setBookRolled={setBookRolled}
         allAgencies={allAgencies}
+        onNavigateToAgency={(targetCode, tab) => {
+          const target = allAgencies.find(a => a.code === targetCode);
+          if (!target) return;
+          setSelectedAgency(getDetail(target));
+          setSelectedAgencyTab(tab);
+        }}
       />
     );
   }
@@ -6589,8 +7383,6 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       {([
                         ["all",            "All Agencies"           ],
-                        ["master",         "Master Agencies Only"   ],
-                        ["excludeMaster",  "Exclude Master Agencies"],
                         ["withAffs",       "Agencies with Affiliations"],
                       ] as const).map(([key, label]) => {
                         const active = exportScope === key;
@@ -6831,42 +7623,99 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           </div>
         </div>
       )}
-      {resumeDraftOpen && (
+      {resumeDraftOpen && (() => {
+        // Show newest drafts first.
+        const drafts = [...agencyDrafts].sort((a, b) => b.savedAt - a.savedAt);
+        const formatRelative = (ts: number | null) => {
+          if (!ts) return "Saved recently";
+          const diffMs = Date.now() - ts;
+          const min = Math.floor(diffMs / 60000);
+          if (min < 1) return "Saved just now";
+          if (min < 60) return `Saved ${min} min ago`;
+          const h = Math.floor(min / 60);
+          if (h < 24) return `Saved ${h} hr ago`;
+          const d = Math.floor(h / 24);
+          return `Saved ${d} day${d === 1 ? "" : "s"} ago`;
+        };
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
           onClick={() => setResumeDraftOpen(false)}
           style={{ background: "rgba(0,0,0,0.45)" }}>
-          <div className="w-[420px] rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}
-            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT }}>
-            <div className="flex items-start gap-4 mb-5">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(168,85,247,0.12)" }}>
-                <FilePen className="w-6 h-6" style={{ color: "#A855F7" }} />
+          <div className="rounded-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}
+            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontFamily: FONT, width: "min(560px,94vw)", maxHeight: "82vh" }}>
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,158,11,0.12)" }}>
+                  <Bookmark className="w-4 h-4" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold" style={{ color: c.text }}>Drafts</h3>
+                  <p className="text-[11px]" style={{ color: c.muted }}>{drafts.length} unfinished {drafts.length === 1 ? "agency" : "agencies"}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>Continue your unfinished agency?</h3>
-                <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
-                  You saved a draft{agencyDraft?.agencyName ? <> for <strong style={{ color: c.text }}>{agencyDraft.agencyName}</strong></> : ""}. Pick up where you left off, or start from scratch.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => { setAgencyDraft(null); setResumeDraftOpen(false); setResumeFromDraft(false); setAddOpen(true); }}
-                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                style={{ border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+              <button onClick={() => setResumeDraftOpen(false)}
+                className="p-1.5 rounded-md transition-colors"
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                Start fresh
+                <X className="w-4 h-4" style={{ color: c.muted }} />
               </button>
-              <button onClick={() => { setResumeFromDraft(true); setResumeDraftOpen(false); setAddOpen(true); }}
-                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                style={{ background: btnGrad }}
-                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
-                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                Continue
-              </button>
+            </div>
+            {/* List */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {drafts.length === 0 ? (
+                <p className="text-[12px] py-10 text-center" style={{ color: c.muted }}>No drafts. Save an agency for later from the &ldquo;Add New Agency&rdquo; form.</p>
+              ) : (
+                <div className="space-y-2">
+                  {drafts.map(entry => {
+                    const d = entry.draft;
+                    const displayName = d.agencyName?.trim() || "Untitled draft";
+                    const subtitle = [d.agencyCode, d.city && d.stateVal ? `${d.city}, ${d.stateVal}` : null].filter(Boolean).join(" · ");
+                    return (
+                      <div key={entry.id} className="rounded-xl px-4 py-3 transition-colors"
+                        style={{ border: `1px solid ${c.border}`, background: "transparent" }}>
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[13px] font-semibold truncate" style={{ color: c.text }}>{displayName}</span>
+                              {d.agencyType && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                  style={{ background: "rgba(168,85,247,0.10)", color: "#A855F7", letterSpacing: "0.04em" }}>{d.agencyType}</span>
+                              )}
+                            </div>
+                            {subtitle && <div className="text-[11px] mt-0.5 truncate" style={{ color: c.muted }}>{subtitle}</div>}
+                            <div className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: c.muted }}>
+                              <Calendar className="w-3 h-3" />{formatRelative(entry.savedAt)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setAgencyDrafts(prev => prev.filter(e => e.id !== entry.id))}
+                              title="Discard draft"
+                              className="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                              style={{ border: `1px solid ${c.borderStrong}`, color: c.muted, background: "transparent" }}
+                              onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.30)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; e.currentTarget.style.borderColor = c.borderStrong; }}>
+                              Discard
+                            </button>
+                            <button onClick={() => { setResumingDraftId(entry.id); setResumeFromDraft(true); setResumeDraftOpen(false); setAddOpen(true); }}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-semibold text-white transition-opacity"
+                              style={{ background: btnGrad }}
+                              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
+                              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                              <FilePen className="w-3 h-3" />Resume
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Section title */}
       {sectionTitle}
@@ -6876,7 +7725,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
         <div className="flex flex-1 max-w-[360px] transition-all"
           style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden" }}>
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder={tab === "affiliations" ? "Search affiliations, agencies, or codes..." : tab === "users" ? "Search users..." : "Search agencies, users, or codes..."}
+            placeholder="By agency, agency code, or user"
             className="flex-1 outline-none"
             style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
           <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0 transition-all"
@@ -6886,24 +7735,61 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
             <Search className="w-3.5 h-3.5" />Search
           </button>
         </div>
-        <button onClick={() => { if (agencyDraft) { setResumeDraftOpen(true); } else { setResumeFromDraft(false); setAddOpen(true); } }}
-          className="relative flex items-center gap-1.5 text-[13px] font-semibold text-white transition-all"
+        <button onClick={() => { setResumeFromDraft(false); setAddOpen(true); }}
+          className="flex items-center gap-1.5 text-[13px] font-semibold text-white transition-all"
           style={{ fontFamily: FONT, background: btnGrad, padding:"9px 16px", borderRadius: 10 }}
-          title={agencyDraft ? "You have an unfinished draft" : undefined}
           onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
           onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
           <Plus className="w-4 h-4" />Add New Agency
-          {agencyDraft && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
-              style={{ background: "#F59E0B", border: `2px solid ${isDark ? "#0B0F1C" : "#FFFFFF"}` }} />
-          )}
         </button>
+        {/* Drafts entry — visible whenever saved drafts exist; lets users hop back into in-progress agencies */}
+        {(() => {
+          const hasDrafts = agencyDrafts.length > 0;
+          return (
+            <button onClick={() => hasDrafts && setResumeDraftOpen(true)}
+              disabled={!hasDrafts}
+              title={hasDrafts ? `${agencyDrafts.length} saved draft${agencyDrafts.length === 1 ? "" : "s"}` : "No saved drafts"}
+              className="relative flex items-center gap-1.5 text-[13px] font-semibold transition-colors"
+              style={{ fontFamily: FONT,
+                padding: "9px 14px",
+                borderRadius: 10,
+                border: `1px solid ${c.border}`,
+                background: c.cardBg,
+                color: hasDrafts ? c.text : c.muted,
+                cursor: hasDrafts ? "pointer" : "not-allowed",
+                opacity: hasDrafts ? 1 : 0.6 }}
+              onMouseEnter={e => { if (hasDrafts) e.currentTarget.style.background = c.hoverBg; }}
+              onMouseLeave={e => { if (hasDrafts) e.currentTarget.style.background = c.cardBg; }}>
+              {/* Brand-gradient bookmark — inline so we can paint with linearGradient */}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={hasDrafts ? "url(#draftsBookmarkGrad)" : "none"} stroke={hasDrafts ? "url(#draftsBookmarkGrad)" : c.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <defs>
+                  <linearGradient id="draftsBookmarkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#5C2ED4" />
+                    <stop offset="100%" stopColor="#A614C3" />
+                  </linearGradient>
+                </defs>
+                <path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" />
+              </svg>
+              Drafts
+              {hasDrafts && (
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: "rgba(166,20,195,0.10)" }}>
+                  <span style={{
+                    backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0%, #A614C3 100%)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}>{agencyDrafts.length}</span>
+                </span>
+              )}
+            </button>
+          );
+        })()}
       </div>
 
       {/* Filter pills */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         {filterPill("All")}
-        {filterPill("Starred")}
         {filterPill("Appointed")}
         {filterPill("Unappointed")}
       </div>
@@ -6954,7 +7840,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           })}
         </div>
         <div className="flex items-center gap-1" style={{ borderLeft: `1px solid ${c.border}`, paddingLeft: 10, marginLeft: 6 }}>
-          <button title="Reset filters"
+          <button title="Reset filters & columns"
             onClick={() => {
               setSearch("");
               setFilterStatus("All");
@@ -6966,6 +7852,11 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               setAgencyNameFilter(new Set()); setAgencyNameSearch(""); setAgencyNameOpen(false);
               setAllUsersJobFilter(new Set()); setAllUsersJobSearch(""); setAllUsersJobOpen(false);
               setAllUsersSortDir("asc");
+              setActivityFilter("all"); setActivityFilterOpen(false);
+              // Reset column visibility for all three tabs.
+              setAgenciesHiddenCols(new Set());
+              setUsersHiddenCols(new Set());
+              setAffVisibleCols(new Set(AFF_DEFAULT_VISIBLE));
             }}
             className="p-2 rounded-lg transition-colors"
             style={{ color: "#A614C3" }}
@@ -7035,7 +7926,26 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               );
             })()}
           </div>
-          <button onClick={() => setExportDialogOpen(true)}
+          <button onClick={() => {
+              // When opening export from the agencies tab, mirror the table's current column visibility
+              // so the preview matches what the user is actually looking at. Hidden columns map to their
+              // underlying export keys (e.g. table "location" → "city" + "state" + "zip").
+              if (tab === "agencies") {
+                const map: Record<string, string[]> = {
+                  code: ["code"],
+                  location: ["city", "state", "zip"],
+                  aff1: ["aff1"], aff2: ["aff2"], aff3: ["aff3"],
+                  totalUsers: ["totalUsers"],
+                  lastLogin: ["lastLogin"],
+                  status: ["status"],
+                };
+                const ALL_EXPORT_KEYS = ["code","name","contact","address","city","state","zip","phone","email","aff1","aff2","aff3","totalUsers","lastLogin","status"];
+                const hidden = new Set<string>();
+                agenciesHiddenCols.forEach(k => (map[k] ?? []).forEach(ek => hidden.add(ek)));
+                setExportSelectedCols(new Set(ALL_EXPORT_KEYS.filter(k => !hidden.has(k))));
+              }
+              setExportDialogOpen(true);
+            }}
             className="p-2 rounded-lg transition-colors"
             style={{ color: "#A614C3" }}
             title={tab === "affiliations" ? "Preview & export agencies in this affiliation" : tab === "users" ? "Preview & export users (filtered)" : "Preview & export agencies (filtered)"}
@@ -7048,7 +7958,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
 
       {/* Table */}
       {tab === "agencies" && (
-      <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); setViewOpen(false); }}>
+      <div className="flex-1 overflow-auto mt-0" style={{ scrollbarGutter: "stable" }} onClick={() => { setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); setActivityFilterOpen(false); setViewOpen(false); }}>
         <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
           <thead className="sticky top-0 z-10" style={{ background: isDark ? "#121628" : c.cardBg }}>
             <tr style={{ borderBottom: `1px solid ${c.border}` }}>
@@ -7068,9 +7978,9 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 const colKey = affIdx !== null ? `aff${affIdx}` : key;
                 if (colKey && colKey !== "name" && agenciesHiddenCols.has(colKey)) return null;
                 return (
-                <th key={`${key}-${idx}`} onClick={() => sortable && key && key !== "name" && handleSort(key)}
-                  className={`text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap ${sortable && key !== "name" ? "cursor-pointer" : ""} ${(key === "name" || key === "location" || affIdx !== null) ? "relative" : ""}`}
-                  style={{ fontFamily: FONT, color: (key === "name" && agencyNameFilter.size > 0) || (key === "location" && locationFilter.size > 0) || (affIdx !== null && affiliationFilter.size > 0) ? "#A614C3" : c.muted, width: w,
+                <th key={`${key}-${idx}`} onClick={() => sortable && key && key !== "lastLogin" && handleSort(key)}
+                  className={`text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap ${sortable && key !== "lastLogin" ? "cursor-pointer" : ""} ${(key === "location" || key === "lastLogin" || affIdx !== null) ? "relative" : ""}`}
+                  style={{ fontFamily: FONT, color: (key === "name" && sortKey === "name") || (key === "location" && locationFilter.size > 0) || (key === "lastLogin" && activityFilter !== "all") || (affIdx !== null && affiliationFilter.size > 0) ? "#A614C3" : c.muted, width: w,
                     paddingLeft: idx === 0 ? 52
                       : key === "location" ? 36
                       : affIdx === 1 ? 26
@@ -7082,73 +7992,8 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                     textAlign: (key === "code" || key === "totalUsers" || key === "status") ? "center" : undefined }}>
                   {key === "name" ? (
                     <>
-                      <button onClick={e => { e.stopPropagation(); setAgencyNameOpen(o => !o); setLocationOpen(false); setAffiliationOpen(null); }}
-                        className="inline-flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
-                        style={{ fontFamily: FONT, color: agencyNameFilter.size > 0 || sortKey === "name" ? "#A614C3" : c.muted }}>
-                        {label}
-                        <ChevronDown className="w-3 h-3 ml-0.5" />
-                      </button>
-                      {agencyNameOpen && (() => {
-                        const names = Array.from(new Set(allAgencies.map(a => a.name))).sort();
-                        const toggleName = (n: string) => setAgencyNameFilter(prev => { const s = new Set(prev); s.has(n) ? s.delete(n) : s.add(n); return s; });
-                        const sortItem = (label: string, dir: "asc" | "desc") => {
-                          const active = sortKey === "name" && sortDir === dir;
-                          return (
-                            <button onClick={() => { setSortKey("name"); setSortDir(dir); setAgencyNameOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors text-left normal-case tracking-normal"
-                              style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 400 }}
-                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                              {dir === "asc"
-                                ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" />
-                                : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />}
-                              <span className="text-[12px] flex-1">{label}</span>
-                              {active && <svg width="9" height="7" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                            </button>
-                          );
-                        };
-                        return (
-                          <div className="absolute left-0 top-8 z-30 w-[260px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
-                            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
-                            onClick={e => e.stopPropagation()}>
-                            <div className="py-1.5">
-                              {sortItem("Sort A → Z", "asc")}
-                              {sortItem("Sort Z → A", "desc")}
-                            </div>
-                            <div className="p-3" style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
-                                <Search className="w-3.5 h-3.5" style={{ color: c.muted }} />
-                                <input placeholder="Search Agency" value={agencyNameSearch} onChange={e => setAgencyNameSearch(e.target.value)}
-                                  className="flex-1 outline-none text-[12px] bg-transparent normal-case tracking-normal" style={{ fontFamily: FONT, color: c.text }} />
-                              </div>
-                            </div>
-                            <div className="py-1.5 max-h-[260px] overflow-y-auto">
-                              {names.filter(n => !agencyNameSearch || n.toLowerCase().includes(agencyNameSearch.toLowerCase())).map(n => {
-                                const checked = agencyNameFilter.has(n);
-                                return (
-                                  <label key={n} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors normal-case tracking-normal"
-                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                                    onClick={() => toggleName(n)}>
-                                    <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
-                                      style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
-                                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                                    </div>
-                                    <span className="text-[12px] font-normal truncate" style={{ fontFamily: FONT, color: c.text }} title={n}>{n}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                            <button onClick={() => { setAgencyNameFilter(new Set()); setAgencyNameSearch(""); }}
-                              className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
-                              style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
-                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                              <RefreshCw className="w-3.5 h-3.5" />Reset Filter
-                            </button>
-                          </div>
-                        );
-                      })()}
+                      {label}
+                      <SortIcon col="name" />
                     </>
                   ) : key === "location" ? (
                     <>
@@ -7248,6 +8093,78 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                         );
                       })()}
                     </>
+                  ) : key === "lastLogin" ? (
+                    <>
+                      <button onClick={e => { e.stopPropagation(); setActivityFilterOpen(o => !o); setLocationOpen(false); setAffiliationOpen(null); setAgencyNameOpen(false); }}
+                        className="inline-flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+                        style={{ fontFamily: FONT, color: activityFilter !== "all" || sortKey === "lastLogin" ? "#A614C3" : c.muted }}>
+                        {label}
+                        <ChevronDown className="w-3 h-3 ml-0.5" />
+                      </button>
+                      {activityFilterOpen && (() => {
+                        const sortItem = (lab: string, dir: "asc" | "desc") => {
+                          const active = sortKey === "lastLogin" && sortDir === dir;
+                          return (
+                            <button onClick={() => { setSortKey("lastLogin"); setSortDir(dir); setActivityFilterOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors text-left normal-case tracking-normal"
+                              style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 400 }}
+                              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                              {dir === "asc"
+                                ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" />
+                                : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />}
+                              <span className="text-[12px] flex-1">{lab}</span>
+                              {active && <svg width="9" height="7" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                          );
+                        };
+                        const filterItem = (val: ActivityFilter, lab: string, hint: string) => {
+                          const active = activityFilter === val;
+                          return (
+                            <button key={val} onClick={() => { setActivityFilter(val); setActivityFilterOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors text-left normal-case tracking-normal"
+                              style={{ fontFamily: FONT, background: active ? "rgba(168,85,247,0.06)" : "transparent" }}
+                              onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                              onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                              <div className="flex items-center justify-center w-3.5 h-3.5 rounded-full flex-shrink-0"
+                                style={{ border: `1.5px solid ${active ? "#A614C3" : c.borderStrong}`, background: c.cardBg }}>
+                                {active && <div className="w-2 h-2 rounded-full" style={{ background: "#A614C3" }} />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[12px] font-medium" style={{ fontFamily: FONT, color: active ? "#A614C3" : c.text }}>{lab}</div>
+                                <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{hint}</div>
+                              </div>
+                            </button>
+                          );
+                        };
+                        return (
+                          <div className="absolute right-0 top-8 z-30 w-[260px] rounded-xl shadow-xl overflow-hidden normal-case tracking-normal"
+                            style={{ background: c.cardBg, border: `1px solid ${c.border}`, fontWeight: 400, letterSpacing: "normal" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div className="py-1.5">
+                              {sortItem("Newest first", "desc")}
+                              {sortItem("Oldest first", "asc")}
+                            </div>
+                            <div className="py-1.5" style={{ borderTop: `1px solid ${c.border}` }}>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider px-4 pt-1.5 pb-1" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Activity</p>
+                              {filterItem("all",     "All agencies",  "No activity filter")}
+                              {filterItem("new",     "New",           "Onboarded < 12 months ago")}
+                              {filterItem("active",  "Active",        "Logged in within 12 months")}
+                              {filterItem("dormant", "Dormant",       "No login for > 12 months")}
+                            </div>
+                            {activityFilter !== "all" && (
+                              <button onClick={() => { setActivityFilter("all"); setActivityFilterOpen(false); }}
+                                className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors normal-case tracking-normal"
+                                style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </>
                   ) : (
                     <>{label}{sortable && key && <SortIcon col={key} />}</>
                   )}
@@ -7278,16 +8195,13 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                 {/* Agency Code */}
                 {!agenciesHiddenCols.has("code") && (
                 <td className="py-3 pr-6 text-center">
-                  <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>
+                  <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#74C3B7" : "#A614C3" }}>{a.code}</span>
                 </td>
                 )}
                 {/* Location */}
                 {!agenciesHiddenCols.has("location") && (
                 <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 36 }}>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
-                    <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city}, {a.state}</span>
-                  </div>
+                  <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city}, {a.state}</span>
                 </td>
                 )}
                 {/* Affiliation 1 / 2 / 3 */}
@@ -7299,19 +8213,26 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                     </span>
                   </td>
                 ))}
-                {/* Total User */}
+                {/* Total User — click to jump straight to the agency's Users tab */}
                 {!agenciesHiddenCols.has("totalUsers") && (
                 <td className="py-3 pr-6 whitespace-nowrap text-center" style={{ paddingLeft: 45 }}>
-                  <div className="inline-flex items-center gap-1.5">
+                  <button onClick={e => { e.stopPropagation(); setSelectedAgencyTab("users"); setSelectedAgency(getDetail(a)); }}
+                    title={`View ${a.totalUsers} ${a.totalUsers === 1 ? "user" : "users"}`}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors"
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                     <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
-                    <span className="text-[13px] font-medium" style={{ fontFamily: FONT, color: c.text }}>{a.totalUsers}</span>
-                  </div>
+                    <span className="text-[13px] font-medium underline-offset-2 hover:underline" style={{ fontFamily: FONT, color: "#A614C3" }}>{a.totalUsers}</span>
+                  </button>
                 </td>
                 )}
                 {/* Last Login */}
                 {!agenciesHiddenCols.has("lastLogin") && (
                 <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 96 }}>
-                  <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.lastLogin}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted, fontVariantNumeric: "tabular-nums", display: "inline-block", minWidth: 78 }}>{a.lastLogin}</span>
+                    <TimeStatusBadge status={getAgencyTimeStatus(getDetail(a).apptDate, a.lastLogin)} isDark={isDark} />
+                  </div>
                 </td>
                 )}
                 {/* Status */}
@@ -7476,7 +8397,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                           const d = getDetail(a);
                           const renderCell = (key: string) => {
                             switch (key) {
-                              case "code":       return <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{a.code}</span>;
+                              case "code":       return <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#74C3B7" : "#A614C3" }}>{a.code}</span>;
                               case "location":   return <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} /><span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.city || "—"}{a.state ? `, ${a.state}` : ""}</span></div>;
                               case "status":     return <StatusBadge status={a.status} />;
                               case "lastLogin":  return <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{a.lastLogin}</span>;
@@ -7550,9 +8471,9 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
               <div className="px-[52px] py-2.5 flex items-center gap-2 text-[12px]"
                 style={{ fontFamily: FONT, color: c.text, background: c.cardBg, borderBottom: `1px solid ${c.border}` }}>
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3" }} />
-                <span>Showing {userRowsAll.length} active {userRowsAll.length === 1 ? "user" : "users"} · <button onClick={() => setAllUsersShowInactive(true)}
+                <span>Showing <button onClick={() => setAllUsersShowInactive(true)}
                   className="font-semibold transition-colors underline underline-offset-2"
-                  style={{ color: "#A614C3" }}>{inactiveMatchCount} inactive also {inactiveMatchCount === 1 ? "matches" : "match"}</button></span>
+                  style={{ color: "#A614C3" }}>{inactiveMatchCount} {inactiveMatchCount === 1 ? "user" : "users"} matching in archive</button>.</span>
               </div>
             )}
             <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
@@ -7579,7 +8500,7 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   {/* JOB TITLE filter */}
                   {!usersHiddenCols.has("jobTitle") && (
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap relative"
-                    style={{ fontFamily: FONT, color: allUsersJobFilter.size > 0 ? "#A614C3" : c.muted, width: "14%", paddingLeft: 55 }}>
+                    style={{ fontFamily: FONT, color: allUsersJobFilter.size > 0 ? "#A614C3" : c.muted, width: "14%", paddingLeft: 25 }}>
                     <button onClick={e => { e.stopPropagation(); setAllUsersJobOpen(o => !o); }}
                       className="flex items-center gap-1 select-none cursor-pointer text-[11px] font-bold uppercase tracking-wider"
                       style={{ fontFamily: FONT, color: allUsersJobFilter.size > 0 ? "#A614C3" : c.muted }}>
@@ -7626,11 +8547,13 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   )}
                   {!usersHiddenCols.has("email") && (
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap"
-                    style={{ fontFamily: FONT, color: c.muted, width: "24%", paddingLeft: 72 }}>Email</th>
+                    style={{ fontFamily: FONT, color: c.muted, width: "24%", paddingLeft: 42 }}>Email</th>
                   )}
                   {!usersHiddenCols.has("phone") && (
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap"
-                    style={{ fontFamily: FONT, color: c.muted, width: "14%" }}>Phone</th>
+                    style={{ fontFamily: FONT, color: c.muted, width: "14%" }}>
+                    <span style={{ display: "inline-block", marginLeft: -20 }}>Phone</span>
+                  </th>
                   )}
                   {!usersHiddenCols.has("ext") && (
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-center"
@@ -7640,12 +8563,16 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                   <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-left"
                     style={{ fontFamily: FONT, color: c.muted, width: "12%" }}>Agency</th>
                   )}
+                  {!usersHiddenCols.has("status") && (
+                  <th className="text-[11px] font-bold uppercase tracking-wider py-3 pr-6 select-none whitespace-nowrap text-center"
+                    style={{ fontFamily: FONT, color: c.muted, width: "10%" }}>Status</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {userRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7 - usersHiddenCols.size} className="py-16 text-center" style={{ fontFamily: FONT }}>
+                    <td colSpan={8 - usersHiddenCols.size} className="py-16 text-center" style={{ fontFamily: FONT }}>
                       <div className="flex flex-col items-center justify-center gap-3">
                         <span className="text-[13px]" style={{ color: c.muted }}>No users found</span>
                       </div>
@@ -7677,18 +8604,18 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                       </td>
                       )}
                       {!usersHiddenCols.has("jobTitle") && (
-                      <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 55 }}>
+                      <td className="py-3 pr-6 whitespace-nowrap" style={{ paddingLeft: 25 }}>
                         <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{u.jobTitle}</span>
                       </td>
                       )}
                       {!usersHiddenCols.has("email") && (
-                      <td className="py-3 pr-6 truncate" style={{ paddingLeft: 72 }}>
+                      <td className="py-3 pr-6 truncate" style={{ paddingLeft: 42 }}>
                         <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>{u.email}</span>
                       </td>
                       )}
                       {!usersHiddenCols.has("phone") && (
                       <td className="py-3 pr-6 whitespace-nowrap">
-                        <span className="text-[13px]" style={{ fontFamily: FONT, color: c.text }}>{u.phone}</span>
+                        <span className="text-[13px] inline-block" style={{ fontFamily: FONT, color: c.text, marginLeft: -20 }}>{u.phone}</span>
                       </td>
                       )}
                       {!usersHiddenCols.has("ext") && (
@@ -7698,9 +8625,22 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                       )}
                       {!usersHiddenCols.has("agency") && (
                       <td className="py-3 pr-6 truncate text-left">
-                        <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{ag?.name ?? "—"}</span>
+                        <span className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#74C3B7" : "#A614C3" }}>{ag?.name ?? "—"}</span>
                       </td>
                       )}
+                      {!usersHiddenCols.has("status") && (() => {
+                        const showInactive = isInactive || statusInactiveUserIds.has(u.id);
+                        const bg = showInactive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "rgba(115,201,183,0.15)";
+                        const fg = showInactive ? c.muted : "#10B981";
+                        return (
+                          <td className="py-3 pr-6 text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded inline-block"
+                              style={{ fontFamily: FONT, background: bg, color: fg, letterSpacing: "0.04em" }}>
+                              {showInactive ? "Inactive" : "Active"}
+                            </span>
+                          </td>
+                        );
+                      })()}
                     </tr>
                   );
                 })}

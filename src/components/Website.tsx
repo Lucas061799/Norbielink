@@ -304,7 +304,7 @@ function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
             backgroundClip: "text",
           }}
         >
-          code
+          Code
         </span>
       </h1>
       <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted }}>
