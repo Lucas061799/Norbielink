@@ -784,7 +784,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const toggleDocSelected = (id: string) =>
     setSelectedDocIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const clearDocSelection = () => setSelectedDocIds(new Set());
-  const [imageRightSyncMins, setImageRightSyncMins] = useState(5);
   // Users-tab export (preview + format selector, mirrors main Agencies export)
   const [userExportFormat,    setUserExportFormat]    = useState<"csv"|"xlsx">("csv");
   const [userExportFormatOpen,setUserExportFormatOpen]= useState(false);
@@ -927,7 +926,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   );
 
   const SectionDivider = ({ title }: { title: string }) => (
-    <div className="mt-8 mb-4 pb-2" style={{ borderBottom: `1px solid ${c.border}` }}>
+    <div className="mt-6 mb-3 pb-2" style={{ borderBottom: `1px solid ${c.border}` }}>
       <h3 className="text-[15px] font-bold" style={{ ...font, color: c.text }}>{title}</h3>
     </div>
   );
@@ -2093,7 +2092,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           {editExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setEditExpanded(false)} />}
           <div className={editExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "flex-1 overflow-y-auto pb-6"}
             style={editExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
-          <div className={editExpanded ? "p-8 mb-6" : "rounded-2xl p-8 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
+          <div className={editExpanded ? "p-6 mb-6" : "rounded-2xl p-6 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
             {/* Card header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
@@ -2497,42 +2496,40 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 );
               })}
             </div>
-          </div>
 
-        {/* Footer buttons */}
-          <div style={{ borderTop: editExpanded ? `1px solid ${c.border}` : "none", marginTop: editExpanded ? 24 : 0, paddingTop: editExpanded ? 20 : 0, marginLeft: editExpanded ? 32 : 0, marginRight: editExpanded ? 32 : 0 }}>
-          <div className="flex items-center justify-between pb-2">
-            <button onClick={() => setIsEditing(false)}
-              className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
-              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              Cancel
-            </button>
-            <button onClick={() => {
-                const w9Changed = (
-                  eName !== agency.name
-                  || eType !== agency.agencyType
-                  || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
-                  || eTaxId !== agency.taxId
-                );
-                const licChanged = eLicNo !== agency.licenseNo;
-                if (w9Changed || licChanged) {
-                  // Block save — modal will require new docs to be uploaded before allowing it.
-                  setDocModalUploads({});
-                  setDocUpdateModal({ w9: w9Changed, license: licChanged });
-                  return;
-                }
-                setBadgesOverride(Array.from(eBadges));
-                setIsEditing(false);
-              }}
-              className="text-[13px] font-semibold text-white transition-all"
-              style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
-              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
-              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-              Save Changes
-            </button>
-          </div>
+            {/* Footer buttons — inside the card so they share width and don't float independently */}
+            <div className="flex items-center justify-between" style={{ marginTop: 36, paddingTop: 28, paddingBottom: 8, borderTop: `1px solid ${c.border}` }}>
+              <button onClick={() => setIsEditing(false)}
+                className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+                style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                  const w9Changed = (
+                    eName !== agency.name
+                    || eType !== agency.agencyType
+                    || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
+                    || eTaxId !== agency.taxId
+                  );
+                  const licChanged = eLicNo !== agency.licenseNo;
+                  if (w9Changed || licChanged) {
+                    // Block save — modal will require new docs to be uploaded before allowing it.
+                    setDocModalUploads({});
+                    setDocUpdateModal({ w9: w9Changed, license: licChanged });
+                    return;
+                  }
+                  setBadgesOverride(Array.from(eBadges));
+                  setIsEditing(false);
+                }}
+                className="text-[13px] font-semibold text-white transition-all"
+                style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                Save Changes
+              </button>
+            </div>
           </div>
           </div>
           </>
@@ -3156,28 +3153,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               )}
 
               <div className="flex-1 min-h-0 overflow-y-auto">
-                {/* Sync strip + drift banners shown in main views only */}
-                {!showDocArchived && !showDocTrashed && (
-                  <>
-                    <div className="flex items-center gap-2 px-5 py-2 mb-4 rounded-lg text-[12px] flex-shrink-0"
-                      style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
-                      <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
-                        title="Sync now" className="flex-shrink-0 transition-transform hover:rotate-180" style={{ transitionDuration: "400ms" }}>
-                        <RefreshCw className="w-3.5 h-3.5" style={{ color: isDark ? "#74C3B7" : "#A855F7" }} />
-                      </button>
-                      <span>Synced from <strong style={isDark
-                          ? { color: "#74C3B7" }
-                          : { background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>ImageRight</strong> · {imageRightSyncMins === 0 ? "just now" : `${imageRightSyncMins} min ago`}</span>
-                      <button onClick={() => { setImageRightSyncMins(0); showToast({ title: "Synced", description: "ImageRight is up to date." }); }}
-                        className="ml-auto font-semibold transition-opacity hover:opacity-80"
-                        style={isDark
-                          ? { color: "#74C3B7" }
-                          : { background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                        Sync now
-                      </button>
-                    </div>
-                  </>
-                )}
 
                 {/* By Type view — grouped by category so each type is visually separated. */}
                 {!showDocArchived && !showDocTrashed && docView === "byType" && (
@@ -6183,7 +6158,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
           <span className="text-[13px] font-semibold" style={{ color: c.text }}>Add New</span>
         </div>
         <form autoComplete="on" onSubmit={e => e.preventDefault()}>
-        <div className="rounded-2xl p-8 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
+        <div className="rounded-2xl p-6 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -6536,7 +6511,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                     {checked ? (
                       <span style={{ backgroundImage: isDark ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)" : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
                     ) : (
-                      <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{b}</span>
+                      <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
                     )}
                   </span>
                 </label>
@@ -6544,26 +6519,26 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             })}
           </div>
 
+          {/* Footer buttons — inside the card so they share width and don't float to the screen edges */}
+          <div className="flex items-center justify-between" style={{ marginTop: 36, paddingTop: 28, paddingBottom: 8, borderTop: `1px solid ${c.border}` }}>
+            <button onClick={() => setDiscardConfirmOpen(true)}
+              className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+              style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              Discard
+            </button>
+            <button onClick={handleSubmit}
+              className="text-[13px] font-semibold text-white transition-all"
+              style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
+              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+              Submit
+            </button>
+          </div>
+
         </div>
         </form>
-
-        {/* Footer buttons */}
-        <div className="flex items-center justify-between pb-6">
-          <button onClick={() => setDiscardConfirmOpen(true)}
-            className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-            style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            Discard
-          </button>
-          <button onClick={handleSubmit}
-            className="text-[13px] font-semibold text-white transition-all"
-            style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
-            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
-            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-            Submit
-          </button>
-        </div>
       </div>
       {discardConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6"

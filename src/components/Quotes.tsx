@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, Download, MessageSquare, MessageCircle, Mail, Phone, Printer, Minus, Maximize2, FileText, FolderOpen, Eye, X } from "lucide-react";
+import { Search, Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, Download, MessageSquare, MessageCircle, Mail, Printer, Minus, Maximize2, FileText, FolderOpen, Eye, X } from "lucide-react";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
@@ -478,7 +478,6 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
                 {[
                   { icon: MessageSquare, title: "Start a Chat", sub: "Get instant help", subColor: c.muted },
                   { icon: Mail,          title: "Send Email",  sub: "We'll respond soon", subColor: c.muted },
-                  { icon: Phone,         title: "Call Us",     sub: "877-649-6682", subColor: "#A614C3" },
                 ].map(({ icon: Icon, title, sub, subColor }) => (
                   <button key={title}
                     className="flex items-center gap-3 w-full text-left rounded-xl transition-colors"

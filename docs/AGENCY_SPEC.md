@@ -140,11 +140,7 @@ The Documents tab is the most complex surface. It manages all agency-related fil
 - Shows expiry date.
 - **No "Read-only" badge** in the section header (intentionally removed — confused users).
 
-### 5.8 Sync banner
-- "Synced from **ImageRight** · 5 min ago" — only on Policy Documents views.
-- "Sync now" link triggers a refresh and "Synced" toast.
-
-### 5.9 Preview pane
+### 5.8 Preview pane
 - Right-side preview panel opens when clicking the eye icon on any doc row.
 - Has expand/collapse — expanded mode is a right-side drawer matching the Notes drawer pattern.
 - Shows breadcrumb (Documents › Category › Filename), meta strip, and a faux PDF body.
