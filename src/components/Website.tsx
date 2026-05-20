@@ -1017,7 +1017,7 @@ function ResetPasswordView({ c, font, inputStyle, labelStyle, primaryBtnStyle, b
       </div>
 
       <button type="button" disabled={!allValid} onClick={() => setDone(true)} style={primaryBtnStyle(allValid)}>
-        Save Password
+        Save New Password
       </button>
 
       <p className="mt-5" style={{ ...font, fontSize: 12, color: c.muted, lineHeight: "18px" }}>
