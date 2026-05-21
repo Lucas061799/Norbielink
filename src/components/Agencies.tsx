@@ -6187,13 +6187,12 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             <h2 className="text-[18px] font-bold" style={{ ...font, color: c.text }}>Add New Agency Information</h2>
             <button
               onClick={() => {
-                // Save for Later requires the top-two rows filled. Missing fields trigger inline hints + a toast.
+                // Save for Later requires Name, Code, Contact, and Email. Phone is optional for drafts.
                 const missing =
                   agencyName.trim().length === 0 ||
                   agencyCode.trim().length === 0 ||
                   contact.trim().length === 0 ||
-                  email.trim().length === 0 ||
-                  phone.trim().length === 0;
+                  email.trim().length === 0;
                 if (missing) {
                   setDraftAttempted(true);
                   setMissingDraftToast(true);
@@ -6294,8 +6293,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                 onChange={e => { const v = formatPhone(e.target.value); setPhone(v); runValidate("phone", v); }}
                 onBlur={e => runValidate("phone", e.target.value)}
                 placeholder="(000) 000-0000" style={{ ...inputStyle, ...errorStyleFor("phone") }} inputMode="tel" />
-              <ErrMsg k="phone" value={phone} />
-              <DraftHint value={phone} />
+              <ErrMsg k="phone" />
             </div>
           </div>
 
@@ -6597,7 +6595,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold" style={{ color: c.text }}>Can&apos;t save draft yet</div>
             <div className="text-[12px] mt-0.5" style={{ color: c.muted, lineHeight: "16px" }}>
-              Fill in Agency Name, Code, Contact, Email, and Phone first.
+              Fill in Agency Name, Code, Contact, and Email first.
             </div>
           </div>
           <button onClick={() => setMissingDraftToast(false)}
@@ -6609,13 +6607,12 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
         </div>
       )}
       {submitIncompleteOpen && (() => {
-        // Per-field status — shows the user exactly which draft-required fields are filled vs missing.
+        // Per-field status — Phone Number is NOT required for save-as-draft.
         const fields: { label: string; value: string }[] = [
           { label: "Agency Name", value: agencyName },
           { label: "Agency Code", value: agencyCode },
           { label: "Agency Contact", value: contact },
           { label: "Email Address", value: email },
-          { label: "Phone Number", value: phone },
         ];
         const canSaveDraft = fields.every(f => f.value.trim().length > 0);
         return (
@@ -6648,7 +6645,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
                   Some required fields are still empty.
                   {canSaveDraft
                     ? " You can save this as a draft and finish later."
-                    : <> To save as a draft, fill in <span style={{ color: c.text, fontWeight: 600 }}>Agency Name</span>, <span style={{ color: c.text, fontWeight: 600 }}>Code</span>, <span style={{ color: c.text, fontWeight: 600 }}>Contact</span>, <span style={{ color: c.text, fontWeight: 600 }}>Email</span>, and <span style={{ color: c.text, fontWeight: 600 }}>Phone</span>.</>}
+                    : <> To save as a draft, fill in <span style={{ color: c.text, fontWeight: 600 }}>Agency Name</span>, <span style={{ color: c.text, fontWeight: 600 }}>Code</span>, <span style={{ color: c.text, fontWeight: 600 }}>Contact</span>, and <span style={{ color: c.text, fontWeight: 600 }}>Email</span>.</>}
                 </p>
               </div>
 
