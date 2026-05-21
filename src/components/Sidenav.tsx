@@ -10,7 +10,7 @@ import {
   LayoutGrid, Sparkles, FileText, Shield,
   Briefcase, CreditCard, BookOpen, FileEdit,
   Wrench, HelpCircle, UserCog, Building2, Globe, ChevronDown, Users,
-  User, LogOut, X, Images, Pencil, ZoomIn, ZoomOut,
+  User, LogOut, X, Images, Pencil, ZoomIn, ZoomOut, AlertTriangle,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -106,15 +106,30 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
   const [profileStep, setProfileStep] = useState<"overview" | "photo">("overview");
   const [profileDrag, setProfileDrag] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  const [userId, setUserId] = useState("john.smith");
+  const [userId, setUserId] = useState("johnsmith");
+  const [savedUserId, setSavedUserId] = useState("johnsmith");
+  // Demo: first Save with a changed User ID is rejected with a "taken" message.
+  // After the user edits to a new value, the next Save succeeds.
+  const [userIdError, setUserIdError] = useState<string | null>(null);
+  const [userIdRejectedValue, setUserIdRejectedValue] = useState<string | null>(null);
+  // Top-right success toast that appears after a successful profile save.
+  const [profileToast, setProfileToast] = useState<{ title: string; description: string } | null>(null);
+  useEffect(() => {
+    if (!profileToast) return;
+    const t = setTimeout(() => setProfileToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [profileToast]);
   // Photo crop controls — zoom and offset within the crop circle.
   const [imageZoom, setImageZoom]       = useState(1);
   const [imageOffsetX, setImageOffsetX] = useState(0);
   const [imageOffsetY, setImageOffsetY] = useState(0);
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(null);
   const resetCrop = () => { setImageZoom(1); setImageOffsetX(0); setImageOffsetY(0); };
-  // Initials derived from the User ID — splits on common separators (".", "-", "_", spaces).
-  const initials = (userId.split(/[.\s_-]+/).filter(Boolean).map(s => s[0]?.toUpperCase() || "").join("").slice(0, 2)) || "?";
+  // Initials are derived from the user's full name (firstName + lastName), not the User ID.
+  // Hard-coded for the demo; in production this comes from the user record.
+  const firstName = "John";
+  const lastName  = "Smith";
+  const initials  = (firstName[0] + lastName[0]).toUpperCase();
 
   // Close the My Account menu on outside click.
   useEffect(() => {
@@ -361,7 +376,7 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           setProfilePreview(url);
           resetCrop();
         };
-        const close = () => { setProfileOpen(false); setProfileDrag(false); setProfilePreview(null); resetCrop(); };
+        const close = () => { setProfileOpen(false); setProfileDrag(false); setProfilePreview(null); resetCrop(); setUserIdError(null); setUserIdRejectedValue(null); };
         return (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-6"
             style={{ background: "rgba(0,0,0,0.45)" }}
@@ -439,47 +454,35 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
 
 
                   {/* User ID — clean labeled field, no heavy card wrapper */}
-                  {(() => {
-                    const USER_ID_MAX = 10;
-                    const overLimit = userId.length > USER_ID_MAX;
-                    const nearLimit = !overLimit && userId.length >= USER_ID_MAX - 2;
-                    const counterColor = overLimit ? "#EF4444" : nearLimit ? "#A614C3" : muted;
-                    return (
-                      <div className="px-6 pt-2 pb-2">
-                        <div className="flex items-baseline justify-between mb-1.5">
-                          <label className="text-[12px] font-semibold" style={{ color: text }}>User ID</label>
-                          {userId.length > 0 && (
-                            <span className="text-[11px] font-medium"
-                              style={{ color: counterColor }}>
-                              {userId.length}/{USER_ID_MAX}
-                            </span>
-                          )}
-                        </div>
-                        <input value={userId}
-                          onChange={e => setUserId(e.target.value.slice(0, USER_ID_MAX))}
-                          placeholder="firstname.lastname"
-                          maxLength={USER_ID_MAX}
-                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
-                          style={{
-                            background: cardBg,
-                            border: `1px solid ${overLimit ? "#EF4444" : border}`,
-                            color: text,
-                          }}
-                          onFocus={e => { if (!overLimit) e.currentTarget.style.borderColor = "#A614C3"; }}
-                          onBlur={e => { e.currentTarget.style.borderColor = overLimit ? "#EF4444" : border; }} />
-                        {overLimit ? (
-                          <div className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: "#EF4444", lineHeight: "16px" }}>
-                            <X className="w-3 h-3 flex-shrink-0" strokeWidth={2.5} />
-                            User ID can&apos;t be more than {USER_ID_MAX} characters.
-                          </div>
-                        ) : (
-                          <div className="text-[11px] mt-1.5" style={{ color: muted, lineHeight: "16px" }}>
-                            The User ID you use to sign in. Your email address also works as an alternative.
-                          </div>
-                        )}
+                  <div className="px-6 pt-2 pb-2">
+                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>User ID</label>
+                    <input value={userId}
+                      onChange={e => {
+                        const v = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                        setUserId(v);
+                        // Clear the "taken" error as soon as the user changes the value.
+                        if (userIdError) setUserIdError(null);
+                      }}
+                      placeholder="yourusername"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                      style={{
+                        background: cardBg,
+                        border: `1px solid ${userIdError ? "#EF4444" : border}`,
+                        color: text,
+                      }}
+                      onFocus={e => { if (!userIdError) e.currentTarget.style.borderColor = "#A614C3"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = userIdError ? "#EF4444" : border; }} />
+                    {userIdError ? (
+                      <div className="text-[11px] mt-1.5 flex items-center gap-1.5" style={{ color: "#EF4444", lineHeight: "16px" }}>
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2} />
+                        {userIdError}
                       </div>
-                    );
-                  })()}
+                    ) : (
+                      <div className="text-[11px] mt-1.5" style={{ color: muted, lineHeight: "16px" }}>
+                        The User ID you use to sign in. Your email address also works as an alternative.
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -661,7 +664,28 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                   style={{ border: `1px solid ${border}`, color: text, background: "transparent", cursor: "pointer" }}>
                   {profileStep === "photo" ? "Back" : "Cancel"}
                 </button>
-                <button onClick={() => { if (profileStep === "photo") setProfileStep("overview"); else close(); }}
+                <button onClick={() => {
+                    if (profileStep === "photo") { setProfileStep("overview"); return; }
+                    // Overview step Save — run the User ID conflict simulation.
+                    if (userId === savedUserId) { close(); return; } // no change
+                    // Minimum length check — User ID must be at least 8 characters.
+                    if (userId.length < 8) {
+                      setUserIdError("User ID must be at least 8 characters.");
+                      return;
+                    }
+                    // First save attempt with a new value, or retry with the same rejected value → reject.
+                    if (userIdRejectedValue === null || userId === userIdRejectedValue) {
+                      setUserIdRejectedValue(userId);
+                      setUserIdError(`The User ID "${userId}" is already taken. Try a different one.`);
+                      return;
+                    }
+                    // User changed to something different from the rejected value → success.
+                    setSavedUserId(userId);
+                    setUserIdRejectedValue(null);
+                    setUserIdError(null);
+                    setProfileToast({ title: "Profile saved", description: `Your User ID has been updated to "${userId}".` });
+                    close();
+                  }}
                   className="px-5 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
                   style={{
                     background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)",
@@ -674,6 +698,31 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           </div>
         );
       })()}
+
+      {/* Success toast — matches the Agencies "Draft saved" toast pattern (top-[68px] right-6, auto-dismiss, no X) */}
+      {profileToast && (
+        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-3"
+          style={{
+            fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
+            background: isDark ? "#1E2240" : "#fff",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+            borderRadius: 12,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            padding: "12px 14px",
+            minWidth: 320, maxWidth: 420,
+          }}>
+          <span className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 26, height: 26, borderRadius: 9999, background: "rgba(166,20,195,0.10)" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold" style={{ color: isDark ? "#F9FAFB" : "#1F2937" }}>{profileToast.title}</div>
+            <div className="text-[12px] mt-0.5" style={{ color: isDark ? "#8B8FA8" : "#6B7280" }}>{profileToast.description}</div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

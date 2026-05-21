@@ -497,7 +497,7 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
               <div>
                 <label style={labelStyle}>User ID</label>
                 <input type="text" value={userIdValue} onChange={e => setUserIdValue(e.target.value)}
-                  autoFocus style={inputStyle} placeholder="firstname.lastname" />
+                  autoFocus style={inputStyle} placeholder="yourusername" />
               </div>
               <div>
                 <label style={labelStyle}>Email Address</label>
@@ -873,7 +873,7 @@ function ResetPasswordView({ c, font, inputStyle, labelStyle, primaryBtnStyle, b
   onContinue: () => void;
 }) {
   // These would come from the URL token in production. Hard-coded here so the dev can see the layout.
-  const accountUserId = "lisa.armitage";
+  const accountUserId = "lisaarmitage";
   const accountEmail  = "lisa.armitage@amyntagroup.com";
 
   const [password, setPassword] = useState("");
