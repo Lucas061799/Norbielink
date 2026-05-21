@@ -188,7 +188,10 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           onMouseEnter={e => { if (!accountOpen) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB"; }}
           onMouseLeave={e => { if (!accountOpen) e.currentTarget.style.background = "transparent"; }}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative"
-            style={{ border: "2.5px solid #73C9B7", background: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)" }}>
+            style={{
+              border: profilePreview ? `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}` : "2.5px solid #73C9B7",
+              background: profilePreview ? "transparent" : (isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)"),
+            }}>
             {profilePreview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profilePreview} alt="Avatar"
@@ -414,8 +417,8 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                       aria-label="Change profile picture">
                       <div className="w-[88px] h-[88px] rounded-full flex items-center justify-center overflow-hidden transition-all relative"
                         style={{
-                          border: "3px solid #73C9B7",
-                          background: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)",
+                          border: profilePreview ? `1px solid ${border}` : "3px solid #73C9B7",
+                          background: profilePreview ? "transparent" : (isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)"),
                         }}>
                         {profilePreview ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -436,14 +439,14 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                           }}>{initials}</span>
                         )}
                       </div>
-                      {/* Edit chip — clean white circle, subtle shadow, brand-purple pencil icon */}
+                      {/* Edit chip — clean circle that contrasts against the modal in both themes */}
                       <span className="absolute flex items-center justify-center transition-all group-hover:shadow-md"
                         style={{
                           right: 0, bottom: 2,
                           width: 28, height: 28, borderRadius: 9999,
-                          background: cardBg,
-                          border: `1px solid ${border}`,
-                          boxShadow: "0 2px 6px rgba(15,23,42,0.12)",
+                          background: isDark ? "#F9FAFB" : "#ffffff",
+                          border: `1px solid ${isDark ? "rgba(0,0,0,0.10)" : "#E5E7EB"}`,
+                          boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.35)" : "0 2px 6px rgba(15,23,42,0.12)",
                         }}>
                         <Pencil className="w-3 h-3" style={{ color: "#A614C3" }} strokeWidth={2} />
                       </span>
@@ -509,7 +512,11 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                         </span>
                         <div className="text-[14px] font-medium mb-2" style={{ color: text }}>Drag and drop your photo</div>
                         <span className="px-3 py-1.5 rounded-lg text-[12px] font-medium"
-                          style={{ background: cardBg, border: `1px solid ${border}`, color: text }}>
+                          style={{
+                            background: isDark ? "rgba(255,255,255,0.06)" : "#fff",
+                            border: `1px solid ${isDark ? "rgba(255,255,255,0.16)" : "#E5E7EB"}`,
+                            color: text,
+                          }}>
                           Upload Photo
                         </span>
                         <div className="text-[11px] mt-2" style={{ color: muted }}>JPG, PNG or GIF · Max 5MB</div>
@@ -600,24 +607,38 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                         </div>
 
                         {/* Action buttons — bordered ghost style matching the modal's Cancel/Back button language */}
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={resetCrop}
-                            className="px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
-                            style={{ border: `1px solid ${border}`, background: "transparent", color: text, cursor: "pointer" }}
-                            onMouseEnter={e => (e.currentTarget.style.background = subtle)}
-                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                            Reset
-                          </button>
-                          <label
-                            className="px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer"
-                            style={{ border: `1px solid ${border}`, background: "transparent", color: text }}
-                            onMouseEnter={e => (e.currentTarget.style.background = subtle)}
-                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                            <input type="file" className="hidden" accept="image/jpeg,image/png,image/gif"
-                              onChange={e => handlePick(e.target.files?.[0] ?? undefined)} />
-                            Change photo
-                          </label>
-                        </div>
+                        {(() => {
+                          const darkGhostBg = "linear-gradient(rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)";
+                          const darkGhostHoverBg = "linear-gradient(rgba(255,255,255,0.16) -0.44%, rgba(192,192,192,0.16) 49.45%, rgba(172,172,172,0.16) 99.33%)";
+                          return (
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={resetCrop}
+                                className="px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                                style={{
+                                  border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : border}`,
+                                  background: isDark ? darkGhostBg : "transparent",
+                                  color: text, cursor: "pointer",
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = isDark ? darkGhostHoverBg : subtle)}
+                                onMouseLeave={e => (e.currentTarget.style.background = isDark ? darkGhostBg : "transparent")}>
+                                Reset
+                              </button>
+                              <label
+                                className="px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer"
+                                style={{
+                                  border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : border}`,
+                                  background: isDark ? darkGhostBg : "transparent",
+                                  color: text,
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = isDark ? darkGhostHoverBg : subtle)}
+                                onMouseLeave={e => (e.currentTarget.style.background = isDark ? darkGhostBg : "transparent")}>
+                                <input type="file" className="hidden" accept="image/jpeg,image/png,image/gif"
+                                  onChange={e => handlePick(e.target.files?.[0] ?? undefined)} />
+                                Change photo
+                              </label>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -628,7 +649,10 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                     <div className="flex items-center gap-3 rounded-xl px-3.5 py-3"
                       style={{ border: `1px solid ${border}`, background: subtle }}>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative"
-                        style={{ border: "2.5px solid #73C9B7", background: isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)" }}>
+                        style={{
+                          border: profilePreview ? `1px solid ${border}` : "2.5px solid #73C9B7",
+                          background: profilePreview ? "transparent" : (isDark ? "rgba(115,201,183,0.18)" : "rgba(115,201,183,0.10)"),
+                        }}>
                         {profilePreview ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={profilePreview} alt="Preview"
@@ -659,11 +683,25 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
 
               {/* Footer */}
               <div className="flex items-center justify-between gap-2 px-6 pb-5 pt-4">
-                <button onClick={() => { if (profileStep === "photo") setProfileStep("overview"); else close(); }}
-                  className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                  style={{ border: `1px solid ${border}`, color: text, background: "transparent", cursor: "pointer" }}>
-                  {profileStep === "photo" ? "Back" : "Cancel"}
-                </button>
+                {(() => {
+                  // Ghost-button gradient used elsewhere in dark mode (e.g. Import Users) — subtle gray gradient.
+                  const darkGhostBg = "linear-gradient(rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)";
+                  const darkGhostHoverBg = "linear-gradient(rgba(255,255,255,0.16) -0.44%, rgba(192,192,192,0.16) 49.45%, rgba(172,172,172,0.16) 99.33%)";
+                  return (
+                    <button onClick={() => { if (profileStep === "photo") setProfileStep("overview"); else close(); }}
+                      className="px-4 py-2 rounded-lg text-[12px] font-medium transition-colors"
+                      style={{
+                        border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : border}`,
+                        color: text,
+                        background: isDark ? darkGhostBg : "transparent",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = isDark ? darkGhostHoverBg : subtle)}
+                      onMouseLeave={e => (e.currentTarget.style.background = isDark ? darkGhostBg : "transparent")}>
+                      {profileStep === "photo" ? "Back" : "Cancel"}
+                    </button>
+                  );
+                })()}
                 <button onClick={() => {
                     if (profileStep === "photo") { setProfileStep("overview"); return; }
                     // Overview step Save — run the User ID conflict simulation.
@@ -688,9 +726,13 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                   }}
                   className="px-5 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
                   style={{
-                    background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)",
+                    background: isDark
+                      ? "radial-gradient(171.32% 99.33% at 33.13% -9%, #282550 0%, #191735 55.82%, rgba(0,0,0,0.3) 74%, rgba(0,0,0,0) 100%), linear-gradient(88.34deg, #5C2ED4 0.11%, #A614C3 63.8%)"
+                      : "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)",
                     border: "none", cursor: "pointer",
-                  }}>
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                  onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
                   Save
                 </button>
               </div>
@@ -712,8 +754,11 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
             minWidth: 320, maxWidth: 420,
           }}>
           <span className="flex items-center justify-center flex-shrink-0"
-            style={{ width: 26, height: 26, borderRadius: 9999, background: "rgba(166,20,195,0.10)" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            style={{
+              width: 26, height: 26, borderRadius: 9999,
+              background: isDark ? "rgba(168,85,247,0.22)" : "rgba(166,20,195,0.10)",
+            }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? "#D946EF" : "#A614C3"} strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </span>
