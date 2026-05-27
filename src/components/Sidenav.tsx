@@ -106,12 +106,12 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
   const [profileStep, setProfileStep] = useState<"overview" | "photo">("overview");
   const [profileDrag, setProfileDrag] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  const [userId, setUserId] = useState("johnsmith");
-  const [savedUserId, setSavedUserId] = useState("johnsmith");
-  // Demo: first Save with a changed User ID is rejected with a "taken" message.
-  // After the user edits to a new value, the next Save succeeds.
-  const [userIdError, setUserIdError] = useState<string | null>(null);
-  const [userIdRejectedValue, setUserIdRejectedValue] = useState<string | null>(null);
+  // User Name = editable handle (what user picks). User ID = system-assigned identifier with numbers (read-only).
+  const [userName, setUserName] = useState("johnsmith");
+  const [savedUserName, setSavedUserName] = useState("johnsmith");
+  const userId = "johnsmith01"; // system-assigned, shown as @userId, never edited by the user
+  // Inline validation (e.g. min-length) for the User Name field. Duplicates are allowed.
+  const [userNameError, setUserNameError] = useState<string | null>(null);
   // Top-right success toast that appears after a successful profile save.
   const [profileToast, setProfileToast] = useState<{ title: string; description: string } | null>(null);
   useEffect(() => {
@@ -125,10 +125,11 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
   const [imageOffsetY, setImageOffsetY] = useState(0);
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(null);
   const resetCrop = () => { setImageZoom(1); setImageOffsetX(0); setImageOffsetY(0); };
-  // Initials are derived from the user's full name (firstName + lastName), not the User ID.
+  // Display name + initials come from the user record (firstName + lastName), NOT the User ID.
   // Hard-coded for the demo; in production this comes from the user record.
   const firstName = "John";
   const lastName  = "Smith";
+  const displayName = `${firstName} ${lastName}`;
   const initials  = (firstName[0] + lastName[0]).toUpperCase();
 
   // Close the My Account menu on outside click.
@@ -222,9 +223,9 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           </div>
           <div className="flex-1 text-left min-w-0">
             <div className="text-[13px] font-bold truncate leading-tight" style={{ color: isDark ? "#F9FAFB" : "#2D3653" }}>
-              {userId}
+              {displayName}
             </div>
-            <div className="text-[11px] leading-tight" style={{ color: isDark ? "#8B8FA8" : "#9CA3AF" }}>
+            <div className="text-[11px] leading-tight truncate" style={{ color: isDark ? "#8B8FA8" : "#9CA3AF" }}>
               ProSuite Member
             </div>
           </div>
@@ -379,7 +380,7 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           setProfilePreview(url);
           resetCrop();
         };
-        const close = () => { setProfileOpen(false); setProfileDrag(false); setProfilePreview(null); resetCrop(); setUserIdError(null); setUserIdRejectedValue(null); };
+        const close = () => { setProfileOpen(false); setProfileDrag(false); setProfilePreview(null); resetCrop(); setUserNameError(null); };
         return (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-6"
             style={{ background: "rgba(0,0,0,0.45)" }}
@@ -451,38 +452,34 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                         <Pencil className="w-3 h-3" style={{ color: "#A614C3" }} strokeWidth={2} />
                       </span>
                     </button>
-                    <div className="text-[18px] font-bold leading-tight" style={{ color: text }}>{userId}</div>
-                    <div className="text-[12px] mt-0.5" style={{ color: muted }}>ProSuite Member</div>
+                    <div className="text-[18px] font-bold leading-tight" style={{ color: text }}>{displayName}</div>
+                    <div className="text-[12px] mt-0.5" style={{ color: muted }}>@{userId} · ProSuite Member</div>
                   </div>
 
 
                   {/* User ID — clean labeled field, no heavy card wrapper */}
                   <div className="px-6 pt-2 pb-2">
-                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>User ID</label>
-                    <input value={userId}
+                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>User Name</label>
+                    <input value={userName}
                       onChange={e => {
                         const v = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
-                        setUserId(v);
+                        setUserName(v);
                         // Clear the "taken" error as soon as the user changes the value.
-                        if (userIdError) setUserIdError(null);
+                        if (userNameError) setUserNameError(null);
                       }}
                       placeholder="yourusername"
                       className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
                       style={{
                         background: cardBg,
-                        border: `1px solid ${userIdError ? "#EF4444" : border}`,
+                        border: `1px solid ${userNameError ? "#EF4444" : border}`,
                         color: text,
                       }}
-                      onFocus={e => { if (!userIdError) e.currentTarget.style.borderColor = "#A614C3"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = userIdError ? "#EF4444" : border; }} />
-                    {userIdError ? (
+                      onFocus={e => { if (!userNameError) e.currentTarget.style.borderColor = "#A614C3"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = userNameError ? "#EF4444" : border; }} />
+                    {userNameError && (
                       <div className="text-[11px] mt-1.5 flex items-center gap-1.5" style={{ color: "#EF4444", lineHeight: "16px" }}>
                         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2} />
-                        {userIdError}
-                      </div>
-                    ) : (
-                      <div className="text-[11px] mt-1.5" style={{ color: muted, lineHeight: "16px" }}>
-                        The User ID you use to sign in. Your email address also works as an alternative.
+                        {userNameError}
                       </div>
                     )}
                   </div>
@@ -673,8 +670,8 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[14px] font-bold" style={{ color: text }}>{userId}</div>
-                        <div className="text-[12px]" style={{ color: muted, marginTop: 1 }}>ProSuite Member</div>
+                        <div className="text-[14px] font-bold" style={{ color: text }}>{displayName}</div>
+                        <div className="text-[12px]" style={{ color: muted, marginTop: 1 }}>@{userId} · ProSuite Member</div>
                       </div>
                     </div>
                   </div>
@@ -704,24 +701,15 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                 })()}
                 <button onClick={() => {
                     if (profileStep === "photo") { setProfileStep("overview"); return; }
-                    // Overview step Save — run the User ID conflict simulation.
-                    if (userId === savedUserId) { close(); return; } // no change
-                    // Minimum length check — User ID must be at least 8 characters.
-                    if (userId.length < 8) {
-                      setUserIdError("User ID must be at least 8 characters.");
+                    // Overview step Save. User Name allows duplicates — no uniqueness check.
+                    if (userName === savedUserName) { close(); return; } // no change
+                    if (userName.length < 8) {
+                      setUserNameError("User name must be at least 8 characters.");
                       return;
                     }
-                    // First save attempt with a new value, or retry with the same rejected value → reject.
-                    if (userIdRejectedValue === null || userId === userIdRejectedValue) {
-                      setUserIdRejectedValue(userId);
-                      setUserIdError(`The User ID "${userId}" is already taken. Try a different one.`);
-                      return;
-                    }
-                    // User changed to something different from the rejected value → success.
-                    setSavedUserId(userId);
-                    setUserIdRejectedValue(null);
-                    setUserIdError(null);
-                    setProfileToast({ title: "Profile saved", description: `Your User ID has been updated to "${userId}".` });
+                    setSavedUserName(userName);
+                    setUserNameError(null);
+                    setProfileToast({ title: "Profile saved", description: `Your user name has been updated to "${userName}".` });
                     close();
                   }}
                   className="px-5 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"

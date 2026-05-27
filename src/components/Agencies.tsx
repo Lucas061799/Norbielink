@@ -570,10 +570,26 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [ePremFin,    setEPremFin]    = useState(agency.premiumFin);
   const [eAffil,      setEAffil]      = useState<Set<string>>(new Set(agency.affiliations));
   const [eWC,         setEWC]         = useState<Set<string>>(new Set(agency.workersComp));
+  // "Show all / Show less" toggle for the long read-only Affiliations and Workers Comp lists.
+  const [affilExpanded, setAffilExpanded] = useState(false);
+  const [wcExpanded, setWcExpanded] = useState(false);
+  // Ref to scroll to the read-only Affiliations section when the user clicks "+N more" in the InfoCard.
+  const affilSectionRef = useRef<HTMLDivElement | null>(null);
+  const scrollToAffiliations = () => {
+    setAffilExpanded(true);
+    setTimeout(() => {
+      affilSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  };
   const [eBadges,     setEBadges]     = useState<Set<string>>(new Set(agency.badges ?? []));
   // Persisted badges override — set after Save Changes so the read-only Overview reflects edits.
   const [badgesOverride, setBadgesOverride] = useState<string[] | null>(null);
   const effectiveBadges = badgesOverride ?? agency.badges ?? [];
+  // Same override pattern for affiliations and workers comp so Save Changes actually persists those selections.
+  const [affilOverride, setAffilOverride] = useState<string[] | null>(null);
+  const [wcOverride,    setWcOverride]    = useState<string[] | null>(null);
+  const effectiveAffils = affilOverride ?? agency.affiliations ?? [];
+  const effectiveWC     = wcOverride    ?? agency.workersComp ?? [];
   const [eStatusOpen, setEStatusOpen] = useState(false);
   const [eBizTypeOpen, setEBizTypeOpen] = useState(false);
   const [eReason, setEReason] = useState("");
@@ -733,7 +749,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // Track users granted admin permissions via the Principal-reassign flow (Principal implies admin).
   const [adminGrantOverrides, setAdminGrantOverrides] = useState<Set<string>>(new Set());
   // ── Documents tab state (demo only — files are mock entries; uploads add rows but don't store anything). ──
-  type AgencyDocCategory = "bor" | "w9" | "license" | "agreement" | "other";
+  type AgencyDocCategory = "bor" | "w9" | "license" | "agreement" | "other" | "eo";
   type AgencyDoc = { id: string; category: AgencyDocCategory; name: string; date: string; size?: string; archived?: boolean; trashed?: boolean };
   const [agencyDocs, setAgencyDocs] = useState<AgencyDoc[]>([
     { id: "d1", category: "bor",       name: "BOR Request - 2025.pdf",      date: "Mar 15, 2025", size: "1.4 MB" },
@@ -1628,6 +1644,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         });
                         showToast({ title: "Changes saved", description: "Updated documents uploaded successfully." });
                         setBadgesOverride(Array.from(eBadges));
+                        setAffilOverride(Array.from(eAffil));
+                        setWcOverride(Array.from(eWC));
                         setIsEditing(false);
                         setDocUpdateModal(null);
                         setDocModalUploads({});
@@ -1943,13 +1961,47 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </InfoCard>
           )}
           <InfoCard title="Affiliations" icon={<Network className="w-5 h-5" style={{ color: "#A855F7" }} />}>
-            <div className="space-y-1" style={{ paddingRight: 40 }}>
-              {agency.affiliations.slice(0, 5).map(a => (
-                <p key={a} className="text-[12px] leading-snug" style={{ ...font, color: c.text }}>{a}</p>
-              ))}
-              {agency.affiliations.length > 5 && (
-                <p className="text-[11px] leading-snug" style={{ ...font, color: c.muted }}>+{agency.affiliations.length - 5} more</p>
-              )}
+            <div style={{ paddingRight: 40 }}>
+              {effectiveAffils.length === 0 ? (
+                <p className="text-[12px]" style={{ ...font, color: c.muted }}>None</p>
+              ) : (() => {
+                // Pill style, max 5 visible. Beyond that, a muted "+N more" pill.
+                const CAP = 5;
+                const visible = effectiveAffils.slice(0, CAP);
+                const extra = effectiveAffils.length - CAP;
+                return (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {visible.map(a => (
+                      <span key={a} className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                        style={{
+                          ...font,
+                          background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
+                          padding: "3px 10px",
+                          fontSize: 11, fontWeight: 600, lineHeight: "16px", color: c.text,
+                        }}>{a}</span>
+                    ))}
+                    {extra > 0 && (
+                      <button
+                        type="button"
+                        onClick={scrollToAffiliations}
+                        title="See all affiliations"
+                        className="inline-flex items-center justify-center rounded-full whitespace-nowrap transition-colors"
+                        style={{
+                          background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+                          border: "none",
+                          padding: "3px 10px",
+                          ...font,
+                          fontSize: 11, fontWeight: 600, lineHeight: "16px", color: c.muted,
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.08)"; e.currentTarget.style.color = "#A614C3"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"; e.currentTarget.style.color = c.muted; }}>
+                        +{extra} more
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </InfoCard>
         </div>
@@ -2046,18 +2098,50 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Premium Finance:</p>
                 <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.premiumFin ? "Yes" : "No"}</p>
               </div>
-              <div>
-                <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Affiliations</p>
-                <div className="space-y-1">{agency.affiliations.map(a => <p key={a} className="text-[13px]" style={{ ...font, color: c.text }}>{a}</p>)}</div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Direct Appointments</p>
-                  <span style={{ color: c.border }}>|</span>
-                  <p className="text-[13px] font-semibold" style={{ ...font, color: "#A614C3" }}>Workers Compensation</p>
-                </div>
-                <div className="space-y-1">{agency.workersComp.map(w => <p key={w} className="text-[13px]" style={{ ...font, color: c.text }}>{w}</p>)}</div>
-              </div>
+              {(() => {
+                const CAP = 5;
+                const affils = effectiveAffils;
+                const wcs    = effectiveWC;
+                const affilVisible = affilExpanded ? affils : affils.slice(0, CAP);
+                const wcVisible    = wcExpanded    ? wcs    : wcs.slice(0, CAP);
+                const toggleStyle: React.CSSProperties = {
+                  fontFamily: FONT, fontSize: 12, fontWeight: 600,
+                  background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                  border: "none", padding: 0, cursor: "pointer", marginTop: 6,
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                };
+                return (
+                  <>
+                    <div ref={affilSectionRef} style={{ scrollMarginTop: 80 }}>
+                      <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Affiliations</p>
+                      <div className="space-y-1">{affilVisible.map(a => <p key={a} className="text-[13px]" style={{ ...font, color: c.text }}>{a}</p>)}</div>
+                      {affils.length > CAP && (
+                        <button onClick={() => setAffilExpanded(e => !e)} style={toggleStyle}>
+                          {affilExpanded
+                            ? <>Show less <ChevronUp className="w-3 h-3" style={{ color: "#A614C3" }} /></>
+                            : <>Show all ({affils.length}) <ChevronDown className="w-3 h-3" style={{ color: "#A614C3" }} /></>}
+                        </button>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Direct Appointments</p>
+                        <span style={{ color: c.border }}>|</span>
+                        <p className="text-[13px] font-semibold" style={{ ...font, color: "#A614C3" }}>Workers Compensation</p>
+                      </div>
+                      <div className="space-y-1">{wcVisible.map(w => <p key={w} className="text-[13px]" style={{ ...font, color: c.text }}>{w}</p>)}</div>
+                      {wcs.length > CAP && (
+                        <button onClick={() => setWcExpanded(e => !e)} style={toggleStyle}>
+                          {wcExpanded
+                            ? <>Show less <ChevronUp className="w-3 h-3" style={{ color: "#A614C3" }} /></>
+                            : <>Show all ({wcs.length}) <ChevronDown className="w-3 h-3" style={{ color: "#A614C3" }} /></>}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
               <div>
                 <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Tags</p>
                 {effectiveBadges.length > 0 ? (
@@ -2521,6 +2605,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     return;
                   }
                   setBadgesOverride(Array.from(eBadges));
+                  setAffilOverride(Array.from(eAffil));
+                  setWcOverride(Array.from(eWC));
                   setIsEditing(false);
                 }}
                 className="text-[13px] font-semibold text-white transition-all"
@@ -2542,7 +2628,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           const trashedDocs  = agencyDocs.filter(d => d.trashed);
           const archivedCount = archivedDocs.length;
           const trashedCount  = trashedDocs.length;
-          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other" };
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other", eo: "E&O Certificate" };
           const parseDate = (s: string) => { const t = Date.parse(s); return isNaN(t) ? 0 : t; };
           const baseDocs: AgencyDoc[] = showDocTrashed
             ? trashedDocs
@@ -2862,7 +2948,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                               </button>
                               <div style={{ height: 1, background: c.border }} />
-                              {(["bor","w9","license","agreement","other"] as AgencyDocCategory[]).map(t => {
+                              {(["bor","w9","license","agreement","other","eo"] as AgencyDocCategory[]).map(t => {
                                 const checked = docFilterCats.has(t);
                                 return (
                                   <button key={t} onClick={() => toggleDocFilterCat(t)}
@@ -2924,7 +3010,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           All Categories
                           {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </button>
-                        {(["bor","w9","license","agreement","other"] as AgencyDocCategory[]).map(t => {
+                        {(["bor","w9","license","agreement","other","eo"] as AgencyDocCategory[]).map(t => {
                           const checked = docFilterCats.has(t);
                           return (
                             <button key={t} onClick={() => toggleDocFilterCat(t)}
@@ -3155,30 +3241,34 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="flex-1 min-h-0 overflow-y-auto">
 
                 {/* By Type view — grouped by category so each type is visually separated. */}
-                {!showDocArchived && !showDocTrashed && docView === "byType" && (
+                {!showDocArchived && !showDocTrashed && docView === "byType" && (() => {
+                  const ORDER: AgencyDocCategory[] = ["bor","w9","license","agreement","other"];
+                  const groups = ORDER
+                    .map(cat => ({ cat, docs: visibleDocs.filter(d => d.category === cat) }))
+                    .filter(g => g.docs.length > 0);
+                  // E&O is a special read-only doc that lives outside agencyDocs — show it when no filter or filter includes "eo".
+                  const eoVisible = docFilterCats.size === 0 || docFilterCats.has("eo");
+                  // Empty state only when both regular groups AND the E&O section are hidden.
+                  const showEmpty = groups.length === 0 && !eoVisible;
+                  return (
                   <>
-                    {visibleDocs.length === 0 ? (
+                    {showEmpty && (
                       <div className="rounded-xl overflow-hidden mb-3 px-5 py-10 text-center text-[12px]" style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
                         No documents in this category yet.
                       </div>
-                    ) : (() => {
-                      const ORDER: AgencyDocCategory[] = ["bor","w9","license","agreement","other"];
-                      const groups = ORDER
-                        .map(cat => ({ cat, docs: visibleDocs.filter(d => d.category === cat) }))
-                        .filter(g => g.docs.length > 0);
-                      return groups.map(g => (
-                        <div key={g.cat} className="rounded-xl overflow-hidden mb-3" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                          <div className="flex items-center gap-2 px-5 py-2.5" style={{ borderBottom: `1px solid ${c.border}`, background: c.hoverBg }}>
-                            <FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
-                            <span className="text-[12px] font-semibold" style={{ ...font, color: c.text }}>{CAT_LABEL[g.cat]}</span>
-                            <span className="text-[11px]" style={{ ...font, color: c.muted }}>({g.docs.length})</span>
-                          </div>
-                          {g.docs.map(d => <FlatRow key={d.id} d={d} />)}
+                    )}
+                    {groups.map(g => (
+                      <div key={g.cat} className="rounded-xl overflow-hidden mb-3" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                        <div className="flex items-center gap-2 px-5 py-2.5" style={{ borderBottom: `1px solid ${c.border}`, background: c.hoverBg }}>
+                          <FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                          <span className="text-[12px] font-semibold" style={{ ...font, color: c.text }}>{CAT_LABEL[g.cat]}</span>
+                          <span className="text-[11px]" style={{ ...font, color: c.muted }}>({g.docs.length})</span>
                         </div>
-                      ));
-                    })()}
-                    {/* E&O (read-only) — only when no category filter */}
-                    {docFilterCats.size === 0 && (
+                        {g.docs.map(d => <FlatRow key={d.id} d={d} />)}
+                      </div>
+                    ))}
+                    {/* E&O (read-only) — shown when no filter is active or when "eo" is in the filter set */}
+                    {eoVisible && (
                       <div className="rounded-xl mb-4" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
                         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${c.border}` }}>
                           <div className="flex items-center gap-2">
@@ -3189,10 +3279,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         <div className="flex items-center gap-3 px-5 py-2.5">
                           <FileText className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
                           <div className="flex-1 min-w-0">
-                            <div className="text-[13px]" style={{ ...font, color: c.text }}>EO-Certificate.pdf</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[13px] truncate" style={{ ...font, color: c.text }}>EO-Certificate.pdf</span>
+                              <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                                style={{ ...font, color: isDark ? "#C87BE0" : "#A614C3", background: isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)" }}>
+                                E&amp;O Certificate
+                              </span>
+                            </div>
                             <div className="text-[11px]" style={{ ...font, color: c.muted }}>Expires {eoExpiry}</div>
                           </div>
-                          <button title="View" onClick={() => setPreviewDoc({ id: "eo", category: "agreement", name: "EO-Certificate.pdf", date: `Expires ${eoExpiry}` })} className="p-1.5 rounded transition-colors"
+                          <button title="View" onClick={() => setPreviewDoc({ id: "eo", category: "eo", name: "EO-Certificate.pdf", date: `Expires ${eoExpiry}` })} className="p-1.5 rounded transition-colors"
                             style={{ color: previewDoc?.id === "eo" ? "#A855F7" : c.muted, background: previewDoc?.id === "eo" ? "rgba(168,85,247,0.10)" : "transparent" }}
                             onMouseEnter={e => { if (previewDoc?.id !== "eo") { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
                             onMouseLeave={e => { if (previewDoc?.id !== "eo") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
@@ -3212,7 +3308,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                     )}
                   </>
-                )}
+                  );
+                })()}
 
                 {/* All / Archive / Trash list view */}
                 {(showDocArchived || showDocTrashed || docView === "all") && (
@@ -3370,7 +3467,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         })()}
         {/* Expanded preview drawer (right side, matches Notes expanded pattern) */}
         {previewDoc && previewExpanded && detailTab === "documents" && (() => {
-          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other" };
+          const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other", eo: "E&O Certificate" };
           return (
           <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width: "58vw" }}>
             <div className="flex-1 cursor-pointer" onClick={() => setPreviewExpanded(false)} style={{ background: "rgba(0,0,0,0.25)" }} />
@@ -5470,7 +5567,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           }
           closeModal();
         };
-        const tabs: [typeof contactMode, string][] = [["edit", "Edit Info"], ["reassign", "Reassign"], ["new", "Add New"]];
+        const tabs: [typeof contactMode, string][] = [["edit", "Edit Info"], ["reassign", "Reassign"]];
         return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
           onClick={closeModal}>
@@ -5480,11 +5577,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex items-center justify-between px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
               <div>
                 <h3 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Update Agency Contact</h3>
-                <p className="text-[12px] mt-0.5 flex items-center gap-1.5" style={{ fontFamily: FONT, color: c.muted }}>
-                  {contactMode === "new" && <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A855F7" }} />}
-                  {contactMode === "edit" ? "Tweak the current contact's info." :
-                   contactMode === "reassign" ? "Hand off to another existing user." :
-                   "Only add new if the contact isn't an existing user."}
+                <p className="text-[12px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  {contactMode === "edit" ? "Tweak the current contact's info." : "Hand off to another existing user."}
                 </p>
               </div>
               <button onClick={closeModal} className="p-1 rounded-md transition-colors flex-shrink-0" style={{ color: c.muted }}
@@ -5674,7 +5768,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 style={{ fontFamily: FONT, background: canSave ? btnGrad : (isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"), color: canSave ? "#fff" : c.muted, cursor: canSave ? "pointer" : "not-allowed" }}
                 onMouseEnter={e => { if (canSave) e.currentTarget.style.filter = "brightness(1.1)"; }}
                 onMouseLeave={e => { if (canSave) e.currentTarget.style.filter = "none"; }}>
-                {contactMode === "edit" ? "Save Changes" : contactMode === "reassign" ? "Reassign Contact" : "Add Contact"}
+                {contactMode === "edit" ? "Save Changes" : "Reassign Contact"}
               </button>
             </div>
           </div>
@@ -5953,9 +6047,34 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
     }
   };
 
+  // Friendly labels for required-field error messages, e.g. "Phone Number is required."
+  const REQUIRED_LABELS: Record<string, string> = {
+    agencyName: "Agency Name",
+    agencyCode: "Agency Code",
+    street:     "Street address",
+    city:       "City",
+    stateVal:   "State",
+    zip:        "ZIP",
+    mStreet:    "Mailing street address",
+    mCity:      "Mailing city",
+    mState:     "Mailing state",
+    mZip:       "Mailing ZIP",
+    contact:    "Agency Contact",
+    email:      "Email Address",
+    bizType:    "Type of Business",
+    taxId:      "Tax ID",
+    phone:      "Phone Number",
+    licenseNo:  "License Number",
+    eoPolicyNo: "E&O Policy #",
+  };
+  const isRequiredErr = (s: string | null) => typeof s === "string" && s.endsWith(" is required.");
+
   const validateKey = (k: string, val?: string): string | null => {
     const v = val !== undefined ? val : getFieldVal(k);
-    if (requiredKeys.has(k) && !v.trim()) return "Required";
+    if (requiredKeys.has(k) && !v.trim()) {
+      const label = REQUIRED_LABELS[k] || "This field";
+      return `${label} is required.`;
+    }
     const f = fieldFormat[k];
     if (f) return validators[f](v);
     return null;
@@ -5967,7 +6086,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
       const err = validateKey(k, val);
       setErrors(e => {
         const n = { ...e };
-        if (err && (err !== "Required" || submitted)) n[k] = err;
+        if (err && (!isRequiredErr(err) || submitted)) n[k] = err;
         else delete n[k];
         return n;
       });

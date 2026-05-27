@@ -486,9 +486,9 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
         <div className="px-6 pb-4">
           {step === "choose" && (
             <div className="flex flex-col gap-2">
-              {tile("password", "I forgot my password", "I know my User ID, just set a new password.",         Lock)}
-              {tile("userId",   "I forgot my User ID",  "I know my email, send me my User ID.",                IdCard)}
-              {tile("both",     "I forgot both",        "Send me my User ID and a password reset link.",        HelpCircle)}
+              {tile("password", "I Forgot My Password", "I know my User ID, just set a new password.",         Lock)}
+              {tile("userId",   "I Forgot My User ID",  "I know my email, send me my User ID.",                IdCard)}
+              {tile("both",     "I Forgot Both",        "Send me my User ID and a password reset link.",        HelpCircle)}
             </div>
           )}
 
@@ -873,7 +873,7 @@ function ResetPasswordView({ c, font, inputStyle, labelStyle, primaryBtnStyle, b
   onContinue: () => void;
 }) {
   // These would come from the URL token in production. Hard-coded here so the dev can see the layout.
-  const accountUserId = "lisaarmitage";
+  const accountUserId = "lisaarmitage01";
   const accountEmail  = "lisa.armitage@amyntagroup.com";
 
   const [password, setPassword] = useState("");
