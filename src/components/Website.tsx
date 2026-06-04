@@ -17,7 +17,8 @@ interface WebsiteProps {
 
 export default function Website({ isDark = false }: WebsiteProps) {
   const [step, setStep] = useState<Step>("login");
-  const [toast, setToast] = useState<{ title: string; description: string } | null>(null);
+  // description is a ReactNode so we can highlight key words (e.g. "Principal's") with the brand magenta.
+  const [toast, setToast] = useState<{ title: string; description: React.ReactNode } | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -149,13 +150,24 @@ export default function Website({ isDark = false }: WebsiteProps) {
             {step === "login"  && <LoginView  c={c} font={font} inputStyle={inputStyle} labelStyle={labelStyle} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad}
               onContinue={() => setStep("verify")}
               onResetLinkClicked={() => setStep("reset")}
-              onResetEmailSent={(email, mode) => {
-                if (mode === "userId") {
-                  setToast({ title: "Email sent", description: `Your User ID has been sent to ${email || "your inbox"}.` });
-                } else {
-                  setToast({ title: "Email sent", description: `We sent a password reset link to ${email || "your inbox"}. Open it to set a new password.` });
-                  setStep("reset");
-                }
+              onResetEmailSent={(_email, mode) => {
+                // Both flows route the reset / recovery email to the Principal's address on file —
+                // copy here mirrors the modal's confirmation text so the user sees the same story.
+                const description = mode === "both" ? (
+                  <>
+                    We&apos;ve emailed your User ID and a password reset link to the{" "}
+                    <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
+                    inbox. Open it to recover your account.
+                  </>
+                ) : (
+                  <>
+                    We&apos;ve sent a password reset link to the{" "}
+                    <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
+                    inbox. Open it to set a new password.
+                  </>
+                );
+                setToast({ title: "Email sent", description });
+                setStep("reset");
               }}
             />}
             {step === "verify" && <VerifyView c={c} font={font} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} onVerify={() => setStep("create")} />}
@@ -210,7 +222,7 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
   btnGrad: string;
   onContinue: () => void;
   onResetLinkClicked: () => void;
-  onResetEmailSent: (email: string, mode: "password" | "userId" | "both") => void;
+  onResetEmailSent: (email: string, mode: "password" | "both") => void;
 }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -332,7 +344,7 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
 }
 
 /* ──────────────────────────── RESET MODAL (3-step wizard) ──────────────────────────── */
-type ResetMode = "password" | "userId" | "both";
+type ResetMode = "password" | "both";
 type ResetStep = "choose" | "form" | "done";
 
 function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimulateEmailClick, onEmailSent }: {
@@ -349,6 +361,11 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
   const [mode, setMode] = useState<ResetMode>("password");
   const [userIdValue, setUserIdValue] = useState("");
   const [emailValue, setEmailValue] = useState("");
+  // Extra identity fields collected in the "I Forgot Both" recovery flow —
+  // they help the back-end match the account when the email alone is ambiguous.
+  const [agencyCode, setAgencyCode] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const handleContinue = () => {
     if (step === "choose") { setStep("form"); return; }
@@ -366,30 +383,42 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
   const formCopy = {
     password: {
       title: "Reset Your Password",
-      body:  "Enter your User ID and the email associated with your account. We'll send you a reset link.",
-      fields: "both",
-    },
-    userId: {
-      title: "Retrieve Your User ID",
-      body:  "Enter the email associated with your account. If your email is on record, we'll email you your User ID.",
-      fields: "emailOnly",
+      body:  "Enter your User ID. We'll send a reset link to the email on file.",
+      fields: "userIdOnly",
     },
     both: {
       title: "Recover Your Account",
-      body:  "Enter the email associated with your account. We'll email you your User ID plus a password reset link in one message.",
-      fields: "emailOnly",
+      // Body is rendered as JSX below so the "Principal's" emphasis can use a
+      // brand color — kept here only as a fallback / a11y label.
+      body:  "Confirm your agency code and name so we can find your account. We'll email your User ID and a password reset link to the Principal's email on file.",
+      fields: "recoverIdentity",
     },
   } as const;
+
+  // JSX version of the "both" form body so "Principal's" is highlighted in brand magenta.
+  const bothFormBody = (
+    <>
+      Confirm your agency code and name so we can find your account. We&apos;ll
+      email your User ID and a password reset link to the{" "}
+      <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
+      email on file.
+    </>
+  );
 
   // Demo: always allow Continue. Production would gate on filled / valid email & User ID.
   const formValid = true;
 
   // Per-mode done-step description.
-  const doneDescription = mode === "userId"
-    ? `If ${emailValue || "your email"} is on record, we've sent your User ID.`
-    : mode === "both"
-      ? `If ${emailValue || "your email"} is on record, we've sent your User ID and a password reset link.`
-      : `If ${emailValue || "your email"} is on record, we've sent a password reset link.`;
+  // "both" mode is JSX so we can highlight "Principal's" the same way the form body does.
+  const doneDescription: React.ReactNode = mode === "both"
+    ? (
+        <>
+          If we find a match, we&apos;ve emailed your User ID and a password reset link to the{" "}
+          <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
+          email on file.
+        </>
+      )
+    : `If ${userIdValue || "your User ID"} matches an account, we've sent a password reset link to the email on file.`;
 
   // Refined tile picker: small leading icon chip + label/sub + trailing radio dot.
   // Matches the visual weight of other modals (Book Roll, Doc Upload).
@@ -445,8 +474,8 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
     : step === "form" ? formCopy[mode].title
     : "Check Your Inbox";
 
-  const subhead = step === "choose" ? "What do you need help with?"
-                 : step === "form" ? formCopy[mode].body
+  const subhead: React.ReactNode = step === "choose" ? "What do you need help with?"
+                 : step === "form" ? (mode === "both" ? bothFormBody : formCopy[mode].body)
                  : doneDescription;
 
   return (
@@ -487,31 +516,37 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
           {step === "choose" && (
             <div className="flex flex-col gap-2">
               {tile("password", "I Forgot My Password", "I know my User ID, just set a new password.",         Lock)}
-              {tile("userId",   "I Forgot My User ID",  "I know my email, send me my User ID.",                IdCard)}
               {tile("both",     "I Forgot Both",        "Send me my User ID and a password reset link.",        HelpCircle)}
             </div>
           )}
 
-          {step === "form" && formCopy[mode].fields === "both" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label style={labelStyle}>User ID</label>
-                <input type="text" value={userIdValue} onChange={e => setUserIdValue(e.target.value)}
-                  autoFocus style={inputStyle} placeholder="yourusername" />
-              </div>
-              <div>
-                <label style={labelStyle}>Email Address</label>
-                <input type="email" value={emailValue} onChange={e => setEmailValue(e.target.value)}
-                  style={inputStyle} placeholder="you@company.com" />
-              </div>
+          {step === "form" && formCopy[mode].fields === "userIdOnly" && (
+            <div>
+              <label style={labelStyle}>User ID</label>
+              <input type="text" value={userIdValue} onChange={e => setUserIdValue(e.target.value)}
+                autoFocus style={inputStyle} placeholder="Your User ID" />
             </div>
           )}
 
-          {step === "form" && formCopy[mode].fields === "emailOnly" && (
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <input type="email" value={emailValue} onChange={e => setEmailValue(e.target.value)}
-                autoFocus style={inputStyle} placeholder="you@company.com" />
+          {step === "form" && formCopy[mode].fields === "recoverIdentity" && (
+            <div className="flex flex-col gap-3">
+              <div>
+                <label style={labelStyle}>Agency Code</label>
+                <input type="text" value={agencyCode} onChange={e => setAgencyCode(e.target.value)}
+                  autoFocus style={inputStyle} placeholder="e.g. AC364" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label style={labelStyle}>First Name</label>
+                  <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                    style={inputStyle} placeholder="First name" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Last Name</label>
+                  <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                    style={inputStyle} placeholder="Last name" />
+                </div>
+              </div>
             </div>
           )}
 
@@ -524,11 +559,9 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
               <div style={{ ...font, fontSize: 12, color: c.muted, maxWidth: 360, marginBottom: 10 }}>
                 Didn&apos;t get it? Check spam, or try again in a minute.
               </div>
-              {mode !== "userId" && (
-                <div style={{ ...font, fontSize: 11, color: c.muted, maxWidth: 360, fontStyle: "italic" }}>
-                  Demo: click <span style={{ fontWeight: 600 }}>Open Reset Link</span> below to simulate clicking the link from the email.
-                </div>
-              )}
+              <div style={{ ...font, fontSize: 11, color: c.muted, maxWidth: 360, fontStyle: "italic" }}>
+                Demo: click <span style={{ fontWeight: 600 }}>Open Reset Link</span> below to simulate clicking the link from the email.
+              </div>
             </div>
           )}
         </div>
@@ -567,29 +600,16 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
           )}
           {step === "done" && (
             <>
-              {mode === "userId" ? (
-                <>
-                  <span />
-                  <button onClick={onClose}
-                    className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                    style={{ ...font, background: btnGrad, border: "none", cursor: "pointer" }}>
-                    Done
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={onClose}
-                    className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
-                    style={{ ...font, border: `1px solid ${c.border}`, color: c.text, background: "transparent", cursor: "pointer" }}>
-                    Close
-                  </button>
-                  <button onClick={onSimulateEmailClick}
-                    className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
-                    style={{ ...font, background: btnGrad, border: "none", cursor: "pointer" }}>
-                    Open Reset Link
-                  </button>
-                </>
-              )}
+              <button onClick={onClose}
+                className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+                style={{ ...font, border: `1px solid ${c.border}`, color: c.text, background: "transparent", cursor: "pointer" }}>
+                Close
+              </button>
+              <button onClick={onSimulateEmailClick}
+                className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                style={{ ...font, background: btnGrad, border: "none", cursor: "pointer" }}>
+                Open Reset Link
+              </button>
             </>
           )}
         </div>

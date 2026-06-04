@@ -8,7 +8,7 @@ import {
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
-  MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter, Paperclip, Check,
+  MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Headphones, Crown, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter, Paperclip, Check, Send,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -711,6 +711,135 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   /* ── users tab state ── */
   const [importUsersOpen, setImportUsersOpen] = useState(false);
+  // The Bulk Upload modal has ONE step but the dropzone has three inline phases:
+  //   "empty"  — paperclip prompt, click/drag to upload
+  //   "ready"  — file uploaded, awaiting Send Invites confirmation
+  //   "sent"   — green-check success message showing the invite emails went out
+  type ImportPhase = "empty" | "ready" | "sent";
+  const [importPhase, setImportPhase] = useState<ImportPhase>("empty");
+  const [importFileName, setImportFileName] = useState<string | null>(null);
+  const [importUserCount, setImportUserCount] = useState<number>(0);
+  // Parsed users from the uploaded file. Each row maps directly to the template columns
+  // (Name / Admin / Job Title / Email / Phone / Ext). Stays empty until a file is parsed.
+  type ParsedUser = { name: string; admin: string; jobTitle: string; email: string; phone: string; ext: string };
+  const [parsedUsers, setParsedUsers] = useState<ParsedUser[]>([]);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const closeImportModal = () => {
+    setImportUsersOpen(false);
+    setImportPhase("empty");
+    setImportFileName(null);
+    setImportUserCount(0);
+    setParsedUsers([]);
+    setImportError(null);
+    setImportBusy(false);
+  };
+
+  /**
+   * Parse an uploaded Excel (.xlsx) or CSV file into ParsedUser rows.
+   * Header row is skipped. Empty rows (missing name or email) are filtered out.
+   * Returns null on a parse error (we surface the error via importError).
+   */
+  const parseImportFile = async (file: File): Promise<ParsedUser[] | null> => {
+    try {
+      const name = file.name.toLowerCase();
+      const rows: ParsedUser[] = [];
+      if (name.endsWith(".csv")) {
+        // Minimal CSV parser — handles commas + quoted fields with escaped quotes.
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length < 2) return [];
+        const splitCsvLine = (line: string): string[] => {
+          const out: string[] = []; let cur = ""; let inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQ) {
+              if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+              else if (ch === '"') { inQ = false; }
+              else { cur += ch; }
+            } else {
+              if (ch === '"') inQ = true;
+              else if (ch === ",") { out.push(cur); cur = ""; }
+              else { cur += ch; }
+            }
+          }
+          out.push(cur);
+          return out.map(v => v.trim());
+        };
+        for (let i = 1; i < lines.length; i++) {
+          const v = splitCsvLine(lines[i]);
+          rows.push({
+            name:     v[0] ?? "",
+            admin:    v[1] ?? "",
+            jobTitle: v[2] ?? "",
+            email:    v[3] ?? "",
+            phone:    v[4] ?? "",
+            ext:      v[5] ?? "",
+          });
+        }
+      } else if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+        // Lazy-load exceljs only on file-pick — keeps the initial bundle slim.
+        const ExcelJS = (await import("exceljs")).default;
+        const wb = new ExcelJS.Workbook();
+        const buf = await file.arrayBuffer();
+        await wb.xlsx.load(buf);
+        const ws = wb.worksheets[0];
+        if (!ws) return [];
+        ws.eachRow({ includeEmpty: false }, (row, rowNum) => {
+          if (rowNum === 1) return; // header
+          const cellText = (col: number): string => {
+            const cell = row.getCell(col);
+            const v = cell?.value;
+            if (v == null) return "";
+            if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v).trim();
+            // Hyperlink / formula / rich-text fallback
+            if (typeof v === "object") {
+              const obj = v as { text?: string; result?: string | number; hyperlink?: string };
+              if (obj.text != null) return String(obj.text).trim();
+              if (obj.result != null) return String(obj.result).trim();
+              if (obj.hyperlink != null) return String(obj.hyperlink).trim();
+            }
+            return "";
+          };
+          rows.push({
+            name:     cellText(1),
+            admin:    cellText(2),
+            jobTitle: cellText(3),
+            email:    cellText(4),
+            phone:    cellText(5),
+            ext:      cellText(6),
+          });
+        });
+      } else {
+        setImportError("Unsupported file type. Please upload a .xlsx or .csv file.");
+        return null;
+      }
+      // Drop rows missing both name and email (likely blank rows in the spreadsheet).
+      return rows.filter(r => r.name || r.email);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not read the file.";
+      setImportError(`Couldn't parse the file: ${msg}`);
+      return null;
+    }
+  };
+
+  // Wired up to the dropzone click + the hidden <input type="file" /> change event.
+  const handleImportFileChosen = async (file: File) => {
+    setImportError(null);
+    setImportBusy(true);
+    const users = await parseImportFile(file);
+    setImportBusy(false);
+    if (!users) return; // error already set
+    if (users.length === 0) {
+      setImportError("That file didn't contain any users with a name and email.");
+      return;
+    }
+    setParsedUsers(users);
+    setImportFileName(file.name);
+    setImportUserCount(users.length);
+    setImportPhase("ready");
+  };
   const [addUserOpen,     setAddUserOpen]     = useState(false);
   const [editUserId,      setEditUserId]      = useState<string|null>(null);
   const [addressModalOpen, setAddressModalOpen] = useState(false);
@@ -844,7 +973,87 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [auStateOpen,  setAuStateOpen]  = useState(false);
   const [auZip,        setAuZip]        = useState("");
   const JOB_TITLES   = ["Principal","Producer","CSR","Accounting","Account Manager"];
+  // Admin access tiers — must match the "Admin Level" dropdown in the Edit User form
+  // (Read-Only Admin / Agency Support Admin / Super Admin) so the import template
+  // and the in-app form stay in sync.
+  const ADMIN_LEVELS = ["Read-Only Admin","Agency Support Admin","Super Admin"];
   const USER_STATUSES = ["Active","Inactive"];
+
+  /**
+   * Build an .xlsx workbook for bulk user import.
+   * Columns mirror the user list table (Name · Admin · Job Title · Email · Phone · Ext).
+   * The Admin and Job Title columns get real Excel data-validation dropdowns so the
+   * uploader picks from the allowed values instead of typing them.
+   */
+  const downloadExcelTemplate = async () => {
+    // Lazy-import so exceljs (~150KB) only loads when the user actually clicks Download.
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Users");
+    ws.columns = [
+      { header: "Name",      key: "name",     width: 22 },
+      { header: "Admin",     key: "admin",    width: 14 },
+      { header: "Job Title", key: "jobTitle", width: 18 },
+      { header: "Email",     key: "email",    width: 28 },
+      { header: "Phone",     key: "phone",    width: 16 },
+      { header: "Ext",       key: "ext",      width: 8  },
+    ];
+    // Bold header row
+    ws.getRow(1).font = { bold: true };
+    // One example row so the format is obvious at a glance
+    ws.addRow({ name: "John Doe", admin: "Read-Only Admin", jobTitle: "Producer", email: "john@example.com", phone: "555-1234", ext: "123" });
+
+    // Apply data-validation dropdowns to Admin (col B) and Job Title (col C),
+    // rows 2..201. exceljs's per-cell assignment is the documented + most reliably
+    // serialised path. A FRESH validation object is assigned per cell — sharing the
+    // same object across cells can let exceljs drop entries when it dedupes.
+    const adminFormula    = `"${ADMIN_LEVELS.join(",")}"`;     // → "Read-Only Admin,Agency Support Admin,Super Admin"
+    const jobTitleFormula = `"${JOB_TITLES.join(",")}"`;       // → "Principal,Producer,CSR,Accounting,Account Manager"
+    for (let r = 2; r <= 201; r++) {
+      ws.getCell(`B${r}`).dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: [adminFormula],
+      };
+      ws.getCell(`C${r}`).dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: [jobTitleFormula],
+      };
+    }
+
+    // Cell comment on the Job Title header so the rule is discoverable on hover.
+    ws.getCell("C1").note = "Only one Principal is allowed per agency.";
+
+    // Conditional formatting — highlight any "Principal" cell in red when the column
+    // already contains more than one. Draws attention to the duplicate before upload.
+    ws.addConditionalFormatting({
+      ref: "C2:C201",
+      rules: [
+        {
+          type: "expression",
+          formulae: [`AND(C2="Principal", COUNTIF($C$2:$C$201,"Principal")>1)`],
+          priority: 1,
+          style: {
+            fill:   { type: "pattern", pattern: "solid", bgColor: { argb: "FFFEE2E2" } },
+            font:   { color: { argb: "FFB91C1C" }, bold: true },
+          },
+        },
+      ],
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users_template.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const US_STATES    = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
   const agencyUsers = mockAgencyUsers
     .filter(u => u.agencyId === agency.id)
@@ -5816,47 +6025,197 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
       {/* ── Import Users Modal ── */}
       {importUsersOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background:"rgba(0,0,0,0.45)" }}
-          onClick={()=>setImportUsersOpen(false)}>
+          onClick={closeImportModal}>
           <div className="rounded-2xl w-[600px] max-w-[90vw] overflow-hidden"
             style={{ background:isDark?"#1E2240":"#fff", boxShadow:"0 20px 60px rgba(0,0,0,0.3)" }}
             onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between px-8 pt-7 pb-5" style={{ borderBottom:`1px solid ${c.border}` }}>
               <h2 className="text-[20px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Bulk Upload Users</h2>
-              <button onClick={()=>setImportUsersOpen(false)} className="p-1.5 rounded-lg transition-colors" style={{ color:c.muted }}
+              <button onClick={closeImportModal} className="p-1.5 rounded-lg transition-colors" style={{ color:c.muted }}
                 onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                 <X className="w-5 h-5"/>
               </button>
             </div>
+
             <div className="px-8 py-6 space-y-4">
-              {/* CSV format info */}
-              <div className="rounded-xl p-5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.03)":"#F9FAFB" }}>
-                <p className="text-[14px] font-bold mb-2" style={{ fontFamily:FONT, color:c.text }}>CSV File Format</p>
-                <p className="text-[13px] mb-2" style={{ fontFamily:FONT, color:c.muted }}>Please upload a CSV file with the following columns (header row required):</p>
-                <p className="text-[13px] font-mono mb-3 px-2 py-1 rounded-md inline-block" style={{ color:"#73C9B7", background: isDark ? "rgba(115,201,183,0.14)" : "rgba(115,201,183,0.12)" }}>Name, Role, Job Title, Email, Phone, Ext</p>
-                <p className="text-[13px]" style={{ fontFamily:FONT, color:c.muted }}>Example: John Doe, Admin, Manager, john@example.com, 555-1234, 123</p>
+              {/* Format reference + template download — only shown in the empty phase.
+                  Once the user has uploaded a file, those preparation aids step out of the way so
+                  the ready (confirmation) and sent (success) phases each get one focused card. */}
+              {importPhase === "empty" && (<>
+              {/* Compact format reference — title + three tight rows + a Principal-uniqueness note */}
+              <div className="rounded-xl px-4 py-3 space-y-1.5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#F9FAFB" }}>
+                <p className="text-[14px] font-bold" style={{ fontFamily:FONT, color:c.text }}>File Format</p>
+                <p className="text-[12px] pb-1" style={{ fontFamily:FONT, color:c.muted }}>
+                  Please upload a CSV/Excel file with the following columns (header row required):
+                </p>
+                <div className="flex items-baseline gap-2 text-[12px]" style={{ fontFamily:FONT }}>
+                  <span className="flex-shrink-0 w-[68px]" style={{ color:c.muted }}>Columns</span>
+                  <span className="font-mono" style={{ color:"#73C9B7" }}>Name, Admin, Job Title, Email, Phone, Ext</span>
+                </div>
+                <div className="flex items-baseline gap-2 text-[12px]" style={{ fontFamily:FONT }}>
+                  <span className="flex-shrink-0 w-[68px]" style={{ color:c.muted }}>Admin</span>
+                  <span className="font-mono" style={{ color:"#A614C3" }}>{ADMIN_LEVELS.join(" / ")}</span>
+                </div>
+                <div className="flex items-baseline gap-2 text-[12px]" style={{ fontFamily:FONT }}>
+                  <span className="flex-shrink-0 w-[68px]" style={{ color:c.muted }}>Job Title</span>
+                  <span className="font-mono" style={{ color:"#A614C3" }}>{JOB_TITLES.join(" / ")}</span>
+                </div>
+                <div className="flex items-baseline gap-2 text-[11px] pt-1" style={{ fontFamily:FONT, color:c.muted, borderTop:`1px dashed ${c.border}` }}>
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color:"#A614C3", transform:"translateY(2px)" }} />
+                  <span>
+                    Only one <span style={{ fontFamily:"monospace", color:"#A614C3" }}>Principal</span> allowed per agency.
+                  </span>
+                </div>
               </div>
 
-              {/* Download button */}
-              <a href="data:text/csv;charset=utf-8,Name%2CRole%2CJob%20Title%2CEmail%2CPhone%2CExt%0AJohn%20Doe%2CAdmin%2CManager%2Cjohn%40example.com%2C555-1234%2C123"
-                download="users_template.csv"
-                className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[13px] font-semibold transition-all"
-                style={{ fontFamily:FONT, border:`1.5px solid rgba(168,85,247,0.35)`, color:"#A614C3", background:"transparent", textDecoration:"none" }}
-                onMouseEnter={e=>(e.currentTarget.style.background="rgba(168,85,247,0.06)")}
-                onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-                <FileText className="w-4 h-4"/>Download Template CSV
-              </a>
+              {/* Template download — single Excel-only button. CSV was dropped because it can't carry
+                  the Admin / Job Title dropdowns that make the template foolproof. */}
+              <button type="button" onClick={() => downloadExcelTemplate()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold text-white transition-all"
+                style={{ fontFamily:FONT, background: btnGrad, boxShadow:"0 2px 10px rgba(166,20,195,0.20)" }}
+                onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.08)")}
+                onMouseLeave={e=>(e.currentTarget.style.filter="none")}>
+                <Download className="w-4 h-4"/>
+                Download Excel Template
+              </button>
+              </>)}
 
-              {/* Upload area — gray dashed, white bg */}
-              <div className="rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-all"
-                style={{ border:`1.5px dashed ${isDark?"rgba(255,255,255,0.2)":"#D1D5DB"}`, background:isDark?"rgba(255,255,255,0.02)":"#fff" }}
-                onMouseEnter={e=>{ e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = "rgba(168,85,247,0.04)"; }}
-                onMouseLeave={e=>{ e.currentTarget.style.borderColor = isDark?"rgba(255,255,255,0.2)":"#D1D5DB"; e.currentTarget.style.background = isDark?"rgba(255,255,255,0.02)":"#fff"; }}>
-                <svg className="mb-3" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                </svg>
-                <p className="text-[14px] font-semibold mb-1" style={{ fontFamily:FONT, color:c.text }}>Click to upload or drag and drop</p>
-                <p className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>CSV files only</p>
-              </div>
+              {/* Upload zone — single container, three inline phases */}
+              {importPhase === "empty" && (
+                <>
+                  {/* Hidden native file input — triggered by the dropzone click + the drag/drop handlers below. */}
+                  <input
+                    ref={importFileInputRef}
+                    type="file"
+                    // Extension-only accept list is the most reliable cross-browser path —
+                    // MIME-type strings are inconsistent across macOS/Windows and sometimes
+                    // hide .xlsx in the picker when paired with text/csv.
+                    accept=".xlsx,.xls,.csv"
+                    style={{ display: "none" }}
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleImportFileChosen(f);
+                      // Reset so the same file can be re-picked after Cancel.
+                      e.target.value = "";
+                    }}
+                  />
+                  <div onClick={() => { if (!importBusy) importFileInputRef.current?.click(); }}
+                    onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(168,85,247,0.6)"; e.currentTarget.style.background = "rgba(168,85,247,0.08)"; }}
+                    onDragLeave={e => { e.currentTarget.style.borderColor = isDark?"rgba(255,255,255,0.2)":"#D1D5DB"; e.currentTarget.style.background = isDark?"rgba(255,255,255,0.02)":"#fff"; }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = isDark?"rgba(255,255,255,0.2)":"#D1D5DB";
+                      e.currentTarget.style.background = isDark?"rgba(255,255,255,0.02)":"#fff";
+                      const f = e.dataTransfer.files?.[0];
+                      if (f) void handleImportFileChosen(f);
+                    }}
+                    className="rounded-xl flex flex-col items-center justify-center py-10 cursor-pointer transition-all"
+                    style={{ border:`1.5px dashed ${isDark?"rgba(255,255,255,0.2)":"#D1D5DB"}`, background:isDark?"rgba(255,255,255,0.02)":"#fff", opacity: importBusy ? 0.6 : 1 }}
+                    onMouseEnter={e=>{ if (!importBusy) { e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = "rgba(168,85,247,0.04)"; } }}
+                    onMouseLeave={e=>{ e.currentTarget.style.borderColor = isDark?"rgba(255,255,255,0.2)":"#D1D5DB"; e.currentTarget.style.background = isDark?"rgba(255,255,255,0.02)":"#fff"; }}>
+                    <svg className="mb-2.5" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    <p className="text-[14px] font-semibold mb-1" style={{ fontFamily:FONT, color:c.text }}>
+                      {importBusy ? "Reading file…" : "Click to upload or drag and drop"}
+                    </p>
+                    <p className="text-[12px]" style={{ fontFamily:FONT, color:c.muted }}>Excel (.xlsx) or CSV files</p>
+                  </div>
+                  {importError && (
+                    <p className="text-[12px] mt-2 px-3 py-2 rounded-lg" style={{ fontFamily:FONT, color:"#B91C1C", background:"#FEF2F2", border:"1px solid #FECACA" }}>
+                      {importError}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {importPhase === "ready" && (() => {
+                // Render the real parsed rows from the uploaded file. The scrollable
+                // container below caps the visible area so a 500-row file doesn't
+                // blow out the modal height — the rest scrolls inside the card.
+                const totalUsers = parsedUsers.length;
+                return (
+                <div>
+                  {/* Question first — the main intent of this screen */}
+                  <p className="text-[18px] font-bold text-center mb-1.5" style={{ fontFamily:FONT, color:c.text }}>
+                    Are you sure you want to send?
+                  </p>
+                  <p className="text-[13px] text-center mx-auto mb-5 max-w-[460px]" style={{ fontFamily:FONT, color:c.muted, lineHeight:"19px" }}>
+                    We&apos;ll email each of these users a secure registration link so they can activate their account. This can&apos;t be undone.
+                  </p>
+
+                  {/* Preview — file caption header + scrollable user list (capped height for large files) */}
+                  <div className="rounded-xl overflow-hidden mb-5" style={{ border:`1px solid ${c.border}` }}>
+                    <div className="flex items-center gap-1.5 px-4 py-2 text-[11.5px]" style={{ borderBottom:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB", fontFamily:FONT, color:c.muted }}>
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color:"#73C9B7" }}/>
+                      <span className="font-medium truncate" style={{ color:c.text }}>{importFileName}</span>
+                      <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex-shrink-0" style={{ fontFamily:FONT, color:"#A614C3", background:"rgba(168,85,247,0.10)" }}>
+                        {totalUsers} {totalUsers === 1 ? "user" : "users"}
+                      </span>
+                    </div>
+                    {/* Scroll body — caps at ~240px so a 500-row file still fits the modal */}
+                    <div style={{ maxHeight: 240, overflowY: "auto" }}>
+                      {parsedUsers.map((u, i) => (
+                        <div key={`${u.email}-${i}`}
+                          className="flex items-center justify-between gap-4 px-4 py-2.5 text-[12px]"
+                          style={{ borderBottom: i < parsedUsers.length - 1 ? `1px solid ${c.border}` : "none", fontFamily:FONT, background:c.cardBg }}>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold truncate" style={{ color:c.text }}>{u.name}</div>
+                            <div className="text-[11px] truncate" style={{ color:c.muted }}>{u.email}</div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-[11px]" style={{ color:c.text }}>{u.jobTitle}</div>
+                            <div className="text-[11px] font-mono" style={{ color:"#A614C3" }}>{u.admin}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions — Cancel on the left, primary confirm pushed to the right */}
+                  <div className="flex items-center justify-between gap-2">
+                    <button onClick={() => { setImportPhase("empty"); setImportFileName(null); setImportUserCount(0); }}
+                      className="px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-colors"
+                      style={{ fontFamily:FONT, color:c.text, border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.04)":"#fff" }}
+                      onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
+                      onMouseLeave={e=>(e.currentTarget.style.background=isDark?"rgba(255,255,255,0.04)":"#fff")}>
+                      Cancel
+                    </button>
+                    <button onClick={() => setImportPhase("sent")}
+                      className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all"
+                      style={{ fontFamily:FONT, background:btnGrad, boxShadow:"0 2px 10px rgba(166,20,195,0.25)" }}
+                      onMouseEnter={e=>(e.currentTarget.style.filter="brightness(1.08)")}
+                      onMouseLeave={e=>(e.currentTarget.style.filter="none")}>
+                      <Send className="w-3.5 h-3.5"/>Yes, Send Invites
+                    </button>
+                  </div>
+                </div>
+                );
+              })()}
+
+              {importPhase === "sent" && (
+                <div className="flex flex-col items-center text-center py-10">
+                  {/* Brand-gradient circle with a white check — feels more decisive than the chip */}
+                  <div className="flex items-center justify-center mb-4"
+                    style={{ width:56, height:56, borderRadius:9999, background:btnGrad }}>
+                    <Check className="w-7 h-7 text-white" strokeWidth={3}/>
+                  </div>
+                  <p className="text-[18px] font-bold mb-1.5" style={{ fontFamily:FONT, color:c.text }}>
+                    Invitations sent
+                  </p>
+                  <p className="text-[13px] mb-6 max-w-[400px]" style={{ fontFamily:FONT, color:c.muted, lineHeight:"19px" }}>
+                    Each user will receive an email with a secure link to register and activate their Norbielink account.
+                  </p>
+                  {/* Single Upload More button, centered. The × in the modal header serves as the close affordance. */}
+                  <button onClick={() => { setImportPhase("empty"); setImportFileName(null); setImportUserCount(0); setParsedUsers([]); }}
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-colors"
+                    style={{ fontFamily:FONT, color:c.text, border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.04)":"#fff" }}
+                    onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)}
+                    onMouseLeave={e=>(e.currentTarget.style.background=isDark?"rgba(255,255,255,0.04)":"#fff")}>
+                    <Upload className="w-3.5 h-3.5"/>Upload More
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -6008,34 +6367,9 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
     }
   };
 
-  // Friendly labels for required-field error messages, e.g. "Phone Number is required."
-  const REQUIRED_LABELS: Record<string, string> = {
-    agencyName: "Agency Name",
-    agencyCode: "Agency Code",
-    street:     "Street address",
-    city:       "City",
-    stateVal:   "State",
-    zip:        "ZIP",
-    mStreet:    "Mailing street address",
-    mCity:      "Mailing city",
-    mState:     "Mailing state",
-    mZip:       "Mailing ZIP",
-    contact:    "Agency Contact",
-    email:      "Email Address",
-    bizType:    "Type of Business",
-    taxId:      "Tax ID",
-    phone:      "Phone Number",
-    licenseNo:  "License Number",
-    eoPolicyNo: "E&O Policy #",
-  };
-  const isRequiredErr = (s: string | null) => typeof s === "string" && s.endsWith(" is required.");
-
   const validateKey = (k: string, val?: string): string | null => {
     const v = val !== undefined ? val : getFieldVal(k);
-    if (requiredKeys.has(k) && !v.trim()) {
-      const label = REQUIRED_LABELS[k] || "This field";
-      return `${label} is required.`;
-    }
+    if (requiredKeys.has(k) && !v.trim()) return "Required";
     const f = fieldFormat[k];
     if (f) return validators[f](v);
     return null;
@@ -6047,7 +6381,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
       const err = validateKey(k, val);
       setErrors(e => {
         const n = { ...e };
-        if (err && (!isRequiredErr(err) || submitted)) n[k] = err;
+        if (err && (err !== "Required" || submitted)) n[k] = err;
         else delete n[k];
         return n;
       });

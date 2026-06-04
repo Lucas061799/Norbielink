@@ -453,7 +453,9 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                       </span>
                     </button>
                     <div className="text-[18px] font-bold leading-tight" style={{ color: text }}>{displayName}</div>
-                    <div className="text-[12px] mt-0.5" style={{ color: muted }}>@{userId} · ProSuite Member</div>
+                    <div className="text-[12px] mt-0.5" style={{ color: muted }}>
+                      <span style={{ fontWeight: 600 }}>User ID:</span> {userId} · ProSuite Member
+                    </div>
                   </div>
 
 
@@ -671,7 +673,9 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[14px] font-bold" style={{ color: text }}>{displayName}</div>
-                        <div className="text-[12px]" style={{ color: muted, marginTop: 1 }}>@{userId} · ProSuite Member</div>
+                        <div className="text-[12px]" style={{ color: muted, marginTop: 1 }}>
+                          <span style={{ fontWeight: 600 }}>User ID:</span> {userId} · ProSuite Member
+                        </div>
                       </div>
                     </div>
                   </div>
