@@ -6525,84 +6525,79 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   then a dashed divider, then the dry column-format specs. Merging the two
                   into one container reads as a coherent "why → how" reference instead of two
                   stacked boxes competing for attention. */}
-              <div className="rounded-xl px-4 py-3.5 space-y-2.5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#F9FAFB" }}>
-                {/* Intro — purpose + 3-step workflow, in one short paragraph */}
-                <div className="flex items-start gap-2.5">
-                  <Users className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color:"#A614C3" }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Invite multiple users at once</p>
-                    <p className="text-[12px] mt-0.5" style={{ fontFamily:FONT, color:c.muted, lineHeight:"17px" }}>
-                      Download the template, fill in each user&apos;s details, and upload the file. We&apos;ll email every valid row a secure registration link.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Divider between the "why" and the "what" — dashed, matches the existing
-                    Principal-uniqueness divider below for visual rhythm */}
-                <div style={{ borderTop:`1px dashed ${c.border}` }} />
-
-                {/* Visual preview — mini spreadsheet table showing what a filled-in row
-                    looks like. Much more intuitive than the prior text breakdown of column
-                    names + dropdown options: the user sees exactly what to produce, including
-                    that Phone uses (XXX) XXX-XXXX, Ext can be blank, Address is optional, etc.
-                    Scrolls horizontally on narrow viewports so the full row is reachable. */}
-                <div>
-                  <p className="text-[12px] mb-1.5" style={{ fontFamily:FONT, color:c.muted }}>
-                    Example — what each row should look like:
+              {/* 3-step workflow card — visual process overview with branded icon chips.
+                  Step 1 is "Prepare" (not "Download") so smart column matching handles arbitrary
+                  files. Step boxes are direct flex children with flex-1 each + non-grow chevrons
+                  between them, so all three boxes end up EXACTLY the same width (the previous
+                  layout shared flex cells with chevrons, which made box 3 wider than 1 and 2). */}
+              {/* Simple intro — icon + bold title + descriptive paragraph. The earlier
+                  step-box version was overkill for what's essentially "fill a file, upload it";
+                  a single sentence reads faster and doesn't need spacing/overflow gymnastics. */}
+              <div className="rounded-xl px-4 py-3.5 flex items-start gap-2.5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB" }}>
+                <Users className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color:"#A614C3" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Invite multiple users at once</p>
+                  <p className="text-[12px] mt-0.5" style={{ fontFamily:FONT, color:c.muted, lineHeight:"17px" }}>
+                    Fill in the template (or use your own file) and upload it. We&apos;ll email every valid row a secure registration link.
                   </p>
-                  <div className="rounded-md overflow-x-auto" style={{ border:`1px solid ${c.border}` }}>
-                    <table className="text-[11px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, width:"100%" }}>
-                      <thead>
-                        <tr style={{ background:isDark?"rgba(255,255,255,0.03)":"#F3F4F6" }}>
-                          {["First Name","Last Name","Admin","Job Title","Email","Phone","Ext","Address"].map((h, i) => (
-                            <th key={h} className="text-left px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color:c.text, borderBottom:`1px solid ${c.border}`, borderRight: i < 7 ? `1px solid ${c.border}` : "none" }}>
-                              {h}
-                            </th>
+                </div>
+              </div>
+
+              {/* Example-row card — the format reference. Users can use the downloaded
+                  template OR upload their own file (smart column mapping handles either).
+                  Card has three rows inside:
+                    1. Example data table (the canonical row shape)
+                    2. Allowed values list (Admin / Job Title — the only restricted columns)
+                    3. Principal-uniqueness note (footer) */}
+              <div className="rounded-xl overflow-hidden" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#fff" }}>
+                <div className="px-4 py-2.5" style={{ borderBottom:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.03)":"#FAFAFB" }}>
+                  <p className="text-[10px] font-bold uppercase" style={{ fontFamily:FONT, color:c.muted, letterSpacing:"0.08em" }}>
+                    Example row
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="text-[11px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, width:"100%" }}>
+                    <thead>
+                      <tr style={{ background:isDark?"rgba(255,255,255,0.04)":"#FAFAFB" }}>
+                        {["First Name","Last Name","Admin","Job Title","Email","Phone","Ext","Address"].map((h, i) => (
+                          <th key={h} className="text-left px-3 py-2 font-semibold whitespace-nowrap" style={{ color:c.muted, borderBottom:`1px solid ${c.border}`, borderRight: i < 7 ? `1px solid ${c.border}` : "none" }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { firstName:"John",  lastName:"Doe",   admin:"Read-Only Admin", jobTitle:"Producer",  email:"john@example.com", phone:"(555) 123-4567", ext:"101", address:"123 Main St" },
+                        { firstName:"Jane",  lastName:"Smith", admin:"Super Admin",     jobTitle:"Principal", email:"jane@example.com", phone:"(555) 987-6543", ext:"",    address:"" },
+                      ].map((r, ri) => (
+                        <tr key={ri}>
+                          {[r.firstName, r.lastName, r.admin, r.jobTitle, r.email, r.phone, r.ext, r.address].map((v, ci) => (
+                            <td key={ci} className="px-3 py-2 whitespace-nowrap font-mono" style={{ color: v ? c.text : c.muted, borderRight: ci < 7 ? `1px solid ${c.border}` : "none", borderBottom: `1px solid ${c.border}` }}>
+                              {v || <span style={{ opacity:0.5 }}>—</span>}
+                            </td>
                           ))}
                         </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { firstName:"John",  lastName:"Doe",   admin:"Read-Only Admin", jobTitle:"Producer",  email:"john@example.com", phone:"(555) 123-4567", ext:"101", address:"123 Main St" },
-                          { firstName:"Jane",  lastName:"Smith", admin:"Super Admin",     jobTitle:"Principal", email:"jane@example.com", phone:"(555) 987-6543", ext:"",    address:"" },
-                        ].map((r, ri) => (
-                          <tr key={ri}>
-                            {[r.firstName, r.lastName, r.admin, r.jobTitle, r.email, r.phone, r.ext, r.address].map((v, ci) => (
-                              <td key={ci} className="px-2 py-1.5 whitespace-nowrap font-mono" style={{ color: v ? c.text : c.muted, borderRight: ci < 7 ? `1px solid ${c.border}` : "none", borderBottom: ri === 0 ? `1px solid ${c.border}` : "none" }}>
-                                {v || <span style={{ opacity:0.5 }}>—</span>}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Allowed values list — explicit text format, brand-purple values. User said the
+                    listed version was clearer than the "use dropdowns" hand-wave. */}
+                <div className="px-4 py-3 space-y-1" style={{ background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB" }}>
+                  <div className="flex items-baseline gap-2 text-[11px]" style={{ fontFamily:FONT }}>
+                    <span className="flex-shrink-0 w-[60px]" style={{ color:c.muted }}>Admin</span>
+                    <span className="font-mono" style={{ color:"#A614C3" }}>{ADMIN_LEVELS.join(" / ")}</span>
                   </div>
-                  {/* Allowed-values legend — the example table shows ONE value per restricted
-                      column; this footnote spells out the full set so users know Admin and Job
-                      Title aren't free-text. Leading line tells the user these are the ONLY
-                      accepted values; rows below list them in brand purple to signal "fixed
-                      dropdown choice". */}
-                  <p className="text-[11px] mt-2 mb-1" style={{ fontFamily:FONT, color:c.text, fontWeight:600 }}>
-                    Admin and Job Title only accept these values:
-                  </p>
-                  <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-2 text-[10.5px]" style={{ fontFamily:FONT }}>
-                      <span className="flex-shrink-0 w-[58px]" style={{ color:c.muted }}>Admin</span>
-                      <span className="font-mono" style={{ color:"#A614C3" }}>{ADMIN_LEVELS.join(" / ")}</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 text-[10.5px]" style={{ fontFamily:FONT }}>
-                      <span className="flex-shrink-0 w-[58px]" style={{ color:c.muted }}>Job Title</span>
-                      <span className="font-mono" style={{ color:"#A614C3" }}>{JOB_TITLES.join(" / ")}</span>
-                    </div>
+                  <div className="flex items-baseline gap-2 text-[11px]" style={{ fontFamily:FONT }}>
+                    <span className="flex-shrink-0 w-[60px]" style={{ color:c.muted }}>Job Title</span>
+                    <span className="font-mono" style={{ color:"#A614C3" }}>{JOB_TITLES.join(" / ")}</span>
                   </div>
                 </div>
-
-                {/* Principal-uniqueness note — same dashed-divider style as above */}
-                <div className="flex items-baseline gap-2 text-[11px] pt-0.5" style={{ fontFamily:FONT, color:c.muted, borderTop:`1px dashed ${c.border}` }}>
-                  <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color:"#A614C3", transform:"translateY(2px)" }} />
-                  <span>
-                    Only one <span style={{ fontFamily:"monospace", color:"#A614C3" }}>Principal</span> allowed per agency.
-                  </span>
+                {/* Principal-uniqueness footer */}
+                <div className="flex items-center gap-1.5 px-4 py-2 text-[11px]" style={{ fontFamily:FONT, color:c.muted, borderTop:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB" }}>
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color:"#A614C3" }} />
+                  <span>Only one <span style={{ fontFamily:"monospace", color:"#A614C3", fontWeight:600 }}>Principal</span> allowed per agency.</span>
                 </div>
               </div>
 
