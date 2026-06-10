@@ -487,7 +487,7 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
     // submission doesn't drive any decision and pushed the row to 5 KPIs + 1 CTA, which felt
     // crowded. The Start-a-Quote CTA tile (rendered after this map) now completes a clean
     // 4-tile row alongside the 3 status breakdowns.
-    { key: "Pending",             label: "Pending",          sub: "Awaiting carrier",     count: pendingCount      },
+    { key: "Pending",             label: "Pending",          sub: "In progress",          count: pendingCount      },
     { key: "Sold/Issued",         label: "Sold / Issued",    sub: "Bound this period",    count: soldCount         },
     { key: "Pending/Action Req.", label: "Action Required",  sub: "Needs your attention", count: actionReqCount    },
   ];
@@ -639,9 +639,9 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
               // Anchored to the RIGHT edge of the Help button so the 260px panel opens
               // leftward — keeps it tucked under the toolbar instead of spilling over the
               // table columns to the right.
-              <div className="absolute right-0 z-30 w-[260px] rounded-xl shadow-xl py-2"
+              <div className="absolute right-0 z-30 w-[260px] rounded-xl shadow-xl py-3"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, top: "calc(100% + 6px)" }}>
-                <p className="px-3 pb-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Can&apos;t find what you&apos;re looking for?</p>
+                <p className="px-4 pb-3 text-[12.5px]" style={{ fontFamily: FONT, color: c.muted }}>Can&apos;t find what you&apos;re looking for?</p>
                 <div className="px-2 space-y-1.5">
                   {[
                     { icon: MessageSquare, title: "Start a Chat", sub: "Get instant help", subColor: c.muted },

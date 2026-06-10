@@ -652,9 +652,9 @@ export default function Policies({ isDark }: { isDark: boolean }) {
               // Anchored to the RIGHT edge of the Help button so the 260px panel opens
               // leftward — keeps it tucked under the toolbar instead of spilling over the
               // table columns to the right.
-              <div className="absolute right-0 z-30 w-[260px] rounded-xl shadow-xl py-2"
+              <div className="absolute right-0 z-30 w-[260px] rounded-xl shadow-xl py-3"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, top: "calc(100% + 6px)" }}>
-                <p className="px-3 pb-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>Can&apos;t find what you&apos;re looking for?</p>
+                <p className="px-4 pb-3 text-[12.5px]" style={{ fontFamily: FONT, color: c.muted }}>Can&apos;t find what you&apos;re looking for?</p>
                 <div className="px-2 space-y-1.5">
                   {[
                     { icon: MessageSquare, title: "Start a Chat", sub: "Get instant help", subColor: c.muted },

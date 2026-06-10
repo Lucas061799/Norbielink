@@ -151,8 +151,11 @@ export default function Website({ isDark = false }: WebsiteProps) {
               onContinue={() => setStep("verify")}
               onResetLinkClicked={() => setStep("reset")}
               onResetEmailSent={(_email, mode) => {
-                // Both flows route the reset / recovery email to the Principal's address on file —
-                // copy here mirrors the modal's confirmation text so the user sees the same story.
+                // Two different destinations:
+                //   - "password" mode: the simple password reset — goes to the user's OWN email
+                //     on file (they know who they are, they just need a new password).
+                //   - "both" mode: account recovery — goes to the Principal's email because the
+                //     user couldn't log in and needs the Principal to forward / coordinate.
                 const description = mode === "both" ? (
                   <>
                     We&apos;ve emailed your User ID and a password reset link to the{" "}
@@ -161,9 +164,7 @@ export default function Website({ isDark = false }: WebsiteProps) {
                   </>
                 ) : (
                   <>
-                    We&apos;ve sent a password reset link to the{" "}
-                    <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
-                    inbox. Open it to set a new password.
+                    We&apos;ve sent a password reset link to your inbox. Open it to set a new password.
                   </>
                 );
                 setToast({ title: "Email sent", description });
@@ -383,7 +384,7 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
   const formCopy = {
     password: {
       title: "Reset Your Password",
-      body:  "Enter your User ID. We'll send a reset link to the email on file.",
+      body:  "Enter your User ID. We'll send a reset link to your email on file.",
       fields: "userIdOnly",
     },
     both: {
@@ -418,7 +419,7 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
           email on file.
         </>
       )
-    : `If ${userIdValue || "your User ID"} matches an account, we've sent a password reset link to the email on file.`;
+    : `If ${userIdValue || "your User ID"} matches an account, we've sent a password reset link to your email on file.`;
 
   // Refined tile picker: small leading icon chip + label/sub + trailing radio dot.
   // Matches the visual weight of other modals (Book Roll, Doc Upload).

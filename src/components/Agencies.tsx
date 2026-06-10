@@ -1243,6 +1243,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     setSentSummary({ sent: sent.length, skipped });
     setImportPhase("sent");
     clearDraftStorage();
+    // Top-right toast matching the rest of the app's notification pattern — confirms the send
+    // happened independently of the modal's own success screen, so users get a familiar signal
+    // even if they close the modal right after clicking Send.
+    const sentCount = sent.length;
+    showToast({
+      title: sentCount === 1 ? "1 invitation sent" : `${sentCount} invitations sent`,
+      description: skipped.length > 0
+        ? `${skipped.length} ${skipped.length === 1 ? "row was" : "rows were"} skipped due to errors.`
+        : "Each user will receive an email with a secure registration link.",
+    }, 5000);
   };
 
   /**
@@ -1287,6 +1297,22 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [reassignContactId, setReassignContactId] = useState("");
   const [reassignAccountsFrom, setReassignAccountsFrom] = useState<{userId: string; userName: string; andArchive?: boolean} | null>(null);
   const [reassignAccountsToId, setReassignAccountsToId] = useState("");
+  // Open state for the custom Reassign Accounts dropdown (replaces the native <select> so the
+  // popup menu matches the app's styling). Rect is captured on open so the panel can use
+  // `position: fixed` and float above the modal's overflow-hidden clip. Click-outside closes.
+  const [reassignAccountsDropOpen, setReassignAccountsDropOpen] = useState(false);
+  const [reassignAccountsDropRect, setReassignAccountsDropRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const reassignAccountsDropRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!reassignAccountsDropOpen) return;
+    const close = (e: MouseEvent) => {
+      if (reassignAccountsDropRef.current && !reassignAccountsDropRef.current.contains(e.target as Node)) {
+        setReassignAccountsDropOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [reassignAccountsDropOpen]);
   const [reassignAccountsConfirm, setReassignAccountsConfirm] = useState<{ toName: string } | null>(null);
   // Optional overrides applied after a reassign — used to reflect the new Principal / Contact in the UI.
   const [principalOverride, setPrincipalOverride] = useState<{ oldId: string; newId: string } | null>(null);
@@ -1861,14 +1887,19 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div className="px-6 pb-4">
                 <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Principal</label>
-                <select value={assignPrincipalChoice} onChange={e => setAssignPrincipalChoice(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                  style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
-                  <option value="">Select a user…</option>
-                  {candidates.map(u => (
-                    <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}{!u.isAdmin && !adminGrantOverrides.has(u.id) ? " · (no admin yet)" : ""}</option>
-                  ))}
-                </select>
+                {/* appearance-none hides the browser's default caret position so we can place
+                    our own ChevronDown with proper margin from the right border. */}
+                <div className="relative">
+                  <select value={assignPrincipalChoice} onChange={e => setAssignPrincipalChoice(e.target.value)}
+                    className="w-full pl-3 pr-9 py-2 rounded-lg text-[13px] outline-none appearance-none"
+                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                    <option value="">Select a user…</option>
+                    {candidates.map(u => (
+                      <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}{!u.isAdmin && !adminGrantOverrides.has(u.id) ? " · (no admin yet)" : ""}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute w-4 h-4 pointer-events-none" style={{ right: 12, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+                </div>
                 {willGrantAdmin && (
                   <div className="mt-2 px-3 py-2 rounded-lg text-[12px] flex items-start gap-2"
                     style={{ backgroundImage: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.10) 63.88%)", border: "1px solid rgba(166,20,195,0.22)", color: "#5C2ED4", fontFamily: FONT }}>
@@ -1968,14 +1999,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       return (
                         <div>
                           <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Principal</label>
+                          <div className="relative">
                           <select value={reassignPrincipalId} onChange={e => setReassignPrincipalId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
+                            className="w-full pl-3 pr-9 py-2 rounded-lg text-[13px] outline-none appearance-none"
                             style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
                             <option value="">Select a user…</option>
                             {candidates.map(u => (
                               <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}{!u.isAdmin && !adminGrantOverrides.has(u.id) ? " · (no admin yet)" : ""}</option>
                             ))}
                           </select>
+                          <ChevronDown className="absolute w-4 h-4 pointer-events-none" style={{ right: 12, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+                          </div>
                           {willGrantAdmin && (
                             <div className="mt-2 px-3 py-2 rounded-lg text-[12px] flex items-start gap-2"
                               style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.20)", color: "#92400E", fontFamily: FONT }}>
@@ -1989,14 +2023,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     {roleReassign.needsContact && (
                       <div>
                         <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>New Agency Contact</label>
-                        <select value={reassignContactId} onChange={e => setReassignContactId(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                          style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
-                          <option value="">Select a user…</option>
-                          {candidates.map(u => (
-                            <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select value={reassignContactId} onChange={e => setReassignContactId(e.target.value)}
+                            className="w-full pl-3 pr-9 py-2 rounded-lg text-[13px] outline-none appearance-none"
+                            style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                            <option value="">Select a user…</option>
+                            {candidates.map(u => (
+                              <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute w-4 h-4 pointer-events-none" style={{ right: 12, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+                        </div>
                       </div>
                     )}
                   </>
@@ -2040,11 +2077,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               onClick={e => e.stopPropagation()}>
               <div className="px-6 pt-5 pb-4">
                 <h3 className="text-[16px] font-bold mb-1" style={{ fontFamily:FONT, color: c.text }}>
-                  {reassignAccountsFrom.andArchive ? "Archive User" : "Reassign Accounts"}
+                  {reassignAccountsFrom.andArchive ? "Deactivate User" : "Reassign Accounts"}
                 </h3>
                 <p className="text-[13px]" style={{ fontFamily:FONT, color: c.muted }}>
                   {reassignAccountsFrom.andArchive
-                    ? "Pick another active user to take over this user's accounts before archiving."
+                    ? "Pick another active user to take over this user's accounts before deactivating."
                     : "Transfer this user's accounts to another active user in this agency."}
                 </p>
               </div>
@@ -2056,14 +2093,75 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 ) : (
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Reassign To</label>
-                    <select value={reassignAccountsToId} onChange={e => setReassignAccountsToId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                      style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
-                      <option value="">Select a user…</option>
-                      {candidates.map(u => (
-                        <option key={u.id} value={u.id}>{u.name} · {u.jobTitle}</option>
-                      ))}
-                    </select>
+                    {/* Custom dropdown replacing the native <select>. The panel uses
+                        `position: fixed` with the trigger's rect captured at open time, so it
+                        floats ABOVE the modal's `overflow-hidden` clip (the previous absolute-
+                        positioned panel was getting cut off by the modal card). Drop-up detection
+                        opens upward when there isn't enough room below. */}
+                    <div ref={reassignAccountsDropRef} className="relative">
+                      <button type="button"
+                        onClick={e => {
+                          if (!reassignAccountsDropOpen) {
+                            const r = e.currentTarget.getBoundingClientRect();
+                            setReassignAccountsDropRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+                          }
+                          setReassignAccountsDropOpen(o => !o);
+                        }}
+                        className="w-full pl-3 pr-9 py-2 rounded-lg text-[13px] outline-none text-left flex items-center relative"
+                        style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: reassignAccountsToId ? c.text : c.muted, cursor: "pointer" }}>
+                        <span className="flex-1 truncate">
+                          {(() => {
+                            const picked = candidates.find(u => u.id === reassignAccountsToId);
+                            return picked ? `${picked.name} · ${picked.jobTitle}` : "Select a user…";
+                          })()}
+                        </span>
+                        <ChevronDown className="absolute w-4 h-4 pointer-events-none" style={{ right: 12, top: "50%", transform: `translateY(-50%) rotate(${reassignAccountsDropOpen ? 180 : 0}deg)`, color: c.muted, transition: "transform 0.15s" }} />
+                      </button>
+                      {reassignAccountsDropOpen && reassignAccountsDropRect && (() => {
+                        // Drop-up when there's not enough room below the trigger (e.g. when the
+                        // modal sits near the viewport bottom).
+                        const panelMaxHeight = Math.min(candidates.length * 42 + 8, 240);
+                        const spaceBelow = window.innerHeight - (reassignAccountsDropRect.top + reassignAccountsDropRect.height);
+                        const openUp = spaceBelow < panelMaxHeight + 16;
+                        const top = openUp
+                          ? reassignAccountsDropRect.top - panelMaxHeight - 4
+                          : reassignAccountsDropRect.top + reassignAccountsDropRect.height + 4;
+                        return (
+                          <div className="fixed rounded-xl overflow-y-auto"
+                            style={{
+                              top, left: reassignAccountsDropRect.left, width: reassignAccountsDropRect.width,
+                              maxHeight: panelMaxHeight,
+                              background: c.cardBg,
+                              boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+                              border: `1px solid ${c.border}`,
+                              zIndex: 9999,
+                            }}>
+                            {candidates.map(u => {
+                              const selected = u.id === reassignAccountsToId;
+                              const selectedBg = isDark ? "rgba(166,20,195,0.18)" : "rgba(166,20,195,0.08)";
+                              const hoverBg    = isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB";
+                              return (
+                                <button key={u.id} type="button"
+                                  onClick={() => { setReassignAccountsToId(u.id); setReassignAccountsDropOpen(false); }}
+                                  className="w-full text-left px-3 py-2.5 text-[13px] transition-colors flex items-center justify-between gap-2"
+                                  style={{
+                                    fontFamily: FONT,
+                                    color: selected ? "#A614C3" : c.text,
+                                    fontWeight: selected ? 600 : 400,
+                                    background: selected ? selectedBg : "transparent",
+                                    cursor: "pointer",
+                                  }}
+                                  onMouseEnter={e => (e.currentTarget.style.background = selected ? selectedBg : hoverBg)}
+                                  onMouseLeave={e => (e.currentTarget.style.background = selected ? selectedBg : "transparent")}>
+                                  <span className="truncate">{u.name} · <span style={{ color: selected ? "#A614C3" : c.muted }}>{u.jobTitle}</span></span>
+                                  {selected && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3" }} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
               </div>
@@ -2095,11 +2193,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <h3 className="text-[16px] font-bold mb-1" style={{ color: c.text }}>
-                  {reassignAccountsFrom.andArchive ? "Archive this user?" : "Reassign all accounts?"}
+                  {reassignAccountsFrom.andArchive ? "Deactivate this user?" : "Reassign all accounts?"}
                 </h3>
                 <p className="text-[12px] leading-relaxed" style={{ color: c.muted }}>
                   {reassignAccountsFrom.andArchive
-                    ? "All accounts will be transferred to the selected user, and this user will be moved to the archive."
+                    ? "All accounts will be transferred to the selected user, and this user will be permanently removed from the agency."
                     : "All accounts will be transferred to the selected user."}
                 </p>
                 <p className="text-[12px] leading-relaxed mt-2 font-semibold" style={{ color: "#B45309" }}>
@@ -2119,12 +2217,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   const fromName = reassignAccountsFrom.userName;
                   const toName = reassignAccountsConfirm.toName;
                   const fromUserId = reassignAccountsFrom.userId;
-                  const archiveToo = !!reassignAccountsFrom.andArchive;
-                  if (archiveToo) {
-                    setInactiveUserIds(prev => { const s = new Set(prev); s.add(fromUserId); return s; });
+                  const deactivateToo = !!reassignAccountsFrom.andArchive;
+                  if (deactivateToo) {
+                    // Permanently remove the user from the agency (was: setInactiveUserIds for
+                    // the archive flow). Their accounts already moved to `toName` above.
+                    setRemovedUserIds(prev => { const s = new Set(prev); s.add(fromUserId); return s; });
                     showToast({
-                      title: "User archived",
-                      description: `Their accounts went to ${toName}.`,
+                      title: "User deactivated",
+                      description: `${fromName} was removed. Their accounts went to ${toName}.`,
                     });
                   } else {
                     showToast({ title: "Accounts reassigned", description: `${fromName}'s accounts transferred to ${toName}.` });
@@ -2135,7 +2235,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 }}
                 className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-colors"
                 style={{ background: btnGrad }}>
-                {reassignAccountsFrom.andArchive ? "Reassign & Archive" : "Yes, reassign"}
+                {reassignAccountsFrom.andArchive ? "Reassign & Deactivate" : "Yes, reassign"}
               </button>
             </div>
           </div>
@@ -5340,22 +5440,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <Upload className="w-3.5 h-3.5" style={{ color: teal }} />Import Users
               </button>
               <div className="ml-auto flex items-center gap-2">
-                <button onClick={e => { e.stopPropagation(); setUsersView(v => v === "inactive" ? "active" : "inactive"); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                  title={usersView === "inactive" ? "Click to go back to Active Users" : "Show archived (deactivated) users"}
-                  style={{ fontFamily: FONT,
-                    background: usersView === "inactive" ? "rgba(245,158,11,0.10)" : "transparent",
-                    color: usersView === "inactive" ? "#F59E0B" : c.muted,
-                    border: `1px solid ${usersView === "inactive" ? "rgba(245,158,11,0.25)" : c.border}` }}
-                  onMouseEnter={e => { if (usersView !== "inactive") e.currentTarget.style.background = c.hoverBg; }}
-                  onMouseLeave={e => { if (usersView !== "inactive") e.currentTarget.style.background = "transparent"; }}>
-                  <Archive className="w-3.5 h-3.5" />
-                  {usersView === "inactive" ? "Back to Active Users" : "Archive"}
-                  {usersView !== "inactive" && inactiveCount > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                      style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", color: c.muted }}>{inactiveCount}</span>
-                  )}
-                </button>
+                {/* Archive toggle removed — the "Deactivate User" action now permanently removes
+                    the user (after reassigning their accounts) instead of moving them to an
+                    archived list, so there's no separate archived view to toggle into. */}
                 {/* Export — split-button matching Notes "New" style. Main click downloads in current format, chevron picks format. */}
                 {(() => {
                   const cols: { label: string; get: (u: typeof agencyUsers[number]) => string }[] = [
@@ -5634,8 +5721,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         {userMenuId === u.id && userMenuPos && (() => {
                           const isInactive = inactiveUserIds.has(u.id);
                           const isLocked = lockedUserIds.has(u.id);
-                          const base = isInactive ? [] : ["Edit User", "Reset Password", "Reassign Accounts", "Unlock User"];
-                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Archive User"];
+                          const base = isInactive ? [] : ["Edit User", "Reset Password", "Reassign Accounts"];
+                          // Unlock User and Deactivate User both go to the bottom of the menu
+                          // because they're rarer / heavier-weight actions. Unlock specifically
+                          // is most often disabled (only meaningful when the account is locked),
+                          // so anchoring it at the bottom keeps the more common actions on top.
+                          const adminOnly = isInactive ? ["Reactivate", "Remove"] : ["Deactivate User", "Unlock User"];
                           // Read-only admin sees no menu items — only full Admin can operate.
                           const actions = currentUserIsReadOnlyAdmin ? [] : currentUserIsAdmin ? [...base, ...adminOnly] : [];
                           return (
@@ -5690,9 +5781,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                       description: "This user can sign in again.",
                                       action: { label: "Undo", onClick: () => setLockedUserIds(prev => { const s = new Set(prev); s.add(u.id); return s; }) },
                                     });
-                                  } else if (action === "Archive User") {
-                                    // Archiving any user always requires reassigning their book of business
-                                    // to another active user — same pattern as archiving a Principal.
+                                  } else if (action === "Deactivate User") {
+                                    // Deactivating a user reassigns their book of business to another
+                                    // active user, then removes the user from the agency. `andArchive`
+                                    // is the internal flag name kept from the previous "archive" flow —
+                                    // its semantics now mean "remove after reassign" (see the confirm
+                                    // handler which adds to removedUserIds rather than inactiveUserIds).
                                     setReassignAccountsFrom({ userId: u.id, userName: u.name, andArchive: true });
                                     setReassignAccountsToId("");
                                   } else if (action === "Reactivate") {
@@ -6536,9 +6630,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div className="rounded-xl px-4 py-3.5 flex items-start gap-2.5" style={{ border:`1px solid ${c.border}`, background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB" }}>
                 <Users className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color:"#A614C3" }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Invite multiple users at once</p>
+                  <p className="text-[13px] font-bold" style={{ fontFamily:FONT, color:c.text }}>Create multiple users at once</p>
                   <p className="text-[12px] mt-0.5" style={{ fontFamily:FONT, color:c.muted, lineHeight:"17px" }}>
-                    Fill in the template (or use your own file) and upload it. We&apos;ll email every valid row a secure registration link.
+                    Fill in the template (or use your own file) and upload it. We&apos;ll email every valid user a secure registration link.
                   </p>
                 </div>
               </div>
@@ -6950,72 +7044,79 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </div>
                   </div>
 
-                  {/* Warning summary — always visible when warnings exist so the user knows
-                      WHAT the warning is and WHICH rows are affected without having to hover
-                      the chip. Grouped by category so the count of rows is communicated even
-                      with many warnings. Currently only one warning category exists ("Multiple
-                      Principals"); the categoryOf branch makes it easy to extend later. */}
-                  {warningCount > 0 && (() => {
-                    const warnings = importIssues.filter(i => i.severity === "warning");
-                    const categoryOf = (iss: ImportIssue): string =>
-                      iss.field === "principal" ? "Multiple Principals" : "Warning";
-                    const groups = new Map<string, { rows: number[]; rule: string }>();
-                    warnings.forEach(iss => {
-                      const key = categoryOf(iss);
-                      const rule = iss.field === "principal"
-                        ? "only one Principal allowed per agency"
-                        : "review the affected rows";
-                      const existing = groups.get(key);
-                      if (existing) existing.rows.push(iss.rowIndex + 2);
-                      else groups.set(key, { rows: [iss.rowIndex + 2], rule });
-                    });
+                  {/* Combined info strip — warning summary (left) + filter status (right) in
+                      ONE row instead of two stacked banners. Either segment is conditional, so
+                      the strip might show just warning, just filter, or both with a vertical
+                      divider between them. Container color: amber-tinted when warnings present,
+                      red-tinted when only an error filter is active. */}
+                  {(warningCount > 0 || tableFilter !== "all") && (() => {
+                    // Build warning info (currently only "Multiple Principals" exists, but the
+                    // categoryOf branch keeps it extensible).
+                    let warningContent: React.ReactNode = null;
+                    if (warningCount > 0) {
+                      const warnings = importIssues.filter(i => i.severity === "warning");
+                      const categoryOf = (iss: ImportIssue): string =>
+                        iss.field === "principal" ? "Multiple Principals" : "Warning";
+                      const groups = new Map<string, { rows: number[]; rule: string }>();
+                      warnings.forEach(iss => {
+                        const key = categoryOf(iss);
+                        const rule = iss.field === "principal"
+                          ? "only one Principal allowed per agency"
+                          : "review the affected rows";
+                        const existing = groups.get(key);
+                        if (existing) existing.rows.push(iss.rowIndex + 2);
+                        else groups.set(key, { rows: [iss.rowIndex + 2], rule });
+                      });
+                      // For the single-line strip we render only the FIRST category. (Multi-
+                      // category warnings would push back to a multi-line layout if it ever
+                      // comes up; right now there's only ever one warning type.)
+                      const [label, info] = Array.from(groups.entries())[0];
+                      const shown = info.rows.slice(0, 6);
+                      const rowText = info.rows.length === 1
+                        ? `Row ${shown[0]}`
+                        : `Rows ${shown.join(", ")}${info.rows.length > shown.length ? `, +${info.rows.length - shown.length} more` : ""}`;
+                      warningContent = (
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#B45309" }} />
+                          <div className="truncate">
+                            <span style={{ color: "#B45309", fontWeight: 600 }}>{label}</span>
+                            <span style={{ color: c.muted }}> · {rowText} · {info.rule}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    // Container background: amber wins (warnings are persistent info), only fall
+                    // back to red when there are no warnings but the error filter is active.
+                    const useAmber = warningCount > 0;
+                    const bg = useAmber ? "rgba(245,158,11,0.06)" : "rgba(239,68,68,0.06)";
+                    const borderColor = useAmber ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)";
                     return (
-                      <div className="rounded-md px-3 py-2 mb-2 text-[11.5px] space-y-0.5"
-                        style={{ fontFamily:FONT, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)" }}>
-                        {Array.from(groups.entries()).map(([label, info]) => {
-                          const shown = info.rows.slice(0, 6);
-                          const rowText = info.rows.length === 1
-                            ? `Row ${shown[0]}`
-                            : `Rows ${shown.join(", ")}${info.rows.length > shown.length ? `, +${info.rows.length - shown.length} more` : ""}`;
-                          return (
-                            <div key={label} className="flex items-start gap-1.5">
-                              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#B45309" }} />
-                              <div className="flex-1 min-w-0" style={{ color: "#B45309" }}>
-                                <span style={{ fontWeight: 600 }}>{label}</span>
-                                <span style={{ color: c.muted }}> · {rowText} · {info.rule}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="flex items-center gap-3 px-3 py-1.5 mb-2 rounded-md text-[11.5px]"
+                        style={{ fontFamily: FONT, background: bg, border: `1px solid ${borderColor}` }}>
+                        {warningContent}
+                        {warningContent && tableFilter !== "all" && (
+                          <div className="flex-shrink-0" style={{ width: 1, height: 16, background: borderColor }} />
+                        )}
+                        {tableFilter !== "all" && (
+                          <div className={`flex items-center gap-2 flex-shrink-0 ${warningContent ? "" : "ml-auto"}`}>
+                            <span style={{ color: tableFilter === "errors" ? "#B91C1C" : "#B45309", fontWeight: 600 }}>
+                              {tableFilter === "errors" ? "Errors only" : "Warnings only"}
+                            </span>
+                            <button type="button" onClick={() => setTableFilter("all")}
+                              className="text-[11px] underline transition-colors"
+                              style={{ color: c.muted, background: "transparent", border: "none", cursor: "pointer" }}
+                              onMouseEnter={e => (e.currentTarget.style.color = c.text)}
+                              onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
+                              Show all
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
 
                   {/* Editable table — fixed-layout grid, scrollable y. The id on the scroll
                       container lets the jump-to-error buttons query it for the last-jumped index. */}
-                  {/* Active-filter status — minimal: no counts (the chip already shows them),
-                      just a label confirming what's being shown + a quick "Show all" escape. */}
-                  {tableFilter !== "all" && (() => {
-                    const labelColor = tableFilter === "errors" ? "#B91C1C" : "#B45309";
-                    const bgColor    = tableFilter === "errors" ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)";
-                    const borderColor= tableFilter === "errors" ? "rgba(239,68,68,0.25)" : "rgba(245,158,11,0.30)";
-                    return (
-                      <div className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-md text-[11.5px]"
-                        style={{ fontFamily:FONT, background: bgColor, border: `1px solid ${borderColor}` }}>
-                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: labelColor }} />
-                        <span style={{ color: labelColor, fontWeight: 600 }}>
-                          {tableFilter === "errors" ? "Errors only" : "Warnings only"}
-                        </span>
-                        <button type="button" onClick={() => setTableFilter("all")}
-                          className="ml-auto text-[11px] underline transition-colors"
-                          style={{ color: c.muted, background: "transparent", border: "none", cursor: "pointer" }}
-                          onMouseEnter={e => (e.currentTarget.style.color = c.text)}
-                          onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
-                          Show all rows
-                        </button>
-                      </div>
-                    );
-                  })()}
 
                   <div id="bulk-table-scroll" className="rounded-xl overflow-auto mb-4" style={{ border:`1px solid ${c.border}`, maxHeight: 420 }}>
                     <table className="text-[12px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, tableLayout:"fixed", width: columns.reduce((a, c) => a + c.width, 24) }}>
