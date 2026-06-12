@@ -311,14 +311,15 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
         {/* Inline label — "User ID" + a small AlertCircle icon + a quiet hint, separated by
             the icon (no em-dash needed). Icon in brand purple draws the eye just enough to
             register the warning without dominating. */}
-        {/* `alignItems: baseline` centers by the text baseline rather than the content-box
-            center — the previous `center` setting was lining up boxes-not-text, which left
-            "User ID" sitting above the hint because they had different line-heights. */}
-        <label style={{ ...labelStyle, display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap", lineHeight: 1.4 }}>
-          <span>User ID</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500, fontSize: 11.5, color: "#6B7280" }}>
-            <AlertCircle style={{ width: 11, height: 11, color: "#A614C3", flexShrink: 0, display: "block", transform: "translateY(0.5px)" }} strokeWidth={2} />
-            <span>We can&apos;t recognize you by <span style={{ fontWeight: 700 }}>Agency Code</span></span>
+        {/* All three pieces (icon, "User ID", hint text) bottom-aligned. Outer label uses
+            `alignItems: flex-end` to line up "User ID"'s bottom with the hint span's bottom.
+            Inner hint span also uses `flex-end` so the icon and the text bottom-align too —
+            and the icon's `translateY` is removed (it would push the icon BELOW the bottom). */}
+        <label style={{ ...labelStyle, display: "flex", alignItems: "flex-end", gap: 6, flexWrap: "wrap", lineHeight: 1 }}>
+          <span style={{ lineHeight: 1 }}>User ID</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500, fontSize: 11.5, color: "#6B7280", lineHeight: 1 }}>
+            <AlertCircle style={{ width: 11, height: 11, color: "#A614C3", flexShrink: 0, display: "block", transform: "translateY(-1px)" }} strokeWidth={2} />
+            <span style={{ lineHeight: 1 }}>We can&apos;t recognize you by <span style={{ fontWeight: 700 }}>Agency Code</span></span>
           </span>
         </label>
         <input type="text" value={identifier} onChange={e => setIdentifier(e.target.value)}
