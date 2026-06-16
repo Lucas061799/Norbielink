@@ -9137,23 +9137,68 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
                     </>
                   )}
                 </div>
-              ) : (
-                <div className="px-6 py-3 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)" }}>
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                  <span className="text-[12px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: FONT, color: c.text }}>
-                    Want to drop columns? Click
-                    <button onClick={() => { setExportDialogOpen(false); setTimeout(() => setViewOpen(true), 0); }}
-                      title="Open View columns"
-                      className="inline-flex items-center justify-center p-1 rounded-md transition-colors"
-                      style={{ color: "#A614C3", background: isDark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.12)", verticalAlign: "middle" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.25)" : "rgba(168,85,247,0.20)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.12)")}>
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg>
-                    </button>
-                    in the toolbar to hide any column — the export updates with it.
-                  </span>
-                </div>
-              )}
+              ) : (() => {
+                // Inline column picker for Affiliations and Users — same pattern as the
+                // Agencies branch above. Restores the per-modal column selection users had
+                // before (the redirect-to-toolbar hint was a step down in UX). The picker
+                // mutates the tab's existing visibility state (affVisibleCols for affiliations,
+                // usersHiddenCols for users) so the toolbar's "Show / hide columns" stays in sync.
+                const cols = tab === "affiliations" ? AFFILIATIONS_COLS : USERS_COLS;
+                const isVisible = (key: string): boolean =>
+                  tab === "affiliations" ? affVisibleCols.has(key) : !usersHiddenCols.has(key);
+                const setVisibleSet = (keys: string[]) => {
+                  if (tab === "affiliations") {
+                    setAffVisibleCols(new Set(keys));
+                  } else {
+                    // usersHiddenCols stores HIDDEN keys, so visible = all minus the visible set
+                    const hidden = USERS_COLS.map(c => c.key).filter(k => !keys.includes(k));
+                    setUsersHiddenCols(new Set(hidden));
+                  }
+                };
+                const toggle = (key: string) => {
+                  if (tab === "affiliations") {
+                    setAffVisibleCols(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+                  } else {
+                    setUsersHiddenCols(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+                  }
+                };
+                const visibleCount = cols.filter(col => isVisible(col.key)).length;
+                return (
+                  <div className="px-5 pt-4 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>
+                        Columns ({visibleCount}/{cols.length})
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setVisibleSet(cols.map(col => col.key))}
+                          className="text-[11px] font-semibold transition-colors"
+                          style={{ fontFamily: FONT, color: "#A614C3" }}>All</button>
+                        <span className="text-[11px]" style={{ color: c.muted }}>·</span>
+                        <button onClick={() => setVisibleSet([])}
+                          className="text-[11px] font-semibold transition-colors"
+                          style={{ fontFamily: FONT, color: "#A614C3" }}>None</button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-y-1 gap-x-3">
+                      {cols.map(col => {
+                        const checked = isVisible(col.key);
+                        return (
+                          <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
+                            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                            onClick={() => toggle(col.key)}>
+                            <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                              style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                              {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </div>
+                            <span className="text-[12px] truncate" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               {/* Preview */}
               <div className="mx-5" style={{ borderTop: `1px solid ${c.border}` }} />
               <div className="px-6 py-3 flex-shrink-0">
