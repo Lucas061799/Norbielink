@@ -728,7 +728,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // `position: fixed` and float above the table's scroll container without being clipped.
   type CellSelectState = {
     rowIdx: number;
-    field: "admin" | "jobTitle";
+    field: "jobTitle";
     options: string[];
     triggerRect: { top: number; left: number; width: number; height: number };
   };
@@ -745,15 +745,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // else is required and gets validated.
   type ParsedUser = {
     firstName: string; lastName: string;
-    admin: string; jobTitle: string;
+    jobTitle: string;
     email: string; phone: string; ext: string;
     address: string;
   };
   // Issue field names map to the ParsedUser keys so the editable table can paint the right cell red.
-  type ImportIssue = { rowIndex: number; severity: "error" | "warning"; field: "firstName" | "lastName" | "email" | "admin" | "jobTitle" | "phone" | "principal"; message: string };
+  type ImportIssue = { rowIndex: number; severity: "error" | "warning"; field: "firstName" | "lastName" | "email" | "jobTitle" | "phone" | "principal"; message: string };
   // Canonical fields we accept in the bulk-upload schema. "ignore" is a sentinel for the mapping
   // step that lets the user explicitly drop unrecognized columns.
-  type CanonicalField = "firstName" | "lastName" | "admin" | "jobTitle" | "email" | "phone" | "ext" | "address" | "ignore";
+  type CanonicalField = "firstName" | "lastName" | "jobTitle" | "email" | "phone" | "ext" | "address" | "ignore";
   // Result of parsing the file before we apply column mapping. We hold on to the raw header strings
   // and the raw row values so the mapping step can show the user what was found.
   type RawParsedFile = { headers: string[]; rows: string[][]; fileName: string };
@@ -814,11 +814,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   /**
    * Normalize a header string for fuzzy matching: lowercase, strip non-alphanumeric.
    * Used both for matching the user's file headers against our canonical fields and for
-   * matching Admin / Job Title values against the allowed sets.
+   * matching Job Title values against the allowed set.
    *   "First Name" → "firstname"
    *   "FNAME"      → "fname"
    *   "first_name" → "firstname"
-   *   "Read-Only Admin" → "readonlyadmin"
    */
   const slugify = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -830,7 +829,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     firstName: ["firstname", "first", "fname", "givenname", "given"],
     lastName:  ["lastname", "last", "lname", "surname", "familyname", "family"],
     email:     ["email", "emailaddress", "mail", "emailid"],
-    admin:     ["admin", "adminlevel", "adminrole", "role", "access", "accesslevel", "permission", "permissions"],
     jobTitle:  ["jobtitle", "title", "job", "position", "designation"],
     phone:     ["phone", "phonenumber", "tel", "telephone", "mobile", "mobilephone", "cell", "cellphone", "contact"],
     ext:       ["ext", "extension", "phoneext", "phoneextension"],
@@ -850,18 +848,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     return null;
   };
 
-  /**
-   * Case- and punctuation-insensitive match for Admin level values. "read-only admin",
-   * "READONLY ADMIN", "Read Only Admin" all return the canonical "Read-Only Admin".
-   * Returns the original (trimmed) string when no match — caller decides if that's an error.
-   */
-  const normalizeAdminValue = (raw: string): string => {
-    const trimmed = raw.trim();
-    if (!trimmed) return "";
-    const slug = slugify(trimmed);
-    const hit = ADMIN_LEVELS.find(v => slugify(v) === slug);
-    return hit ?? trimmed;
-  };
   const normalizeJobTitleValue = (raw: string): string => {
     const trimmed = raw.trim();
     if (!trimmed) return "";
@@ -895,8 +881,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
    * beyond accepting whatever the user provides). Phone is required and must be 10 (or 11 with
    * a leading 1) digits after stripping non-digits.
    *
-   * Admin / Job Title use slug-match — the parse layer already normalizes values to canonical
-   * casing, so what hits validate is either an exact ADMIN_LEVELS entry or unrecognizable.
+   * Job Title uses slug-match — the parse layer already normalizes values to canonical
+   * casing, so what hits validate is either an exact JOB_TITLES entry or unrecognizable.
    *
    * Returns issues with the original spreadsheet row number (1-indexed, +1 for the header).
    */
@@ -924,11 +910,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         } else {
           seenEmails.set(key, idx);
         }
-      }
-      if (!u.admin.trim()) {
-        issues.push({ rowIndex: idx, severity: "error", field: "admin", message: `Row ${sheetRow}: missing Admin level.` });
-      } else if (!ADMIN_LEVELS.includes(u.admin.trim())) {
-        issues.push({ rowIndex: idx, severity: "error", field: "admin", message: `Row ${sheetRow}: "${u.admin}" isn't a valid Admin level.` });
       }
       if (!u.jobTitle.trim()) {
         issues.push({ rowIndex: idx, severity: "error", field: "jobTitle", message: `Row ${sheetRow}: missing Job Title.` });
@@ -1032,13 +1013,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   /**
    * Apply a header → canonical-field mapping to the raw parsed file, building ParsedUser rows.
-   * Values are normalized inline: Admin and Job Title get slug-matched to canonical casing so
-   * "read only admin" doesn't trigger an error. Empty rows (no name AND no email) are dropped.
+   * Job Title is slug-matched inline so "Producer" / "producer" / "Producer " all land canonical.
+   * Empty rows (no name AND no email) are dropped.
    */
   const buildParsedUsers = (raw: RawParsedFile, mapping: CanonicalField[]): ParsedUser[] => {
     // colIndex[field] = index into the raw header array that maps to that field, or -1 if unmapped.
     const colIndex: Record<Exclude<CanonicalField, "ignore">, number> = {
-      firstName: -1, lastName: -1, admin: -1, jobTitle: -1,
+      firstName: -1, lastName: -1, jobTitle: -1,
       email: -1, phone: -1, ext: -1, address: -1,
     };
     mapping.forEach((field, idx) => {
@@ -1051,7 +1032,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     return raw.rows.map(row => ({
       firstName: pick(row, "firstName").trim(),
       lastName:  pick(row, "lastName").trim(),
-      admin:     normalizeAdminValue(pick(row, "admin")),
       jobTitle:  normalizeJobTitleValue(pick(row, "jobTitle")),
       email:     pick(row, "email").trim(),
       // Format phones at parse time so a file with raw digits ("5551234567") or assorted
@@ -1172,7 +1152,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
       const users: ParsedUser[] = rawUsers.map(u => ({
         firstName: String(u.firstName ?? ""),
         lastName:  String(u.lastName  ?? ""),
-        admin:     String(u.admin     ?? ""),
         jobTitle:  String(u.jobTitle  ?? ""),
         email:     String(u.email     ?? ""),
         phone:     String(u.phone     ?? ""),
@@ -1207,16 +1186,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   /**
    * Update a single field on a single row in the editable table. Re-runs validation against
    * the whole file (cheap at 500 rows) so cross-row checks like duplicate-email + multiple-
-   * Principal stay accurate after every edit. Admin / Job Title cells pass through the
-   * normalizer so a dropdown pick lands as the canonical value even if the user later
-   * pastes a slug-equivalent string.
+   * Principal stay accurate after every edit. Job Title cells pass through the normalizer
+   * so a dropdown pick lands as the canonical value even if the user later pastes a
+   * slug-equivalent string.
    */
   const updateRow = (rowIdx: number, field: keyof ParsedUser, value: string) => {
     setParsedUsers(prev => {
       const next = prev.map((u, i) => {
         if (i !== rowIdx) return u;
-        // Normalize on the way in for Admin/Job Title so the cell snaps to canonical casing.
-        if (field === "admin")    return { ...u, admin:    normalizeAdminValue(value) };
+        // Normalize on the way in for Job Title so the cell snaps to canonical casing.
         if (field === "jobTitle") return { ...u, jobTitle: normalizeJobTitleValue(value) };
         // Phone gets live-formatted as the user types — `formatPhone` is the same
         // progressive `(XXX) XXX-XXXX` formatter used in the single-user input forms
@@ -1415,10 +1393,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [auStateOpen,  setAuStateOpen]  = useState(false);
   const [auZip,        setAuZip]        = useState("");
   const JOB_TITLES   = ["Principal","Producer","CSR","Accounting","Account Manager"];
-  // Admin access tiers — must match the "Admin Level" dropdown in the Edit User form
-  // (Read-Only Admin / Agency Support Admin / Super Admin) so the import template
-  // and the in-app form stay in sync.
-  const ADMIN_LEVELS = ["Read-Only Admin","Agency Support Admin","Super Admin"];
   const USER_STATUSES = ["Active","Inactive"];
 
   /**
@@ -1437,7 +1411,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     ws.columns = [
       { header: "First Name", key: "firstName", width: 16 },
       { header: "Last Name",  key: "lastName",  width: 16 },
-      { header: "Admin",      key: "admin",     width: 22 },
       { header: "Job Title",  key: "jobTitle",  width: 18 },
       { header: "Email",      key: "email",     width: 28 },
       { header: "Phone",      key: "phone",     width: 16 },
@@ -1449,43 +1422,37 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
       // Re-export current progress (Download progress button). One row per ParsedUser.
       seedRows.forEach(u => ws.addRow({
         firstName: u.firstName, lastName: u.lastName,
-        admin: u.admin, jobTitle: u.jobTitle,
+        jobTitle: u.jobTitle,
         email: u.email, phone: u.phone, ext: u.ext, address: u.address,
       }));
     } else {
       // Fresh template — one example row so the format is obvious at a glance.
-      ws.addRow({ firstName: "John", lastName: "Doe", admin: "Read-Only Admin", jobTitle: "Producer", email: "john@example.com", phone: "(555) 123-4567", ext: "123", address: "123 Main St, Springfield, IL 62701" });
+      ws.addRow({ firstName: "John", lastName: "Doe", jobTitle: "Producer", email: "john@example.com", phone: "(555) 123-4567", ext: "123", address: "123 Main St, Springfield, IL 62701" });
     }
 
-    // Apply data-validation dropdowns to Admin (col C) and Job Title (col D), rows 2..501.
+    // Apply data-validation dropdown to Job Title (col C), rows 2..501.
     // Bumped the range from 200 to 500 to fit the 500-row "large file" use case.
     // exceljs's per-cell assignment is the documented + most reliably serialised path.
     // A FRESH validation object is assigned per cell — sharing the same object can let
     // exceljs drop entries when it dedupes.
-    const adminFormula    = `"${ADMIN_LEVELS.join(",")}"`;
     const jobTitleFormula = `"${JOB_TITLES.join(",")}"`;
     for (let r = 2; r <= 501; r++) {
       ws.getCell(`C${r}`).dataValidation = {
-        type: "list",
-        allowBlank: true,
-        formulae: [adminFormula],
-      };
-      ws.getCell(`D${r}`).dataValidation = {
         type: "list",
         allowBlank: true,
         formulae: [jobTitleFormula],
       };
     }
 
-    ws.getCell("D1").note = "Only one Principal is allowed per agency.";
-    ws.getCell("H1").note = "Address is optional. Leave blank if you don't have it.";
+    ws.getCell("C1").note = "Only one Principal is allowed per agency.";
+    ws.getCell("G1").note = "Address is optional. Leave blank if you don't have it.";
 
     ws.addConditionalFormatting({
-      ref: "D2:D501",
+      ref: "C2:C501",
       rules: [
         {
           type: "expression",
-          formulae: [`AND(D2="Principal", COUNTIF($D$2:$D$501,"Principal")>1)`],
+          formulae: [`AND(C2="Principal", COUNTIF($C$2:$C$501,"Principal")>1)`],
           priority: 1,
           style: {
             fill:   { type: "pattern", pattern: "solid", bgColor: { argb: "FFFEE2E2" } },
@@ -6653,8 +6620,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <table className="text-[11px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, width:"100%" }}>
                     <thead>
                       <tr style={{ background:isDark?"rgba(255,255,255,0.04)":"#FAFAFB" }}>
-                        {["First Name","Last Name","Admin","Job Title","Email","Phone","Ext","Address"].map((h, i) => (
-                          <th key={h} className="text-left px-3 py-2 font-semibold whitespace-nowrap" style={{ color:c.muted, borderBottom:`1px solid ${c.border}`, borderRight: i < 7 ? `1px solid ${c.border}` : "none" }}>
+                        {["First Name","Last Name","Job Title","Email","Phone","Ext","Address"].map((h, i) => (
+                          <th key={h} className="text-left px-3 py-2 font-semibold whitespace-nowrap" style={{ color:c.muted, borderBottom:`1px solid ${c.border}`, borderRight: i < 6 ? `1px solid ${c.border}` : "none" }}>
                             {h}
                           </th>
                         ))}
@@ -6662,12 +6629,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     </thead>
                     <tbody>
                       {[
-                        { firstName:"John",  lastName:"Doe",   admin:"Read-Only Admin", jobTitle:"Producer",  email:"john@example.com", phone:"(555) 123-4567", ext:"101", address:"123 Main St" },
-                        { firstName:"Jane",  lastName:"Smith", admin:"Super Admin",     jobTitle:"Principal", email:"jane@example.com", phone:"(555) 987-6543", ext:"",    address:"" },
+                        { firstName:"John",  lastName:"Doe",   jobTitle:"Producer",  email:"john@example.com", phone:"(555) 123-4567", ext:"101", address:"123 Main St" },
+                        { firstName:"Jane",  lastName:"Smith", jobTitle:"Principal", email:"jane@example.com", phone:"(555) 987-6543", ext:"",    address:"" },
                       ].map((r, ri) => (
                         <tr key={ri}>
-                          {[r.firstName, r.lastName, r.admin, r.jobTitle, r.email, r.phone, r.ext, r.address].map((v, ci) => (
-                            <td key={ci} className="px-3 py-2 whitespace-nowrap font-mono" style={{ color: v ? c.text : c.muted, borderRight: ci < 7 ? `1px solid ${c.border}` : "none", borderBottom: `1px solid ${c.border}` }}>
+                          {[r.firstName, r.lastName, r.jobTitle, r.email, r.phone, r.ext, r.address].map((v, ci) => (
+                            <td key={ci} className="px-3 py-2 whitespace-nowrap font-mono" style={{ color: v ? c.text : c.muted, borderRight: ci < 6 ? `1px solid ${c.border}` : "none", borderBottom: `1px solid ${c.border}` }}>
                               {v || <span style={{ opacity:0.5 }}>—</span>}
                             </td>
                           ))}
@@ -6679,10 +6646,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 {/* Allowed values list — explicit text format, brand-purple values. User said the
                     listed version was clearer than the "use dropdowns" hand-wave. */}
                 <div className="px-4 py-3 space-y-1" style={{ background:isDark?"rgba(255,255,255,0.02)":"#FAFAFB" }}>
-                  <div className="flex items-baseline gap-2 text-[11px]" style={{ fontFamily:FONT }}>
-                    <span className="flex-shrink-0 w-[60px]" style={{ color:c.muted }}>Admin</span>
-                    <span className="font-mono" style={{ color:"#A614C3" }}>{ADMIN_LEVELS.join(" / ")}</span>
-                  </div>
                   <div className="flex items-baseline gap-2 text-[11px]" style={{ fontFamily:FONT }}>
                     <span className="flex-shrink-0 w-[60px]" style={{ color:c.muted }}>Job Title</span>
                     <span className="font-mono" style={{ color:"#A614C3" }}>{JOB_TITLES.join(" / ")}</span>
@@ -6696,7 +6659,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
 
               {/* Template download — single Excel-only button. CSV was dropped because it can't carry
-                  the Admin / Job Title dropdowns that make the template foolproof. */}
+                  the Job Title dropdown that makes the template foolproof. */}
               <button type="button" onClick={() => downloadExcelTemplate()}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold text-white transition-all"
                 style={{ fontFamily:FONT, background: btnGrad, boxShadow:"0 2px 10px rgba(166,20,195,0.20)" }}
@@ -6787,7 +6750,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   { value: "firstName", label: "First Name" },
                   { value: "lastName",  label: "Last Name" },
                   { value: "email",     label: "Email" },
-                  { value: "admin",     label: "Admin level" },
                   { value: "jobTitle",  label: "Job Title" },
                   { value: "phone",     label: "Phone" },
                   { value: "ext",       label: "Ext" },
@@ -6944,12 +6906,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 };
                 // Column definitions for the editable table. `width` is a hint for the layout;
                 // the table is fixed-width so columns stay aligned during scroll.
-                type ColKey = "firstName" | "lastName" | "admin" | "jobTitle" | "email" | "phone" | "ext" | "address";
+                type ColKey = "firstName" | "lastName" | "jobTitle" | "email" | "phone" | "ext" | "address";
                 type Col = { key: ColKey; label: string; required: boolean; width: number; kind: "text" | "select"; options?: readonly string[] };
                 const columns: Col[] = [
                   { key: "firstName", label: "First Name", required: true,  width: 120, kind: "text" },
                   { key: "lastName",  label: "Last Name",  required: true,  width: 120, kind: "text" },
-                  { key: "admin",     label: "Admin",      required: true,  width: 175, kind: "select", options: ADMIN_LEVELS },
                   { key: "jobTitle",  label: "Job Title",  required: true,  width: 145, kind: "select", options: JOB_TITLES },
                   { key: "email",     label: "Email",      required: true,  width: 200, kind: "text" },
                   { key: "phone",     label: "Phone",      required: true,  width: 130, kind: "text" },
@@ -7119,7 +7080,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       container lets the jump-to-error buttons query it for the last-jumped index. */}
 
                   <div id="bulk-table-scroll" className="rounded-xl overflow-auto mb-4" style={{ border:`1px solid ${c.border}`, maxHeight: 420 }}>
-                    <table className="text-[12px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, tableLayout:"fixed", width: columns.reduce((a, c) => a + c.width, 24) }}>
+                    <table className="text-[12px]" style={{ fontFamily:FONT, borderCollapse:"separate", borderSpacing:0, tableLayout:"fixed", width:"100%", minWidth: columns.reduce((a, c) => a + c.width, 24) }}>
                       <thead style={{ position:"sticky", top:0, zIndex:1, background:isDark?"#1E2240":"#F9FAFB" }}>
                         <tr>
                           {columns.map(col => (
@@ -7179,7 +7140,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                           const rect = e.currentTarget.getBoundingClientRect();
                                           setCellSelect({
                                             rowIdx: i,
-                                            field: col.key as "admin" | "jobTitle",
+                                            field: col.key as "jobTitle",
                                             options: col.options as string[],
                                             triggerRect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
                                           });

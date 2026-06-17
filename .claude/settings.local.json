@@ -68,7 +68,22 @@
       "Bash(grep -iA 5 \"Aliases\")",
       "Bash(perl -i -pe 's|linear-gradient\\\\\\(to bottom, rgba\\\\\\(255,255,255,0\\\\.10\\\\\\), rgba\\\\\\(192,192,192,0\\\\.10\\\\\\), rgba\\\\\\(172,172,172,0\\\\.10\\\\\\)\\\\\\)|#FFFFFF|g' src/components/Agencies.tsx src/components/Clients.tsx)",
       "Bash(awk 'NR==3800,NR==3960' /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
-      "WebFetch(domain:norbielink.btisinc.com)"
+      "WebFetch(domain:norbielink.btisinc.com)",
+      "Bash(grep -n \"Reassign Accounts</button>\\\\|Reassign Accounts$\" src/components/Agencies.tsx)",
+      "Bash(grep -c ', textTransform: \"uppercase\", letterSpacing: \"0.04em\" }}>{b}</span>' /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "Bash(grep -n \"^              </div>$\\\\|<!-- Toolbar\\\\|Toolbar */\\\\|^              {previewDoc &&\\\\|Body of Documents\\\\|<div className=\\\\\"flex-1 overflow-auto\\\\\"\\\\|<div className=\\\\\"flex-1 min-h-0 overflow-auto\" /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "Bash(gh project *)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(brew list *)",
+      "Bash(git credential *)",
+      "Bash(python3 -c 'import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\(\"html_url\"\\) or d.get\\(\"message\"\\) or d\\)')",
+      "Bash(grep -n \"errors\\\\[\\\\|setErrors\\\\|validate\\\\|FieldError\\\\|ErrMsg\\\\|/^.*\\\\$/.test\\\\|maxLength\\\\|pattern=\\\\|EIN\\\\|taxId\\\\|zipPattern\" /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "Bash(grep -n \"px-6 py-3\\\\\"\\\\s*$\\\\|justify-end gap-2 px-6 py-3\" /Users/lucasye/Norbielink/src/components/Website.tsx)",
+      "Bash(python3)",
+      "Bash(grep -n \"ParsedUser\\\\|Name, Admin, Job Title\\\\|name: \\\\\"Name\\\\\"\\\\|addRow\\({ name\\\\|cellText\\(1\\)\\\\|B2:B201\\\\|C2:C201\\\\|getCell\\(\\\\\"C1\\\\\"\\\\|adminFormula\\\\|jobTitleFormula\" /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "Bash(grep -n \"statusSummary\\\\|Start a Quote\\\\|Start a Policy\\\\|All Policies\\\\|Total Policies\\\\|repeat\\(auto-fit, minmax\\\\|handleRefresh\\\\|setRefreshing\\\\|btnGrad\\\\|ml-auto\\\\|order:\\\\|Plus,\\\\|onClick={handleRefresh}\\\\|Section title\\\\|<h1\\\\|^export default function Policies\" /Users/lucasye/Norbielink/src/components/Policies.tsx)",
+      "Bash(grep -n \"File columns \\(header row required\\)\\\\|space-y-1.5\\\\\">$\\\\|<span className=\\\\\"flex-shrink-0 w-\\\\[68px\\\\]\\\\\"\" /Users/lucasye/Norbielink/src/components/Agencies.tsx)",
+      "Bash(grep -n \"parsedUsers.map\\(\\(u, i\\) => {\" /Users/lucasye/Norbielink/src/components/Agencies.tsx)"
     ]
   }
 }
