@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Eye, EyeOff, X, Check, Lock, IdCard, HelpCircle, Mail, AlertCircle } from "lucide-react";
 import norbielinkLogoDark from "@/assets/norbielink-logo-dark.png";
@@ -177,16 +178,12 @@ export default function Website({ isDark = false }: WebsiteProps) {
                 });
               }}
               onResetEmailSent={(_email, mode) => {
-                // Two different destinations:
-                //   - "password" mode: the simple password reset — goes to the user's OWN email
-                //     on file (they know who they are, they just need a new password).
-                //   - "both" mode: account recovery — goes to the Principal's email because the
-                //     user couldn't log in and needs the Principal to forward / coordinate.
+                // Generic copy — we intentionally don't echo the user-entered email here.
+                // Long addresses break the toast layout, and a stable phrase reads more
+                // confidently than a templated one.
                 const description = mode === "both" ? (
                   <>
-                    We&apos;ve emailed your User ID and a password reset link to the{" "}
-                    <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
-                    inbox. Open it to recover your account.
+                    We&apos;ve sent your User ID and a password reset link to your inbox. Open it to recover your account.
                   </>
                 ) : (
                   <>
@@ -319,7 +316,7 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
           <span style={{ lineHeight: 1 }}>User ID</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500, fontSize: 11.5, color: "#6B7280", lineHeight: 1 }}>
             <AlertCircle style={{ width: 11, height: 11, color: "#A614C3", flexShrink: 0, display: "block", transform: "translateY(-1px)" }} strokeWidth={2} />
-            <span style={{ lineHeight: 1 }}>We can&apos;t recognize you by <span style={{ fontWeight: 700 }}>Agency Code</span></span>
+            <span style={{ lineHeight: 1 }}><span style={{ fontWeight: 700 }}>Agency Code</span> can&apos;t sign you in</span>
           </span>
         </label>
         <input type="text" value={identifier} onChange={e => setIdentifier(e.target.value)}
@@ -466,34 +463,36 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
     },
     both: {
       title: "Recover Your Account",
-      // Body is rendered as JSX below so the "Principal's" emphasis can use a
-      // brand color — kept here only as a fallback / a11y label.
-      body:  "Confirm your agency code and name so we can find your account. We'll email your User ID and a password reset link to the Principal's email on file.",
+      // Plain-text fallback / a11y label; the rendered version below highlights
+      // the two deliverables in brand magenta so the payoff reads at a glance.
+      body:  "Confirm your agency code, name, and email so we can find your account. If they match, we'll send your User ID and a password reset link to that email.",
       fields: "recoverIdentity",
     },
   } as const;
 
-  // JSX version of the "both" form body so "Principal's" is highlighted in brand magenta.
+  // JSX version of the "both" form body — highlights "User ID" and
+  // "password reset link" (the two deliverables) so the description has rhythm.
   const bothFormBody = (
     <>
-      Confirm your agency code and name so we can find your account. We&apos;ll
-      email your User ID and a password reset link to the{" "}
-      <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
-      email on file.
+      Confirm your agency code, name, and email so we can find your account.
+      If they match, we&apos;ll send your{" "}
+      <span style={{ color: "#A614C3", fontWeight: 600 }}>User ID</span>
+      {" "}and a{" "}
+      <span style={{ color: "#A614C3", fontWeight: 600 }}>Password reset link</span>
+      {" "}to that email.
     </>
   );
 
   // Demo: always allow Continue. Production would gate on filled / valid email & User ID.
   const formValid = true;
 
-  // Per-mode done-step description.
-  // "both" mode is JSX so we can highlight "Principal's" the same way the form body does.
+  // Per-mode done-step description. The "both" flow echoes the email the user
+  // entered (highlighted in brand magenta) so it's clear where we sent it.
   const doneDescription: React.ReactNode = mode === "both"
     ? (
         <>
-          If we find a match, we&apos;ve emailed your User ID and a password reset link to the{" "}
-          <span style={{ color: "#A614C3", fontWeight: 600 }}>Principal&apos;s</span>{" "}
-          email on file.
+          If we find a match, we&apos;ve emailed your User ID and a password reset link to{" "}
+          <span style={{ color: "#A614C3", fontWeight: 600 }}>{emailValue || "the email you entered"}</span>.
         </>
       )
     : `If ${userIdValue || "your User ID"} matches an account, we've sent a password reset link to your email on file.`;
@@ -556,7 +555,10 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
                  : step === "form" ? (mode === "both" ? bothFormBody : formCopy[mode].body)
                  : doneDescription;
 
-  return (
+  // Portal to <body> so the fixed-position overlay isn't trapped by the scaled
+  // form wrapper's transform (which creates a new containing block for `fixed`).
+  if (typeof document === "undefined") return null;
+  return createPortal((
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.45)" }}
@@ -624,6 +626,11 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
                   <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
                     style={inputStyle} placeholder="Last name" />
                 </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input type="email" value={emailValue} onChange={e => setEmailValue(e.target.value)}
+                  style={inputStyle} placeholder="you@company.com" />
               </div>
             </div>
           )}
@@ -693,7 +700,7 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 /* ──────────────────────────── VERIFY ──────────────────────────── */
