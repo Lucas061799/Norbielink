@@ -345,11 +345,10 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
                   fontFamily: FONT,
                 }}
               >
-                Not sure of your User ID? It&apos;s usually your first name, last name,
-                and numbers (e.g.,{" "}
-                <span style={{ fontFamily: "monospace", color: "#A614C3", fontWeight: 600 }}>johnsmith00110</span>),
-                though some users log in with their email address. Please note that your{" "}
-                <span style={{ fontWeight: 600, color: "#A614C3" }}>agency code</span> will not work as a User ID.
+                User IDs are your first name, last name, and numbers (e.g.,{" "}
+                <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#4B5563" }}>johnsmith00110</span>).
+                If that doesn&apos;t work, try your email address.{" "}
+                <span style={{ fontWeight: 600, color: "#4B5563" }}>Agency codes</span> cannot be used as User IDs.
               </div>
             )}
           </span>
