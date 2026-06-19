@@ -346,9 +346,9 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
                 }}
               >
                 User IDs are your first name, last name, and numbers (e.g.,{" "}
-                <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#4B5563" }}>johnsmith00110</span>).
+                <span style={{ fontFamily: "monospace", color: "#4B5563" }}>johnsmith00110</span>).
                 If that doesn&apos;t work, try your email address.{" "}
-                <span style={{ fontWeight: 600, color: "#4B5563" }}>Agency codes</span> cannot be used as User IDs.
+                <span style={{ fontWeight: 600, color: "#4B5563" }}>Agency codes cannot be used as User IDs.</span>
               </div>
             )}
           </span>
