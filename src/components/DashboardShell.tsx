@@ -33,6 +33,10 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         return <Clients isDark={darkMode} />;
       case "Agencies":
         return <Agencies isDark={darkMode} />;
+      case "Admin":
+        // External-client view: same Agency detail surface, scoped to the user's
+        // own (mock) agency and rendered read-only.
+        return <Agencies isDark={darkMode} clientMode />;
       case "Quotes":
         return <Quotes isDark={darkMode} />;
       case "Policies":
@@ -73,7 +77,7 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         <TopBar isDark={darkMode} activePage={activePage} />
         <main
           className="flex-1 overflow-hidden transition-colors duration-300 px-12"
-          style={(() => { const fullHeightPages = ["Clients", "Agencies", "Quotes", "Policies", "Endorsements"]; const isFullHeight = fullHeightPages.includes(activePage); return { background: darkMode ? "#0F1120" : "#ffffff", paddingTop: isFullHeight ? 0 : 24, paddingBottom: isFullHeight ? 48 : 24, display: isFullHeight ? "flex" : "block", flexDirection: "column" as const, overflowY: isFullHeight ? "hidden" : "auto", height: isFullHeight ? "100%" : "auto" }; })()}
+          style={(() => { const fullHeightPages = ["Clients", "Agencies", "Admin", "Quotes", "Policies", "Endorsements"]; const isFullHeight = fullHeightPages.includes(activePage); return { background: darkMode ? "#0F1120" : "#ffffff", paddingTop: isFullHeight ? 0 : 24, paddingBottom: isFullHeight ? 48 : 24, display: isFullHeight ? "flex" : "block", flexDirection: "column" as const, overflowY: isFullHeight ? "hidden" : "auto", height: isFullHeight ? "100%" : "auto" }; })()}
         >
           {renderPage()}
         </main>

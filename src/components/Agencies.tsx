@@ -495,7 +495,7 @@ const mockAgencyUsers: AgencyUser[] = [
 /* ─── Agency Detail View ─────────────────────────────────────────────────── */
 type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes";
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency }: {
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency, viewMode = "internal" }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -514,6 +514,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   allAgencies: Agency[];
   initialTab?: DetailTab;
   onNavigateToAgency?: (targetCode: string, tab?: DetailTab) => void;
+  // "internal" = BTIS staff viewing all agencies (default, full edit power).
+  // "client"   = agency's own user viewing their single agency, read-only.
+  viewMode?: "internal" | "client";
 }) {
   const [detailTab, setDetailTab] = useState<DetailTab>(initialTab ?? "overview");
   const [isEditing, setIsEditing]           = useState(false);
@@ -525,8 +528,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
-  const currentUserIsAdmin = true; // toggle to false to hide admin-only actions (Deactivate, Reactivate, Remove)
-  const currentUserIsReadOnlyAdmin = false; // when true, hide all action-menu items — read-only admins can't operate anything
+  // In the Admin segment (viewMode="client"), the user is browsing their own agency
+  // read-only: no Edit, Add User, Bulk Upload, Deactivate, Reassign, etc. Internal staff
+  // view stays full-power.
+  const currentUserIsAdmin = viewMode === "internal";
+  const currentUserIsReadOnlyAdmin = viewMode === "client"; // hides per-row action menus
   const [lockedUserIds, setLockedUserIds] = useState<Set<string>>(() => new Set(["u5"])); // mock: Brian Nguyen locked by default
   const [contactRequestOpen, setContactRequestOpen] = useState(false);
   const [requestedName, setRequestedName] = useState("");
@@ -2493,34 +2499,45 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
       {/* Section title — same as list view */}
       <div className="flex flex-col justify-center flex-shrink-0 mb-12"
         style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
-        <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Agencies</h1>
+        <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>{viewMode === "client" ? "Admin" : "Agencies"}</h1>
       </div>
 
-        {/* Back link */}
-        <div className="pb-4 flex-shrink-0">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] transition-all" style={{ ...font, color: c.muted }}
-            onMouseEnter={e => (e.currentTarget.style.color = c.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
-            <ChevronLeft className="w-3.5 h-3.5" />Back to Agencies
-          </button>
-        </div>
+        {/* Back link — only useful in the internal staff view (the list is one level up).
+            Hidden in client view because there's no list to return to. */}
+        {viewMode === "internal" && (
+          <div className="pb-4 flex-shrink-0">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] transition-all" style={{ ...font, color: c.muted }}
+              onMouseEnter={e => (e.currentTarget.style.color = c.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = c.muted)}>
+              <ChevronLeft className="w-3.5 h-3.5" />Back to Agencies
+            </button>
+          </div>
+        )}
 
         {/* Agency hero row */}
         <div className="flex items-start justify-between mb-5 flex-shrink-0">
           <div>
-            {/* Title row — star inline with h2 and badge */}
+            {/* Title row — star inline with h2 and badge. Star is internal-staff-only
+                (BTIS staff favoriting an agency in their list); hidden in client view. */}
             <div className="flex items-center gap-2.5">
-              <button onClick={() => onToggleStar(agency.id)} className="flex-shrink-0 transition-all"
-                onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.18)")}
-                onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                <Star className="w-5 h-5" style={{ color: "#F59E0B", fill: isStarred ? "#F59E0B" : "none" }} />
-              </button>
+              {viewMode === "internal" && (
+                <button onClick={() => onToggleStar(agency.id)} className="flex-shrink-0 transition-all"
+                  onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.18)")}
+                  onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
+                  <Star className="w-5 h-5" style={{ color: "#F59E0B", fill: isStarred ? "#F59E0B" : "none" }} />
+                </button>
+              )}
               <h2 className="text-[24px] font-bold" style={{ ...font, color: c.text }}>{agency.name}</h2>
               <TimeStatusBadge status={getAgencyTimeStatus(agency.apptDate, agency.lastLogin)} isDark={isDark} />
             </div>
-            {/* Subtitle indented to sit under the title text */}
-            <p className="text-[12px] mt-0.5 ml-[29px]" style={{ ...font, color: c.muted }}>Agency Code: {agency.code}</p>
+            {/* Subtitle indented to sit under the title text (offset accounts for the star);
+                no offset in client view since the star isn't rendered. */}
+            <p className="text-[12px] mt-0.5" style={{ ...font, color: c.muted, marginLeft: viewMode === "internal" ? 29 : 0 }}>Agency Code: {agency.code}</p>
           </div>
+          {/* Action cluster (Website / Address / Send Email / Phone Call / Book Roll) is
+              internal-staff-only — these are quick links for BTIS staff to reach the agency.
+              Hidden in the client view because the agency wouldn't be contacting themselves. */}
+          {viewMode === "internal" && (
           <div className="flex items-center gap-2 flex-shrink-0 ml-4">
             {agency.website ? (
               <a href={agency.website.startsWith("http") ? agency.website : `https://${agency.website}`}
@@ -2640,6 +2657,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               );
             })()}
           </div>
+          )}
         </div>
 
         {/* 4 info cards */}
@@ -2781,13 +2799,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           <div className="rounded-2xl p-8 mb-8" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
-              <button onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
-                style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.muted }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                <Pencil className="w-3.5 h-3.5" />Edit
-              </button>
+              {currentUserIsAdmin && (
+                <button onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <Pencil className="w-3.5 h-3.5" />Edit
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-x-12 gap-y-6">
               <LabelValue label="Agency Name" value={agency.name} />
@@ -3394,9 +3414,18 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               ? archivedDocs
               : agencyDocs.filter(d => !d.trashed && !d.archived);
           // Soft-hidden categories — kept in the type + CAT_LABEL + mock data per the
-          // product decision to retain the underlying schema, but never surfaced in the
-          // agency-facing docs UI. Filter applies to every list view + By Type grouping.
-          const HIDDEN_AGENCY_DOC_CATEGORIES = new Set<AgencyDocCategory>(["w9", "other"]);
+          // product decision to retain the underlying schema, but hidden from the
+          // INTERNAL staff view of agency docs (Lisa's rule). In the client view, the
+          // agency is looking at their own portal and should see their own W-9 / Other
+          // docs, so the hide list only applies when viewMode === "internal".
+          const HIDDEN_AGENCY_DOC_CATEGORIES = viewMode === "internal"
+            ? new Set<AgencyDocCategory>(["w9", "other"])
+            : new Set<AgencyDocCategory>();
+          // Category list for pickers (Filter, By Type filter, Upload modal) and the By Type
+          // section ORDER. Mirrors the hide rule above so the client view exposes W-9 / Other.
+          const DOC_CATEGORY_LIST: AgencyDocCategory[] = viewMode === "internal"
+            ? ["bor","license","agreement","eo"]
+            : ["bor","w9","license","agreement","eo","other"];
           const visibleDocs = baseDocs
             .filter(d => !HIDDEN_AGENCY_DOC_CATEGORIES.has(d.category))
             .filter(d => docFilterCats.size === 0 || docFilterCats.has(d.category))
@@ -3714,7 +3743,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                               </button>
                               <div style={{ height: 1, background: c.border }} />
-                              {(["bor","license","agreement","eo"] as AgencyDocCategory[]).map(t => {
+                              {DOC_CATEGORY_LIST.map(t => {
                                 const checked = docFilterCats.has(t);
                                 return (
                                   <button key={t} onClick={() => toggleDocFilterCat(t)}
@@ -3776,7 +3805,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                           All Categories
                           {docFilterCats.size === 0 && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </button>
-                        {(["bor","license","agreement","eo"] as AgencyDocCategory[]).map(t => {
+                        {DOC_CATEGORY_LIST.map(t => {
                           const checked = docFilterCats.has(t);
                           return (
                             <button key={t} onClick={() => toggleDocFilterCat(t)}
@@ -3834,8 +3863,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     style={{ color: isDocSelectMode ? "#A855F7" : c.muted, background: isDocSelectMode ? "rgba(168,85,247,0.10)" : "transparent" }}>
                     <CheckSquare className="w-3.5 h-3.5" />
                   </button>
-                  {/* Upload — hidden in archive/trash */}
-                  {!showDocArchived && !showDocTrashed && isAdmin && (
+                  {/* Upload — hidden in archive/trash. Available to both internal staff
+                      (isAdmin) and client view since agencies submit their own docs here. */}
+                  {!showDocArchived && !showDocTrashed && (
                     <button onClick={() => { setDocUploadModalOpen(true); setDocUploadModalFile(null); setDocUploadModalCat(""); }}
                       className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all"
                       style={{ background: btnGrad, fontFamily: FONT }}
@@ -3901,7 +3931,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 {docUploadModalCatOpen && (
                                   <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg overflow-hidden"
                                     style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                                    {(["bor","license","agreement","eo"] as AgencyDocCategory[]).map(cat => {
+                                    {DOC_CATEGORY_LIST.map(cat => {
                                       const active = docUploadModalCat === cat;
                                       return (
                                         <button key={cat} type="button"
@@ -4009,7 +4039,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 {/* By Type view — grouped by category so each type is visually separated. */}
                 {!showDocArchived && !showDocTrashed && docView === "byType" && (() => {
                   // Render order: regular categories → E&O Certificate → Other (catch-all at the end).
-                  const ORDER: AgencyDocCategory[] = ["bor","license","agreement","eo"];
+                  const ORDER: AgencyDocCategory[] = DOC_CATEGORY_LIST;
                   const renderGroup = (cat: AgencyDocCategory) => {
                     const docs = visibleDocs.filter(d => d.category === cat);
                     if (docs.length === 0) return null;
@@ -8284,7 +8314,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
 }
 
 /* ─── Component ─────────────────────────────────────────────────────────── */
-export default function Agencies({ isDark }: { isDark: boolean }) {
+export default function Agencies({ isDark, clientMode = false }: { isDark: boolean; clientMode?: boolean }) {
   const [search, setSearch]           = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("All");
   const [sortKey, setSortKey]         = useState<SortKey>(null);
@@ -8928,6 +8958,33 @@ export default function Agencies({ isDark }: { isDark: boolean }) {
           c={c} btnGrad={btnGrad} FONT={FONT}
         />
       </div>
+    );
+  }
+
+  // Admin segment renders this Agencies module with clientMode=true: skip the
+  // list/picker entirely and drop straight into a single, read-only AgencyDetailView
+  // pinned to mockAgencies[0] (the current user's own agency in the demo).
+  if (clientMode) {
+    return (
+      <AgencyDetailView
+        agency={getDetail(mockAgencies[0])}
+        isDark={isDark}
+        viewMode="client"
+        onBack={() => { /* no list to go back to */ }}
+        c={c}
+        btnGrad={btnGrad}
+        stars={stars}
+        onToggleStar={toggleStar}
+        inactiveUserIds={inactiveUserIds}
+        setInactiveUserIds={setInactiveUserIds}
+        statusInactiveUserIds={statusInactiveUserIds}
+        setStatusInactiveUserIds={setStatusInactiveUserIds}
+        removedUserIds={removedUserIds}
+        setRemovedUserIds={setRemovedUserIds}
+        bookRolled={bookRolled}
+        setBookRolled={setBookRolled}
+        allAgencies={allAgencies}
+      />
     );
   }
 
