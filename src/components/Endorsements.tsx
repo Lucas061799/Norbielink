@@ -290,18 +290,22 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
       <div className="flex-1 min-h-0 overflow-y-auto" style={{ paddingBottom: 48 }}>
         {view === "search" && (
           <div className="flex flex-col gap-6">
+          {/* Top stroke is painted as a 4px-tall background-image at the top of the card
+              instead of a child div. The card's rounded-2xl naturally clips the gradient
+              to a real 16px corner — a child div with border-radius would get clamped to
+              ~2px because the browser caps corner radius at half the element's height. */}
           <div className="rounded-2xl"
             style={{
-              background: c.cardBg,
+              backgroundColor: c.cardBg,
+              backgroundImage: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "100% 4px",
+              backgroundPosition: "top",
               borderLeft: `1px solid ${c.border}`,
               borderRight: `1px solid ${c.border}`,
               borderBottom: `1px solid ${c.border}`,
               boxShadow: isDark ? "none" : "0 1px 3px rgba(15,23,42,0.04)",
             }}>
-            {/* Top stroke = the brand gradient itself. We can't use parent overflow-hidden
-                to clip the bar (it would also clip in-card dropdowns), so the gradient div
-                carries its own top-corner radius to match the card's rounded-2xl (16px). */}
-            <div style={{ height: 4, background: "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)", borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />
             <div className="px-8 py-8">
               <div className="text-[15px] font-semibold mb-1" style={{ color: c.text }}>Find a policy to endorse</div>
               <div className="text-[13px] mb-6" style={{ color: c.muted }}>Search by policy number, submission ID, or insured name.</div>
