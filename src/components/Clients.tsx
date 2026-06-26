@@ -8,7 +8,7 @@ import {
   Calendar, DollarSign, TrendingUp, FileStack, Upload, Download,
   MessageSquare, UserCircle, X, MapPin, Users, ChevronRight, RefreshCw,
   StickyNote, LayoutGrid, AlertTriangle, Trash2, FileArchive, FolderOpen, NotebookPen, CopyPlus, Video, Clock, Bell, Paperclip, Filter, Eye,
-  Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare,
+  Maximize2, Minimize2, Lock, Unlock, Copy, Archive, Type, Pin, List, Table2, CheckSquare, Check,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 
@@ -53,17 +53,17 @@ interface Note { id: string; title: string; content: string; author: string; tim
 
 /* ─── Mock Data ──────────────────────────────────────────────────────────── */
 const mockClients: Client[] = [
-  { id:"1", type:"Corporation", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2024-04-10", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85", contacts:[
+  { id:"1", type:"Corporation", companyName:"Tech Solutions Inc.", dbaName:"TechSol", contactFirstName:"David", contactLastName:"Chen", inspectionFirstName:"Lisa", inspectionLastName:"Wang", email:"contact@techsolutions.com", phone:"(555) 123-4567", address:{street:"123 Innovation Drive",city:"San Francisco",state:"CA",zipCode:"94105"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-15", lastActivity:"2026-06-18", isStarred:true, totalPremium:45000, activePolicies:3, pendingQuotes:1, industry:"Technology", website:"www.techsolutions.com", primaryClassCode:"8810 - Auto Repair Shops", federalId:"82-1234567", contractorLicense:"CA-789456", grossSales:"$12,500,000", payroll:"$3,200,000", owners:"2", employees:"85", contacts:[
     { id:"c1-1", type:"inspection", firstName:"Lisa",   lastName:"Wang",     phone:"(555) 123-4570", email:"lisa.wang@techsolutions.com" },
     { id:"c1-2", type:"accounting", firstName:"Marcus", lastName:"Reyes",    phone:"(555) 123-4571", email:"ap@techsolutions.com" },
     { id:"c1-3", type:"claims",     firstName:"Priya",  lastName:"Patel",    phone:"(555) 123-4572", email:"claims@techsolutions.com" },
   ] },
   { id:"2", type:"Individual", firstName:"John", lastName:"Anderson", email:"john.anderson@email.com", phone:"(555) 234-5678", address:{street:"456 Oak Street",city:"Los Angeles",state:"CA",zipCode:"90001"}, status:"Active", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2024-02-20", lastActivity:"2024-04-08", isStarred:false, totalPremium:12000, activePolicies:2, pendingQuotes:0 },
-  { id:"3", type:"LLC", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2024-04-12", isStarred:true, totalPremium:17500, activePolicies:1, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
-  { id:"4", type:"Partnership", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2024-04-11", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
+  { id:"3", type:"LLC", companyName:"Green Earth Logistics", dbaName:"GEL Transport", contactFirstName:"Tom", contactLastName:"Harris", inspectionFirstName:"Amy", inspectionLastName:"Lee", email:"info@greenearth.com", phone:"(555) 345-6789", address:{street:"789 Commerce Blvd",city:"Chicago",state:"IL",zipCode:"60601"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-03-10", lastActivity:"2026-05-12", isStarred:true, totalPremium:17500, activePolicies:1, pendingQuotes:2, industry:"Logistics", website:"www.greenearthlogistics.com", primaryClassCode:"7219 - Trucking", federalId:"36-9876543", grossSales:"$8,750,000", payroll:"$2,100,000", owners:"3", employees:"120" },
+  { id:"4", type:"Partnership", companyName:"Metro Construction LLC", dbaName:"MetroBuild", contactFirstName:"James", contactLastName:"Wilson", inspectionFirstName:"Robert", inspectionLastName:"Kim", email:"contact@metroconstruction.com", phone:"(555) 456-7890", address:{street:"321 Builder Lane",city:"New York",state:"NY",zipCode:"10001"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2023-11-05", lastActivity:"2026-06-08", isStarred:true, totalPremium:78000, activePolicies:5, pendingQuotes:0, industry:"Construction", website:"www.metroconstruction.com", primaryClassCode:"5403 - Carpentry", federalId:"13-5678901", contractorLicense:"NY-654321", grossSales:"$25,000,000", payroll:"$6,800,000", owners:"2", employees:"210" },
   { id:"5", type:"Individual", firstName:"Maria", lastName:"Rodriguez", email:"maria.r@email.com", phone:"(555) 567-8901", address:{street:"654 Palm Avenue",city:"Miami",state:"FL",zipCode:"33101"}, status:"Inactive", assignedAgent:"Mike Chen", agencyId:"1", createdDate:"2023-08-15", lastActivity:"2024-01-20", isStarred:false, totalPremium:8500, activePolicies:1, pendingQuotes:0 },
   { id:"6", type:"Corporation", firstName:"Kevin", lastName:"Park", email:"kevin.park@email.com", phone:"(555) 678-9012", address:{street:"987 Maple Street",city:"Seattle",state:"WA",zipCode:"98101"}, status:"Active", assignedAgent:"Jane Smith", agencyId:"1", createdDate:"2024-01-08", lastActivity:"2024-04-05", isStarred:false, totalPremium:11200, activePolicies:2, pendingQuotes:1 },
-  { id:"7", type:"LLC", companyName:"Sunrise Properties LLC", dbaName:"Sunrise RE", contactFirstName:"Diana", contactLastName:"Nguyen", inspectionFirstName:"Diana", inspectionLastName:"Nguyen", email:"diana@sunriseproperties.com", phone:"(555) 789-0123", address:{street:"222 Harbor View",city:"Boston",state:"MA",zipCode:"02101"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-02-14", lastActivity:"2024-04-09", isStarred:false, totalPremium:22000, activePolicies:0, pendingQuotes:3, industry:"Real Estate", website:"www.sunriseproperties.com", primaryClassCode:"6400 - Real Estate", federalId:"04-1234567", grossSales:"$5,000,000", payroll:"$800,000", owners:"1", employees:"12" },
+  { id:"7", type:"LLC", companyName:"Sunrise Properties LLC", dbaName:"Sunrise RE", contactFirstName:"Diana", contactLastName:"Nguyen", inspectionFirstName:"Diana", inspectionLastName:"Nguyen", email:"diana@sunriseproperties.com", phone:"(555) 789-0123", address:{street:"222 Harbor View",city:"Boston",state:"MA",zipCode:"02101"}, status:"Prospect", assignedAgent:"Sarah Johnson", agencyId:"1", createdDate:"2024-02-14", lastActivity:"2026-04-15", isStarred:false, totalPremium:22000, activePolicies:0, pendingQuotes:3, industry:"Real Estate", website:"www.sunriseproperties.com", primaryClassCode:"6400 - Real Estate", federalId:"04-1234567", grossSales:"$5,000,000", payroll:"$800,000", owners:"1", employees:"12" },
 ];
 const mockQuotes: Quote[] = [
   { id:"1", quoteId:"QMWC123456789", policyType:"Commercial Auto", status:"Sold/Issued", createdDate:"2024-05-01", premium:15000, clientId:"1", applicant:"Jane Smith", dba:"TechSol", effectiveDate:"2024-01-01", lob:"Worker's Comp", producer:"Jane Smith" },
@@ -748,6 +748,47 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [highlightFilter, setHighlightFilter] = useState<"incomplete-quotes" | "active-policies" | "renewals" | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("All");
   const [search, setSearch] = useState("");
+  // Refresh spinner — matches the Policies page pattern; purely cosmetic in the mock.
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 900);
+  };
+  // Toolbar state — date scope dropdown + column-visibility "View" popover.
+  // Defaults to "All Time" so the mock data (mostly 2024) isn't filtered out on page load.
+  const [dateRange, setDateRange] = useState("All Time");
+  const [dateOpen, setDateOpen]   = useState(false);
+  const [viewOpen, setViewOpen]   = useState(false);
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
+  const CLIENT_COLS: Array<{ key: string; label: string }> = [
+    { key: "name",          label: "Client Name"   },
+    { key: "type",          label: "Entity"        },
+    { key: "contact",       label: "Contact"       },
+    { key: "assignedAgent", label: "Agent"         },
+    { key: "status",        label: "Status"        },
+    { key: "activePolicies",label: "Policies"      },
+    { key: "lastActivity",  label: "Last Activity" },
+  ];
+  const closeAllToolbarDropdowns = () => { setDateOpen(false); setViewOpen(false); };
+
+  // Export preview modal state. Mirrors the Policies Export modal's scope + columns +
+  // preview pattern; kept narrower (CSV only, no multi-format split button) since the
+  // mock doesn't need TSV / XLSX / JSON yet.
+  type ClientExportColKey = "name" | "type" | "email" | "phone" | "assignedAgent" | "status" | "activePolicies" | "lastActivity";
+  const CLIENT_EXPORT_COLS: Array<{ key: ClientExportColKey; label: string; get: (cl: Client & { isStarred?: boolean }) => string }> = [
+    { key: "name",           label: "Client Name",   get: cl => getClientName(cl) },
+    { key: "type",           label: "Entity",        get: cl => cl.type },
+    { key: "email",          label: "Email",         get: cl => cl.email },
+    { key: "phone",          label: "Phone",         get: cl => cl.phone },
+    { key: "assignedAgent",  label: "Agent",         get: cl => cl.assignedAgent },
+    { key: "status",         label: "Status",        get: cl => cl.status },
+    { key: "activePolicies", label: "Active Policies", get: cl => String(cl.activePolicies) },
+    { key: "lastActivity",   label: "Last Activity", get: cl => new Date(cl.lastActivity).toLocaleDateString() },
+  ];
+  const [exportOpen, setExportOpen]     = useState(false);
+  const [exportScope, setExportScope]   = useState<"filtered" | "all">("filtered");
+  const [exportCols, setExportCols]     = useState<Set<ClientExportColKey>>(new Set(CLIENT_EXPORT_COLS.map(col => col.key)));
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -906,9 +947,17 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   /* Filter + search */
   const allClients = mockClients.map(cl => ({ ...cl, isStarred: stars.has(cl.id) }));
+  // Date-scope cutoff — drop a client when its lastActivity is older than the window.
+  // "All Time" disables the filter (cutoff = -Infinity matches every date).
+  const dateCutoffMs = (() => {
+    if (dateRange === "All Time") return -Infinity;
+    const days = dateRange === "Last 30 days" ? 30 : dateRange === "Last 60 days" ? 60 : 90;
+    return Date.now() - days * 24 * 60 * 60 * 1000;
+  })();
   const filtered = allClients.filter(cl => {
-    if (filterStatus === "Starred") return cl.isStarred;
-    if (filterStatus !== "All" && cl.status !== filterStatus) return false;
+    if (filterStatus === "Starred" && !cl.isStarred) return false;
+    if (filterStatus !== "All" && filterStatus !== "Starred" && cl.status !== filterStatus) return false;
+    if (new Date(cl.lastActivity).getTime() < dateCutoffMs) return false;
     if (search) {
       const name = getClientName(cl).toLowerCase();
       return name.includes(search.toLowerCase()) || cl.email.toLowerCase().includes(search.toLowerCase()) || cl.phone.includes(search);
@@ -963,23 +1012,6 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
       <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>Clients</h1>
     </div>
   );
-
-  /* Filter pill btn — image 2 style: rounded rect with border, no count */
-  const filterPill = (label: FilterStatus) => {
-    const active = filterStatus === label;
-    return (
-      <button key={label} onClick={() => { setFilterStatus(label); setPage(1); }}
-        className="flex-shrink-0 transition-all"
-        style={{ fontFamily: FONT, background: active ? "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)" : "transparent", padding: active ? 1 : 0, borderRadius: 12, border: active ? "none" : `1px solid ${c.border}` }}
-        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; } }}
-        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ fontFamily: FONT, background: active ? `linear-gradient(88.54deg, rgba(92,46,212,0.05) 0.1%, rgba(166,20,195,0.05) 63.88%), ${isDark ? "#0F1120" : "#ffffff"}` : "transparent", borderRadius: 11, padding: "5px 15px" }}>
-          {label === "Starred" && <Star className="w-3.5 h-3.5" style={{ fill: "#F59E0B", color: "#F59E0B" }} />}
-          <span style={active ? { backgroundImage: "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" } : { color: c.muted }}>{label}</span>
-        </span>
-      </button>
-    );
-  };
 
   /* Sort arrow icon — rounded up/down arrows */
   const SortIcon = ({ col }: { col: SortKey }) => {
@@ -1087,105 +1119,264 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
 
   /* ══════════════════════ LIST VIEW ══════════════════════ */
   if (view === "list") return (
-    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => setOpenMenuId(null)}>
+    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={() => { setOpenMenuId(null); closeAllToolbarDropdowns(); }}>
       {starLimitToast && (
         <div className="fixed top-[68px] right-6 z-50 px-4 py-2.5 rounded-xl text-[13px] font-semibold"
           style={{ background: isDark ? "#1E2240" : "#fff", color: c.text, border: `1px solid ${c.border}`, fontFamily: FONT, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
           ⭐ You can only pin up to 6 clients
         </div>
       )}
-      {/* Top section */}
+      {/* Top section — title, then 4-card KPI strip, then toolbar.
+          Same visual order as the Policies page (KPI above toolbar). */}
       <div>
         {sectionTitle}
 
-        {/* Search + Add */}
-        <div className="flex items-center gap-2 mb-7">
-          <div className="flex flex-1 max-w-[340px]" style={{ background: c.cardBg, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, borderRadius: 10, overflow: "hidden", transition: "background 0.15s, border-color 0.15s" }}>
-            <input placeholder="Search clients..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              className="flex-1 outline-none" style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 14px", fontSize: 13, border: "none" }} />
-            <button className="flex items-center gap-1.5 px-4 text-[12px] font-semibold text-white flex-shrink-0"
-              style={{ background: btnGrad, fontFamily: FONT, transition: "filter 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
-              onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-              <Search className="w-3.5 h-3.5" />Search
+        {/* KPI strip — gradient `Add Client` tile + 3 stat cards (Active / Inactive / Prospect).
+            The primary action lives as the first tile (brand gradient + Plus icon), matching the
+            Policies page's "Start a Quote" pattern. Status cards remain clickable quick-filters. */}
+        {(() => {
+          const activeCount   = allClients.filter(cl => cl.status === "Active").length;
+          const inactiveCount = allClients.filter(cl => cl.status === "Inactive").length;
+          const prospectCount = allClients.filter(cl => cl.status === "Prospect").length;
+          const statusSummary: { key: FilterStatus; label: string; sub: string; count: number }[] = [
+            { key: "Active",   label: "Active",   sub: "Currently insured",    count: activeCount   },
+            { key: "Inactive", label: "Inactive", sub: "Lapsed or terminated", count: inactiveCount },
+            { key: "Prospect", label: "Prospect", sub: "In pipeline",          count: prospectCount },
+          ];
+          return (
+            <div className="grid gap-3 mb-5 flex-shrink-0"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
+              onClick={e => e.stopPropagation()}>
+              {/* Add Client — primary action tile, gradient + Plus icon. */}
+              <button onClick={() => setModalOpen(true)}
+                className="rounded-2xl px-5 py-4 text-left cursor-pointer flex flex-col justify-between"
+                style={{ background: btnGrad, color: "#fff", border: "none", transition: "filter 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.08)"; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}>
+                <div className="flex items-start justify-between gap-3 mb-0.5">
+                  <div className="text-[15px] font-semibold">Add Client</div>
+                  <div className="flex-shrink-0"><Plus className="w-6 h-6" strokeWidth={2.5} /></div>
+                </div>
+                <div className="text-[11px]" style={{ opacity: 0.9 }}>New client record</div>
+              </button>
+              {statusSummary.map(s => {
+                const active = filterStatus === s.key;
+                return (
+                  <button key={s.key}
+                    onClick={() => { setFilterStatus(active ? "All" : s.key); setPage(1); }}
+                    className="rounded-2xl px-5 py-4 text-left cursor-pointer transition-all"
+                    style={{
+                      background: c.cardBg,
+                      border: `1px solid ${active ? (isDark ? "#4ECDC4" : "#A614C3") : c.border}`,
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.20)" : "#D1D5DB"; }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = c.border; }}>
+                    <div className="flex items-start justify-between gap-3 mb-0.5">
+                      <div className="text-[15px] font-semibold truncate" style={{ color: c.text }}>{s.label}</div>
+                      <div className="text-[24px] font-semibold leading-none tracking-tight flex-shrink-0"
+                        style={{ color: active ? (isDark ? "#4ECDC4" : "#A614C3") : c.text }}>
+                        {s.count}
+                      </div>
+                    </div>
+                    <div className="text-[11px]" style={{ color: c.muted }}>{s.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 mb-5 flex-wrap" onClick={e => e.stopPropagation()}>
+          {/* Date scope dropdown — filters clients by `lastActivity` falling within the
+              selected window (relative to today). "All Time" disables the filter. */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => { closeAllToolbarDropdowns(); setDateOpen(o => !o); }}
+              className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}
+            >
+              <Calendar className="w-3.5 h-3.5" style={{ color: c.muted }} />
+              {dateRange}
+              <ChevronDown className="w-3 h-3 transition-transform duration-200" style={{ opacity: 0.6, transform: dateOpen ? "rotate(180deg)" : "rotate(0deg)" }} />
+            </button>
+            {dateOpen && (
+              <div className="absolute left-0 z-30 rounded-lg overflow-hidden py-1 min-w-[160px]"
+                style={{ top: "calc(100% + 6px)", background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 12px 28px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.04)" }}>
+                {["Last 30 days", "Last 60 days", "Last 90 days", "All Time"].map(opt => {
+                  const active = opt === dateRange;
+                  return (
+                    <button key={opt} onClick={() => { setDateRange(opt); setDateOpen(false); setPage(1); }}
+                      className="w-full px-2.5 py-1.5 text-left text-[12px] flex items-center gap-2 cursor-pointer transition-colors"
+                      style={{ color: active ? "#A614C3" : c.text, fontWeight: active ? 600 : 500 }}
+                      onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <Check className="w-3 h-3 flex-shrink-0" style={{ opacity: active ? 1 : 0, color: "#A614C3" }} />
+                      <span className="whitespace-nowrap">{opt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Search — leading icon, fixed-ish width (not flex-1). Submits live. */}
+          <div className="flex items-center"
+            style={{ width: 460, maxWidth: "100%", background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", transition: "background 0.15s, border-color 0.15s" }}>
+            <Search className="w-3.5 h-3.5 flex-shrink-0 ml-3" style={{ color: c.muted }} />
+            <input placeholder="Search clients by name, email, or phone..."
+              value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+              className="flex-1 outline-none min-w-0"
+              style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 12px", fontSize: 13, border: "none" }} />
+          </div>
+
+          {/* Right-side action cluster: View | Export | Refresh | + Add Client */}
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            {/* View — column visibility popover, same pattern as Policies. */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => { closeAllToolbarDropdowns(); setViewOpen(o => !o); }}
+                className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                style={{ fontFamily: FONT, background: viewOpen ? c.hoverBg : c.cardBg, border: `1px solid ${c.border}`, color: c.text }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : c.cardBg)}
+                title="Show / hide columns">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: c.muted }}>
+                  <rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/>
+                  <rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/>
+                  <rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/>
+                </svg>
+                View
+              </button>
+              {viewOpen && (
+                <div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden"
+                  style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold"
+                    style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>
+                    Show Columns
+                  </div>
+                  <div className="py-1.5 max-h-[280px] overflow-y-auto">
+                    {CLIENT_COLS.map(col => {
+                      const visible = !hiddenCols.has(col.key);
+                      return (
+                        <label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          onClick={() => setHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                            style={{ border: `1.5px solid ${c.border}`, background: c.cardBg }}>
+                            {visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <button onClick={() => setHiddenCols(new Set())}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+                    style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <RefreshCw className="w-3.5 h-3.5" />Show All
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Export — opens a preview modal (scope / columns / preview / Download CSV). */}
+            <button
+              onClick={() => setExportOpen(true)}
+              title="Export clients"
+              className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+              <Download className="w-3.5 h-3.5" style={{ color: c.muted }} />
+              Export
+            </button>
+
+            {/* Refresh — cosmetic spinner in the mock. Add Client lives in the KPI strip
+                as the primary-action gradient tile, so there's no duplicate CTA here. */}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh clients"
+              className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+              style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text, opacity: refreshing ? 0.7 : 1 }}
+              onMouseEnter={e => { if (!refreshing) e.currentTarget.style.background = c.hoverBg; }}
+              onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: c.muted }} />
+              {refreshing ? "Refreshing…" : "Refresh"}
             </button>
           </div>
-          <button onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 text-[12px] font-semibold text-white"
-            style={{ fontFamily: FONT, background: btnGrad, padding:"9px 17px", borderRadius: 10, transition: "filter 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.12)")}
-            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-            <Plus className="w-4 h-4" />Add Client
-          </button>
-        </div>
-
-        {/* Filter Pills — no divider line */}
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {filterPill("All")}
-          {filterPill("Active")}
-          {filterPill("Inactive")}
-          {filterPill("Prospect")}
         </div>
       </div>
 
-      {/* Starred Cards */}
-      {starredClients.length > 0 && filterStatus !== "Starred" && (
-        <div className="mb-2">
-          <div className="flex items-center gap-2 mb-3">
-            <Star className="w-4 h-4" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
-            <span className="text-[13px] font-bold" style={{ fontFamily: FONT, color: c.text }}>
-              Starred Clients <span style={{ color: c.muted, fontWeight: 400 }}>({starredClients.length} of 6)</span>
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-            {starredClients.map(cl => (
-              <button key={cl.id} onClick={() => openDetail(cl)}
-                className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-left transition-all"
-                style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: 190, flexShrink: 0 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.45)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#F5F5F5"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}>
-                <Star className="w-4 h-4 flex-shrink-0" style={{ fill: "#F59E0B", color: "#F59E0B" }} />
-                <div style={{ minWidth: 0 }}>
-                  <div className="text-[13px] font-semibold truncate" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
-                  <div className="text-[11px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{cl.type}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Table — no outer card border, just row dividers */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Table — wrapped in a card with the pagination, matching the live deck layout.
+          Column widths + visibility derived from `hiddenCols`. Star + Action fixed at the ends. */}
+      {(() => {
+        const COL_WIDTHS: Record<string, string> = {
+          name:           "1.5fr",
+          type:           "1fr",
+          contact:        "1.5fr",
+          assignedAgent:  "1.1fr",
+          status:         "1fr",
+          activePolicies: "1fr",
+          lastActivity:   "1.2fr",
+        };
+        const visibleCols = CLIENT_COLS.filter(col => !hiddenCols.has(col.key));
+        const gridTemplate = `32px ${visibleCols.map(col => COL_WIDTHS[col.key]).join(" ")} 80px`;
+        return (
+      <div
+        className="rounded-2xl flex flex-col flex-1 min-h-0 overflow-hidden"
+        style={{ background: c.cardBg, border: `1px solid ${c.border}`, marginBottom: 16 }}
+      >
         {/* Header + Rows share one overflow-y: scroll container so scrollbar never shifts column widths */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: "scroll" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
           <div className="grid sticky top-0 z-10" style={{
-            gridTemplateColumns: "32px 1.5fr 1fr 1.5fr 1.1fr 1fr 1fr 1.2fr 80px",
+            gridTemplateColumns: gridTemplate,
             borderBottom: `1px solid ${c.border}`,
-            background: isDark ? "rgba(255,255,255,0.02)" : "#FDFDFD",
+            background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB",
             gap: "20px",
-            padding: "12px 0",
+            padding: "12px 20px",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
           }}>
             <div />
-            {th("Client Name", "name")}
-            {th("Entity", "type")}
-            {th("Contact")}
-            {th("Agent", "assignedAgent")}
-            {th("Status", "status")}
-            {th("Policies", "activePolicies")}
-            {th("Last Activity", "lastActivity")}
+            {!hiddenCols.has("name")           && th("Client Name", "name")}
+            {!hiddenCols.has("type")           && th("Entity", "type")}
+            {!hiddenCols.has("contact")        && th("Contact")}
+            {!hiddenCols.has("assignedAgent")  && th("Agent", "assignedAgent")}
+            {!hiddenCols.has("status")         && th("Status", "status")}
+            {!hiddenCols.has("activePolicies") && th("Policies", "activePolicies")}
+            {!hiddenCols.has("lastActivity")   && th("Last Activity", "lastActivity")}
             {th("Action")}
           </div>
 
           {pageItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 gap-2">
-              <Users className="w-8 h-8" style={{ color: c.sub }} />
-              <span className="text-[13px]" style={{ fontFamily: FONT, color: c.muted }}>No clients found</span>
+            // Empty state — stretches to fill the remaining card body height (the parent
+            // scroll wrapper is `flex: 1`) so the icon + text land in the visual middle
+            // instead of clinging to the top under the sticky header.
+            <div className="flex flex-col items-center justify-center gap-3 py-20"
+              style={{ minHeight: "calc(100% - 48px)" }}>
+              <div className="flex items-center justify-center w-12 h-12 rounded-full"
+                style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6" }}>
+                <Users className="w-6 h-6" style={{ color: c.muted }} />
+              </div>
+              <div className="text-center">
+                <div className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>
+                  No clients found
+                </div>
+                <div className="text-[12px] mt-0.5" style={{ fontFamily: FONT, color: c.muted }}>
+                  Try widening the date range or clearing filters.
+                </div>
+              </div>
             </div>
           ) : pageItems.map((cl, i) => (
             <div key={cl.id} onClick={() => openDetail(cl)}
-              className="grid py-4 items-center cursor-pointer transition-colors"
-              style={{ gridTemplateColumns: "32px 1.5fr 1fr 1.5fr 1.1fr 1fr 1fr 1.2fr 80px", gap: "20px", borderBottom: `1px solid ${c.border}`, padding: "18px 0" }}
+              className="grid items-center cursor-pointer transition-colors"
+              style={{ gridTemplateColumns: gridTemplate, gap: "20px", borderBottom: i !== pageItems.length - 1 ? `1px solid ${c.border}` : "none", padding: "18px 20px" }}
               onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
               {/* Star */}
@@ -1193,27 +1384,41 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                 <Star className="w-4 h-4" style={{ fill: cl.isStarred ? "#F59E0B" : "none", color: cl.isStarred ? "#F59E0B" : c.sub }} />
               </button>
               {/* Name */}
-              <div>
-                <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
-                {cl.dbaName && <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>DBA: {cl.dbaName}</div>}
-              </div>
+              {!hiddenCols.has("name") && (
+                <div>
+                  <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>{getClientName(cl)}</div>
+                  {cl.dbaName && <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>DBA: {cl.dbaName}</div>}
+                </div>
+              )}
               {/* Type */}
-              <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{cl.type}</div>
+              {!hiddenCols.has("type") && (
+                <div className="text-[12px] font-semibold" style={{ fontFamily: FONT, color: isDark ? "#4ECDC4" : "#A614C3" }}>{cl.type}</div>
+              )}
               {/* Contact */}
-              <div>
-                <div className="text-[11px] mb-0.5 truncate" style={{ fontFamily: FONT, color: c.muted }}>{cl.email}</div>
-                <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.phone}</div>
-              </div>
+              {!hiddenCols.has("contact") && (
+                <div>
+                  <div className="text-[11px] mb-0.5 truncate" style={{ fontFamily: FONT, color: c.muted }}>{cl.email}</div>
+                  <div className="text-[11px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.phone}</div>
+                </div>
+              )}
               {/* Agent */}
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.assignedAgent}</div>
+              {!hiddenCols.has("assignedAgent") && (
+                <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>{cl.assignedAgent}</div>
+              )}
               {/* Status */}
-              <div><StatusBadge status={cl.status} isDark={isDark} /></div>
+              {!hiddenCols.has("status") && (
+                <div><StatusBadge status={cl.status} isDark={isDark} /></div>
+              )}
               {/* Policies */}
-              <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text, paddingLeft: 10 }}>
-                {cl.activePolicies}
-              </div>
+              {!hiddenCols.has("activePolicies") && (
+                <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text, paddingLeft: 10 }}>
+                  {cl.activePolicies}
+                </div>
+              )}
               {/* Last activity */}
-              <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted, paddingLeft: 10 }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
+              {!hiddenCols.has("lastActivity") && (
+                <div className="text-[12px]" style={{ fontFamily: FONT, color: c.muted, paddingLeft: 10 }}>{new Date(cl.lastActivity).toLocaleDateString()}</div>
+              )}
               {/* Menu */}
               <div onClick={e => e.stopPropagation()}>
                 <ActionMenu isDark={isDark} items={["Edit Client","New Quote","Send Email","Start an Endorsement"]} menuId={`client-${cl.id}`} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
@@ -1221,52 +1426,225 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Pagination — sticky at bottom */}
-      <div className="flex-shrink-0 flex items-center justify-between py-3 mt-auto"
-        style={{ marginLeft: "-48px", marginRight: "-48px", marginBottom: "-48px", paddingLeft: "48px", paddingRight: "48px", paddingBottom: "16px", borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
-        {/* Per page */}
-        <div className="flex-1 flex items-center gap-2 text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
-          Show
-          <div className="relative">
-            <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
-              className="appearance-none pr-7 pl-3 py-1.5 rounded-xl outline-none cursor-pointer"
-              style={{ fontFamily: FONT, background: c.inputBg, border: `1px solid ${c.border}`, color: c.text, fontSize: 13 }}>
-              <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: c.muted }} />
-          </div>
-          per page
-        </div>
-        {/* Pages */}
-        <div className="flex items-center gap-1">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
-            style={{ color: c.muted }}
-            onMouseEnter={e => { if (page > 1) e.currentTarget.style.background = c.hoverBg; }}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-bold text-white"
-            style={{ fontFamily: FONT, background: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" }}>
-            {page}
-          </button>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
-            style={{ color: c.muted }}
-            onMouseEnter={e => { if (page < totalPages) e.currentTarget.style.background = c.hoverBg; }}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        {/* Page label */}
-        <div className="flex-1 text-right text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>
-          Page {page} of {totalPages}
-        </div>
+        {/* Pagination — in-card footer, matches the live deck layout.
+            Left: "1 – N of total clients". Right: page-size selector + Previous / Next. */}
+        {(() => {
+          const rangeStart = sorted.length === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+          const rangeEnd   = Math.min(page * itemsPerPage, sorted.length);
+          const atFirst = page === 1;
+          const atLast  = page === totalPages || totalPages === 0;
+          return (
+            <div className="flex items-center justify-between gap-3 px-5 py-3 flex-wrap"
+              style={{ borderTop: `1px solid ${c.border}` }}>
+              <span className="text-[11.5px]" style={{ fontFamily: FONT, color: c.muted }}>
+                {rangeStart} – {rangeEnd} of {sorted.length} {sorted.length === 1 ? "client" : "clients"}
+              </span>
+              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                <div className="relative">
+                  <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
+                    className="appearance-none pl-2.5 pr-7 py-1.5 rounded-lg outline-none cursor-pointer text-[11.5px] font-medium"
+                    style={{ fontFamily: FONT, background: c.cardBg, border: `1px solid ${c.border}`, color: c.text }}>
+                    <option value={10}>1 – 10</option>
+                    <option value={20}>1 – 20</option>
+                    <option value={50}>1 – 50</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" style={{ color: c.muted, opacity: 0.6 }} />
+                </div>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={atFirst}
+                  className="text-[11.5px] font-medium px-3 py-1.5 rounded-lg transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg, opacity: atFirst ? 0.5 : 1, cursor: atFirst ? "not-allowed" : "pointer" }}
+                  onMouseEnter={e => { if (!atFirst) e.currentTarget.style.background = c.hoverBg; }}
+                  onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                  Previous
+                </button>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={atLast}
+                  className="text-[11.5px] font-medium px-3 py-1.5 rounded-lg transition-colors"
+                  style={{ fontFamily: FONT, border: `1px solid ${c.border}`, color: c.text, background: c.cardBg, opacity: atLast ? 0.5 : 1, cursor: atLast ? "not-allowed" : "pointer" }}
+                  onMouseEnter={e => { if (!atLast) e.currentTarget.style.background = c.hoverBg; }}
+                  onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                  Next
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
+      );
+      })()}
 
       <AddClientModal isOpen={modalOpen} onClose={() => setModalOpen(false)} isDark={isDark} />
+
+      {/* Export preview modal — scope + columns + 5-row preview + Download CSV. Slimmer
+          than the Policies export (no multi-format split button); easy to extend later. */}
+      {exportOpen && (() => {
+        const exportRows = exportScope === "all" ? allClients : sorted;
+        const selectedCols = CLIENT_EXPORT_COLS.filter(col => exportCols.has(col.key));
+        const previewRows = exportRows.slice(0, 5);
+        const triggerDownload = () => {
+          if (selectedCols.length === 0) return;
+          const headerRow = selectedCols.map(col => col.label);
+          const dataRows  = exportRows.map(cl => selectedCols.map(col => col.get(cl)));
+          const escape = (v: string) => /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+          const text = [headerRow, ...dataRows].map(r => r.map(escape).join(",")).join("\n");
+          const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+          const url  = URL.createObjectURL(blob);
+          const fname = `clients-${new Date().toISOString().slice(0,10)}.csv`;
+          const a    = document.createElement("a"); a.href = url; a.download = fname;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setExportOpen(false);
+        };
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setExportOpen(false)}>
+            <div className="rounded-2xl shadow-2xl flex flex-col"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}`, width: 620, maxWidth: "92vw", maxHeight: "86vh", fontFamily: FONT }}
+              onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+                <div>
+                  <h2 className="text-[16px] font-bold" style={{ color: c.text }}>Export Clients</h2>
+                  <p className="text-[12px] mt-0.5" style={{ color: c.muted }}>Based on your current view</p>
+                </div>
+                <button onClick={() => setExportOpen(false)} className="p-1.5 rounded-md transition-colors"
+                  style={{ color: c.muted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+                {/* Scope */}
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: c.muted }}>Scope</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      ["filtered", `Current view (${sorted.length})`],
+                      ["all",      `All clients (${allClients.length})`],
+                    ] as ["filtered"|"all", string][]).map(([key, label]) => {
+                      const active = exportScope === key;
+                      return (
+                        <button key={key} onClick={() => setExportScope(key)}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] transition-colors"
+                          style={{ background: active ? "rgba(166,20,195,0.06)" : "transparent", color: active ? "#A614C3" : c.text, border: `1px solid ${active ? "rgba(166,20,195,0.25)" : c.border}` }}>
+                          <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ border: `1.5px solid ${active ? "#A614C3" : c.border}` }}>
+                            {active && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#A614C3" }} />}
+                          </span>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Columns */}
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.muted }}>Columns ({exportCols.size})</p>
+                    <div className="flex items-center gap-2 text-[11px] font-semibold">
+                      <button onClick={() => setExportCols(new Set(CLIENT_EXPORT_COLS.map(col => col.key)))}
+                        className="cursor-pointer transition-colors" style={{ color: "#A614C3" }}>All</button>
+                      <span style={{ color: c.border }}>·</span>
+                      <button onClick={() => setExportCols(new Set())}
+                        className="cursor-pointer transition-colors" style={{ color: c.muted }}>None</button>
+                    </div>
+                  </div>
+                  <div className="grid gap-0.5" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                    {CLIENT_EXPORT_COLS.map(col => {
+                      const checked = exportCols.has(col.key);
+                      return (
+                        <label key={col.key}
+                          className="flex items-center gap-2.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors select-none"
+                          onClick={() => setExportCols(prev => { const s = new Set(prev); if (s.has(col.key)) s.delete(col.key); else s.add(col.key); return s; })}
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                            style={{ border: `1.5px solid ${c.border}`, background: c.cardBg }}>
+                            {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                          <span className="text-[12px] truncate" style={{ color: c.text }}>{col.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <Eye className="w-3.5 h-3.5" style={{ color: c.muted }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.muted }}>Preview</span>
+                  </div>
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${c.border}` }}>
+                    {selectedCols.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-32 gap-2">
+                        <AlertTriangle className="w-5 h-5" style={{ color: c.muted }} />
+                        <span className="text-[12px]" style={{ color: c.muted }}>Select at least one column to preview.</span>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[12px]" style={{ borderCollapse: "collapse" }}>
+                          <thead style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                            <tr>
+                              {selectedCols.map(col => (
+                                <th key={col.key} className="text-left px-4 py-2.5 font-semibold whitespace-nowrap"
+                                  style={{ color: c.text, fontSize: 11.5, borderBottom: `1px solid ${c.border}` }}>
+                                  {col.label}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {previewRows.map((cl, i) => (
+                              <tr key={cl.id}>
+                                {selectedCols.map(col => (
+                                  <td key={col.key} className="px-4 py-2.5 whitespace-nowrap"
+                                    style={{ color: c.text, borderBottom: i < previewRows.length - 1 ? `1px solid ${c.border}` : "none" }}>
+                                    {col.get(cl) || <span style={{ color: c.muted }}>—</span>}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {exportRows.length > previewRows.length && selectedCols.length > 0 && (
+                      <div className="px-4 py-2.5 text-center text-[11px]"
+                        style={{ color: c.muted, borderTop: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB" }}>
+                        + {exportRows.length - previewRows.length} more {exportRows.length - previewRows.length === 1 ? "row" : "rows"} included on download
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2 px-6 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${c.border}` }}>
+                <button onClick={() => setExportOpen(false)}
+                  className="px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors"
+                  style={{ color: c.text, border: `1px solid ${c.border}`, background: c.cardBg }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = c.cardBg)}>
+                  Cancel
+                </button>
+                <button onClick={triggerDownload} disabled={selectedCols.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold text-white transition-all"
+                  style={{ background: btnGrad, opacity: selectedCols.length === 0 ? 0.5 : 1, cursor: selectedCols.length === 0 ? "not-allowed" : "pointer" }}
+                  onMouseEnter={e => { if (selectedCols.length > 0) e.currentTarget.style.filter = "brightness(1.08)"; }}
+                  onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                  <Download className="w-3.5 h-3.5" />Download CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 

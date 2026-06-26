@@ -49,22 +49,12 @@ export default function DashboardShell({ children, pageTitle }: DashboardShellPr
         return <Policies isDark={darkMode} />;
       case "Endorsements":
         return <Endorsements isDark={darkMode} />;
-      default: {
-        const title = pageTitle;
-        return (
-          <>
-            {title && (
-              <div className="flex flex-col justify-center flex-shrink-0 mb-12"
-                style={{ height: 71, borderBottom: `0.87px solid ${darkMode ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
-                <h1 className="text-[22px] font-normal" style={{ color: darkMode ? "#F9FAFB" : "#1F2937" }}>
-                  {title}
-                </h1>
-              </div>
-            )}
-            {children}
-          </>
-        );
-      }
+      default:
+        // Un-routed / placeholder segments (Marketplace, Appetite Assistant, Make a
+        // Payment, Accounting, Tools & Resources, Support, …) just render whatever
+        // children the parent passed. No section-title bar — designed pages own
+        // their own title; an orphan title above an empty body just looks broken.
+        return <>{children}</>;
     }
   };
 
