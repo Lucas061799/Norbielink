@@ -759,6 +759,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
     setFilterStatus("All");
     setSearch("");
     setDateRange("All Time");
+    setHiddenCols(new Set());
+    setSortKey(null);
+    setSortDir("asc");
     setPage(1);
   };
   // Toolbar state — date scope dropdown + column-visibility "View" popover.

@@ -126,6 +126,9 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
     setStatusFilter(new Set());
     setProducerFilter(new Set());
     setDateRange("Last 60 days");
+    setHiddenCols(new Set());
+    setSortKey("createdDate");
+    setSortDir("desc");
     setPage(1);
   };
   const COLUMNS: Array<{ key: string; label: string; width: string }> = [
