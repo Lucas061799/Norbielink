@@ -748,12 +748,18 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   const [highlightFilter, setHighlightFilter] = useState<"incomplete-quotes" | "active-policies" | "renewals" | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("All");
   const [search, setSearch] = useState("");
-  // Refresh spinner — matches the Policies page pattern; purely cosmetic in the mock.
+  // Refresh — spins for 0.9s AND clears every user-applied filter, returning the
+  // table to the unfiltered default. Acts as a one-tap "reset view" on top of the
+  // refresh affordance. The actual data fetch is mocked.
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
     if (refreshing) return;
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 900);
+    setFilterStatus("All");
+    setSearch("");
+    setDateRange("All Time");
+    setPage(1);
   };
   // Toolbar state — date scope dropdown + column-visibility "View" popover.
   // Defaults to "All Time" so the mock data (mostly 2024) isn't filtered out on page load.
@@ -1033,9 +1039,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
   };
 
   /* Sortable table header cell */
-  const th = (label: string, col?: SortKey) => (
+  const th = (label: string, col?: SortKey, align: "left" | "center" = "left") => (
     <button
-      className="flex items-center gap-0.5 text-[11px] font-bold uppercase tracking-wider text-left w-full"
+      className={`flex items-center gap-0.5 text-[11px] font-bold uppercase tracking-wider w-full ${align === "center" ? "justify-center text-center" : "text-left"}`}
       style={{ fontFamily: FONT, color: c.muted, cursor: col ? "pointer" : "default", background: "none", border: "none", padding: 0, minWidth: 0, overflow: "hidden" }}
       onClick={() => col && handleSort(col)}
     >
@@ -1238,6 +1244,57 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             )}
           </div>
 
+          {/* View — column visibility popover. Sits right after the date filter so the
+              two "scope" controls (which time window, which columns) cluster together. */}
+          <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+            <button onClick={() => { closeAllToolbarDropdowns(); setViewOpen(o => !o); }}
+              className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ fontFamily: FONT, background: viewOpen ? c.hoverBg : c.cardBg, border: `1px solid ${c.border}`, color: c.text }}
+              onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : c.cardBg)}
+              title="Show / hide columns">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: c.muted }}>
+                <rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/>
+                <rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/>
+                <rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/>
+              </svg>
+              View
+            </button>
+            {viewOpen && (
+              <div className="absolute left-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden"
+                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold"
+                  style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>
+                  Show Columns
+                </div>
+                <div className="py-1.5 max-h-[280px] overflow-y-auto">
+                  {CLIENT_COLS.map(col => {
+                    const visible = !hiddenCols.has(col.key);
+                    return (
+                      <label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        onClick={() => setHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}>
+                        <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                          style={{ border: `1.5px solid ${c.border}`, background: c.cardBg }}>
+                          {visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                        <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <button onClick={() => setHiddenCols(new Set())}
+                  className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+                  style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <RefreshCw className="w-3.5 h-3.5" />Show All
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Search — leading icon, fixed-ish width (not flex-1). Submits live. */}
           <div className="flex items-center"
             style={{ width: 460, maxWidth: "100%", background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 10, overflow: "hidden", transition: "background 0.15s, border-color 0.15s" }}>
@@ -1248,58 +1305,8 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               style={{ fontFamily: FONT, background: "transparent", color: c.text, padding: "8px 12px", fontSize: 13, border: "none" }} />
           </div>
 
-          {/* Right-side action cluster: View | Export | Refresh | + Add Client */}
+          {/* Right-side action cluster: Export | Refresh */}
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-            {/* View — column visibility popover, same pattern as Policies. */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => { closeAllToolbarDropdowns(); setViewOpen(o => !o); }}
-                className="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
-                style={{ fontFamily: FONT, background: viewOpen ? c.hoverBg : c.cardBg, border: `1px solid ${c.border}`, color: c.text }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = viewOpen ? c.hoverBg : c.cardBg)}
-                title="Show / hide columns">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: c.muted }}>
-                  <rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/>
-                  <rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/>
-                  <rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/>
-                </svg>
-                View
-              </button>
-              {viewOpen && (
-                <div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden"
-                  style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-                  <div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold"
-                    style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>
-                    Show Columns
-                  </div>
-                  <div className="py-1.5 max-h-[280px] overflow-y-auto">
-                    {CLIENT_COLS.map(col => {
-                      const visible = !hiddenCols.has(col.key);
-                      return (
-                        <label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors"
-                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                          onClick={() => setHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}>
-                          <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
-                            style={{ border: `1.5px solid ${c.border}`, background: c.cardBg }}>
-                            {visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                          </div>
-                          <span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <button onClick={() => setHiddenCols(new Set())}
-                    className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
-                    style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
-                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                    <RefreshCw className="w-3.5 h-3.5" />Show All
-                  </button>
-                </div>
-              )}
-            </div>
-
             {/* Export — opens a preview modal (scope / columns / preview / Download CSV). */}
             <button
               onClick={() => setExportOpen(true)}
@@ -1365,7 +1372,7 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
             {!hiddenCols.has("contact")        && th("Contact")}
             {!hiddenCols.has("assignedAgent")  && th("Agent", "assignedAgent")}
             {!hiddenCols.has("status")         && th("Status", "status")}
-            {!hiddenCols.has("activePolicies") && th("Policies", "activePolicies")}
+            {!hiddenCols.has("activePolicies") && th("Policies", "activePolicies", "center")}
             {!hiddenCols.has("lastActivity")   && th("Last Activity", "lastActivity")}
             {th("Action")}
           </div>
@@ -1425,9 +1432,9 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
               {!hiddenCols.has("status") && (
                 <div><StatusBadge status={cl.status} isDark={isDark} /></div>
               )}
-              {/* Policies */}
+              {/* Policies — centered under the header */}
               {!hiddenCols.has("activePolicies") && (
-                <div className="text-[13px] font-semibold" style={{ fontFamily: FONT, color: c.text, paddingLeft: 10 }}>
+                <div className="text-[13px] font-semibold text-center" style={{ fontFamily: FONT, color: c.text }}>
                   {cl.activePolicies}
                 </div>
               )}

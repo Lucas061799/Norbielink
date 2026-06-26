@@ -119,6 +119,14 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
     if (refreshing) return;
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 900);
+    // Also clear every user-applied filter so a single tap resets the table.
+    setSearch("");
+    setApplicantFilter(new Set());
+    setLobFilter(new Set());
+    setStatusFilter(new Set());
+    setProducerFilter(new Set());
+    setDateRange("Last 60 days");
+    setPage(1);
   };
   const COLUMNS: Array<{ key: string; label: string; width: string }> = [
     { key: "created",      label: "Created",       width: "1fr"    },
