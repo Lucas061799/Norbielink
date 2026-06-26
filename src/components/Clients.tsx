@@ -1138,10 +1138,13 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
           const activeCount   = allClients.filter(cl => cl.status === "Active").length;
           const inactiveCount = allClients.filter(cl => cl.status === "Inactive").length;
           const prospectCount = allClients.filter(cl => cl.status === "Prospect").length;
+          // Card order: Prospect → Active → Inactive. Prospects sit first because they're
+          // the most actionable bucket — new business in the pipeline that producers should
+          // be working — so they earn the spot right after the Add Client primary action.
           const statusSummary: { key: FilterStatus; label: string; sub: string; count: number }[] = [
+            { key: "Prospect", label: "Prospect", sub: "In pipeline",          count: prospectCount },
             { key: "Active",   label: "Active",   sub: "Currently insured",    count: activeCount   },
             { key: "Inactive", label: "Inactive", sub: "Lapsed or terminated", count: inactiveCount },
-            { key: "Prospect", label: "Prospect", sub: "In pipeline",          count: prospectCount },
           ];
           return (
             <div className="grid gap-3 mb-5 flex-shrink-0"
@@ -1169,8 +1172,21 @@ export default function Clients({ isDark = false }: { isDark?: boolean }) {
                       background: c.cardBg,
                       border: `1px solid ${active ? (isDark ? "#4ECDC4" : "#A614C3") : c.border}`,
                     }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.20)" : "#D1D5DB"; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = c.border; }}>
+                    onMouseEnter={e => {
+                      // Background tint + border darken — a bare border-color shift
+                      // on a 1px line was basically invisible. Skip on the active
+                      // card so it doesn't "flash" when re-hovered.
+                      if (!active) {
+                        e.currentTarget.style.background = c.hoverBg;
+                        e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.20)" : "#D1D5DB";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        e.currentTarget.style.background = c.cardBg;
+                        e.currentTarget.style.borderColor = c.border;
+                      }
+                    }}>
                     <div className="flex items-start justify-between gap-3 mb-0.5">
                       <div className="text-[15px] font-semibold truncate" style={{ color: c.text }}>{s.label}</div>
                       <div className="text-[24px] font-semibold leading-none tracking-tight flex-shrink-0"

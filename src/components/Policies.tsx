@@ -782,8 +782,20 @@ export default function Policies({ isDark }: { isDark: boolean }) {
                 background: c.cardBg,
                 border: `1px solid ${active ? c.accent : c.border}`,
               }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = c.borderStrong; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = c.border; }}
+              onMouseEnter={e => {
+                // Background tint + border darken — a bare border-color shift on
+                // a 1px line was basically invisible.
+                if (!active) {
+                  e.currentTarget.style.background = c.hoverBg;
+                  e.currentTarget.style.borderColor = c.borderStrong;
+                }
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  e.currentTarget.style.background = c.cardBg;
+                  e.currentTarget.style.borderColor = c.border;
+                }
+              }}
             >
               {/* Top: title + big count on the right */}
               <div className="flex items-start justify-between gap-3 mb-0.5">
