@@ -515,9 +515,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   initialTab?: DetailTab;
   onNavigateToAgency?: (targetCode: string, tab?: DetailTab) => void;
   // "internal" = BTIS staff viewing all agencies (default, full edit power).
-  // "client"   = agency's own user viewing their single agency, read-only.
+  // "client"   = the agency's own external user, viewing their single agency. Their edit
+  //             power depends on whether they're the agency admin — see `clientIsAdmin`.
   viewMode?: "internal" | "client";
 }) {
+  // Mock role toggle for the Admin (client) section. In production internal & client are
+  // separate deployments and this flag would come from auth; here we let the demo user
+  // flip roles from a segmented control in the section header. `true` = admin (full
+  // edit power like BTIS staff), `false` = non-admin (edit buttons show a "no permission"
+  // tooltip on hover instead of opening the edit modal).
+  const [clientIsAdmin, setClientIsAdmin] = useState(true);
   const [detailTab, setDetailTab] = useState<DetailTab>(initialTab ?? "overview");
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
@@ -528,17 +535,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
-  // In the Admin segment (viewMode="client"), the user is browsing their own agency
-  // read-only: no Edit, Add User, Bulk Upload, Deactivate, Reassign, etc. Internal staff
-  // view stays full-power.
-  const currentUserIsAdmin = viewMode === "internal";
-  const currentUserIsReadOnlyAdmin = viewMode === "client"; // hides per-row action menus
+  // Permission derivation. Internal staff always full power. External-client users split
+  // by the mock role toggle: admin gets the same edit affordances as internal; non-admin
+  // sees Edit buttons but they surface a "no permission" tooltip on hover instead of
+  // opening modals, and per-row action menus stay hidden.
+  const currentUserIsAdmin = viewMode === "internal" || (viewMode === "client" && clientIsAdmin);
+  const currentUserIsReadOnlyAdmin = viewMode === "client" && !clientIsAdmin;
   const [lockedUserIds, setLockedUserIds] = useState<Set<string>>(() => new Set(["u5"])); // mock: Brian Nguyen locked by default
-  const [contactRequestOpen, setContactRequestOpen] = useState(false);
-  const [requestedName, setRequestedName] = useState("");
-  const [requestedPhone, setRequestedPhone] = useState("");
-  const [requestedEmail, setRequestedEmail] = useState("");
-  const [contactRequestSent, setContactRequestSent] = useState(false);
   const [eContactPhone, setEContactPhone]   = useState(agency.contactPhone);
   const font = { fontFamily: FONT };
   const isStarred = stars.has(agency.id);
@@ -2500,7 +2503,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         </div>
       )}
-      {/* Section title — same as list view */}
+      {/* Section title — same as list view. In production the external-client user's role
+          would come from auth (see `clientIsAdmin` in AgencyDetailView); here we simply
+          default to admin, so the header renders the h1 alone as it did originally. */}
       <div className="flex flex-col justify-center flex-shrink-0 mb-12"
         style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
         <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>{viewMode === "client" ? "Admin" : "Agencies"}</h1>
@@ -2681,15 +2686,39 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <User className="w-5 h-5" style={{ color: "#A855F7" }} />
               </div>
             )}
-            {/* Edit button — floats left of icon on hover only */}
+            {/* Edit button — floats left of icon on card hover.
+                • Admin (internal staff OR external admin): opens the contact edit modal.
+                • Non-admin external user: button is disabled and its own hover shows a
+                  small tooltip explaining the permission gate. No modal, no submit flow. */}
             {!contactCardEditing && (
-              <button onClick={() => { if (currentUserIsAdmin) { setContactCardEditing(true); } else { setRequestedName(agency.contact); setRequestedPhone(agency.contactPhone); setRequestedEmail(agency.contactEmail); setContactRequestOpen(true); } }}
-                className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
-                style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: c.text, border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`, background: isDark ? "rgba(255,255,255,0.05)" : c.cardBg }}
-                onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
-                onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : c.cardBg}>
-                <Pencil className="w-3.5 h-3.5" />Edit
-              </button>
+              currentUserIsAdmin ? (
+                <button onClick={() => setContactCardEditing(true)}
+                  className="absolute opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold transition-all"
+                  style={{ top: "16px", right: "56px", height: 36, fontFamily: FONT, color: c.text, border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`, background: isDark ? "rgba(255,255,255,0.05)" : c.cardBg }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : c.cardBg}>
+                  <Pencil className="w-3.5 h-3.5" />Edit
+                </button>
+              ) : (
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-all"
+                  style={{ top: "16px", right: "56px" }}>
+                  <div className="relative group/lockedit">
+                    <button disabled
+                      className="flex items-center gap-1.5 px-3 rounded-lg text-[12px] font-semibold cursor-not-allowed"
+                      style={{ height: 36, fontFamily: FONT, color: c.muted, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, background: isDark ? "rgba(255,255,255,0.03)" : c.cardBg, opacity: 0.75 }}>
+                      <Lock className="w-3.5 h-3.5" />Edit
+                    </button>
+                    {/* Tooltip surfaces on the button's own hover (nested tailwind group:
+                        `group/lockedit`). Hidden by default, visible when the Edit button
+                        itself is hovered — the card-hover already brought the button into
+                        view, so the extra hover feels natural. */}
+                    <div className="absolute pointer-events-none opacity-0 group-hover/lockedit:opacity-100 transition-opacity whitespace-nowrap"
+                      style={{ top: "calc(100% + 6px)", right: 0, background: isDark ? "#1F2233" : "#111827", color: "#fff", fontFamily: FONT, fontSize: 11, padding: "6px 10px", borderRadius: 8, zIndex: 20, boxShadow: "0 6px 20px rgba(15,23,42,0.15)" }}>
+                      You don&apos;t have permission — only your admin can modify this
+                    </div>
+                  </div>
+                </div>
+              )
             )}
             {/* Content */}
             <p className="text-[13px] font-semibold mb-0.5" style={{ ...font, color: c.text }}>{eContact}</p>
@@ -6498,82 +6527,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         </div>
         );
       })()}
-
-      {/* ── Contact Request Modal (non-admin) ── */}
-      {contactRequestOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={() => { setContactRequestOpen(false); setContactRequestSent(false); }}>
-          <div className="rounded-2xl w-[460px] max-w-[95vw] overflow-hidden"
-            style={{ background: c.cardBg, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
-            onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${c.border}` }}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(168,85,247,0.10)" }}>
-                  <Lock className="w-4 h-4" style={{ color: "#A855F7" }} />
-                </div>
-                <h2 className="text-[16px] font-bold" style={{ fontFamily: FONT, color: c.text }}>Request Contact Update</h2>
-              </div>
-              <button onClick={() => { setContactRequestOpen(false); setContactRequestSent(false); }}
-                className="p-1.5 rounded-lg transition-colors" style={{ color: c.muted }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-6 py-5">
-              {contactRequestSent ? (
-                <div className="flex flex-col items-center text-center py-4">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "rgba(115,201,183,0.15)" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="#73C9B7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                  <p className="text-[14px] font-semibold mb-1" style={{ fontFamily: FONT, color: c.text }}>Request submitted</p>
-                  <p className="text-[12px]" style={{ fontFamily: FONT, color: c.muted }}>An admin will review and approve your change.</p>
-                </div>
-              ) : (<>
-                <p className="text-[12px] mb-4 leading-relaxed" style={{ fontFamily: FONT, color: c.muted }}>
-                  You don't have permission to edit the agency contact. Submit the new contact info below and an admin will review.
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Contact Name</label>
-                    <input value={requestedName} onChange={e => setRequestedName(e.target.value)} placeholder="Full name"
-                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Phone</label>
-                    <input value={requestedPhone} onChange={e => setRequestedPhone(e.target.value)} placeholder="(000) 000-0000"
-                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ fontFamily: FONT, color: c.text }}>Email</label>
-                    <input value={requestedEmail} onChange={e => setRequestedEmail(e.target.value)} placeholder="email@example.com"
-                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none"
-                      style={{ fontFamily: FONT, background: isDark ? "rgba(255,255,255,0.05)" : "#fff", border: `1px solid ${c.border}`, color: c.text }} />
-                  </div>
-                </div>
-              </>)}
-            </div>
-            {!contactRequestSent && (
-              <div className="flex items-center justify-between gap-2 px-6 py-4" style={{ borderTop: `1px solid ${c.border}` }}>
-                <button onClick={() => setContactRequestOpen(false)}
-                  className="px-[17px] py-[9px] rounded-lg text-[12px] font-normal transition-colors"
-                  style={{ fontFamily: FONT, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}>
-                  Cancel
-                </button>
-                <button onClick={() => { setContactRequestSent(true); setTimeout(() => { setContactRequestOpen(false); setContactRequestSent(false); }, 1800); }}
-                  className="px-[17px] py-[9px] rounded-lg text-[12px] font-semibold text-white transition-all"
-                  style={{ fontFamily: FONT, background: btnGrad }}
-                  onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.1)")}
-                  onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                  Submit Request
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── Import Users Modal ── */}
       {importUsersOpen && (
