@@ -1603,6 +1603,36 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
     backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
   };
+  // External-client mode: only the agency principal can edit Agency Address / Phone
+  // Number / Agency Contact. Every other Agency Information field mirrors the Agency
+  // Code padlock affordance — readOnly input, muted color, not-allowed cursor, lock
+  // icon overlay. `clientLocked` is the on/off switch; the helpers below are the
+  // rendering primitives used across the edit form.
+  const clientLocked = viewMode === "client";
+  const lockedInputStyle: React.CSSProperties = {
+    ...inputStyle,
+    paddingRight: 34,
+    background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+    color: c.muted,
+    cursor: "not-allowed",
+  };
+  const LOCKED_HINT = "Only the agency principal can modify this — contact them to request a change.";
+  const LockedInput = ({ value }: { value: string | number }) => (
+    <div className="relative">
+      <input value={value} readOnly aria-readonly="true" title={LOCKED_HINT} style={lockedInputStyle} />
+      <Lock className="w-3.5 h-3.5 absolute pointer-events-none"
+        style={{ right: 10, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+    </div>
+  );
+  // Multi-select grids (Affiliations / Direct Appointments / Tags): keep the visual
+  // layout so the reader still sees which items are selected, but block interaction
+  // and dim the group.
+  const LockedGroupOverlay = ({ children }: { children: React.ReactNode }) => (
+    <div title={LOCKED_HINT}
+      style={{ pointerEvents: "none", opacity: 0.55, cursor: "not-allowed" }}>
+      {children}
+    </div>
+  );
 
   // Note: rendered as <span> not <button> because Radio is typically nested inside a parent
   // <button> (e.g. the Agency Type toggle), and HTML disallows nested buttons.
@@ -3002,7 +3032,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Agency Name:</label>
-                <input value={eName} onChange={e => setEName(e.target.value)} style={inputStyle} />
+                {clientLocked
+                  ? <LockedInput value={eName} />
+                  : <input value={eName} onChange={e => setEName(e.target.value)} style={inputStyle} />}
               </div>
               <div>
                 <label style={labelStyle}>Agency Code:</label>
@@ -3027,30 +3059,32 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Agency Type:</label>
-                <div className="flex" style={{ gap: 10 }}>
-                  {(["Retail","Wholesale"] as const).map(t => {
-                    const active = eType === t;
-                    return (
-                      <button key={t} onClick={() => setEType(t)}
-                        className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
-                        style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                          border: active ? "1px solid transparent" : `1px solid ${c.border}`,
-                          background: active ? undefined : c.cardBg,
-                          backgroundImage: active
-                            ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                            : undefined,
-                          backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
-                          backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
-                        }}>
-                        <Radio checked={active} onClick={() => setEType(t)} />
-                        {active
-                          ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
-                          : <span style={{ color: c.muted }}>{t}</span>
-                        }
-                      </button>
-                    );
-                  })}
-                </div>
+                {clientLocked ? <LockedInput value={eType} /> : (
+                  <div className="flex" style={{ gap: 10 }}>
+                    {(["Retail","Wholesale"] as const).map(t => {
+                      const active = eType === t;
+                      return (
+                        <button key={t} onClick={() => setEType(t)}
+                          className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                          style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
+                            border: active ? "1px solid transparent" : `1px solid ${c.border}`,
+                            background: active ? undefined : c.cardBg,
+                            backgroundImage: active
+                              ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                              : undefined,
+                            backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                            backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
+                          }}>
+                          <Radio checked={active} onClick={() => setEType(t)} />
+                          {active
+                            ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t}</span>
+                            : <span style={{ color: c.muted }}>{t}</span>
+                          }
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3143,50 +3177,21 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Status:</label>
-                <div className="relative" onClick={e => e.stopPropagation()}>
-                  <button type="button" onClick={() => { setEStatusOpen(o => !o); setEBizTypeOpen(false); }}
-                    className="w-full flex items-center justify-between outline-none"
-                    style={{ ...inputStyle, cursor: "pointer" }}>
-                    <span style={{ color: eStatus ? c.text : c.muted }}>{eStatus || "- Select one"}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eStatusOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
-                  </button>
-                  {eStatusOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
-                      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                      {["Appointed", "Unappointed"].map(opt => {
-                        const active = eStatus === opt;
-                        return (
-                          <button key={opt} type="button" onClick={() => { setEStatus(opt); setEStatusOpen(false); }}
-                            className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
-                            style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
-                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
-                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                            <span>{opt}</span>
-                            {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {eStatus === "Unappointed" ? (
-                <div>
-                  <label style={labelStyle}>Reason:</label>
+                {clientLocked ? <LockedInput value={eStatus || "—"} /> : (
                   <div className="relative" onClick={e => e.stopPropagation()}>
-                    <button type="button" onClick={() => { setEReasonOpen(o => !o); setEStatusOpen(false); setEBizTypeOpen(false); }}
+                    <button type="button" onClick={() => { setEStatusOpen(o => !o); setEBizTypeOpen(false); }}
                       className="w-full flex items-center justify-between outline-none"
                       style={{ ...inputStyle, cursor: "pointer" }}>
-                      <span style={{ color: eReason ? c.text : c.muted }}>{eReason || "Select reason"}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eReasonOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                      <span style={{ color: eStatus ? c.text : c.muted }}>{eStatus || "- Select one"}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eStatusOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
                     </button>
-                    {eReasonOpen && (
+                    {eStatusOpen && (
                       <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
                         style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                        {E_REASON_OPTIONS.map(opt => {
-                          const active = eReason === opt;
+                        {["Appointed", "Unappointed"].map(opt => {
+                          const active = eStatus === opt;
                           return (
-                            <button key={opt} type="button" onClick={() => { setEReason(opt); setEReasonOpen(false); }}
+                            <button key={opt} type="button" onClick={() => { setEStatus(opt); setEStatusOpen(false); }}
                               className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
                               style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
                               onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
@@ -3199,11 +3204,46 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       </div>
                     )}
                   </div>
+                )}
+              </div>
+              {eStatus === "Unappointed" ? (
+                <div>
+                  <label style={labelStyle}>Reason:</label>
+                  {clientLocked ? <LockedInput value={eReason || "—"} /> : (
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      <button type="button" onClick={() => { setEReasonOpen(o => !o); setEStatusOpen(false); setEBizTypeOpen(false); }}
+                        className="w-full flex items-center justify-between outline-none"
+                        style={{ ...inputStyle, cursor: "pointer" }}>
+                        <span style={{ color: eReason ? c.text : c.muted }}>{eReason || "Select reason"}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eReasonOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                      </button>
+                      {eReasonOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                          style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                          {E_REASON_OPTIONS.map(opt => {
+                            const active = eReason === opt;
+                            return (
+                              <button key={opt} type="button" onClick={() => { setEReason(opt); setEReasonOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                                style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                                onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                                <span>{opt}</span>
+                                {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div>
                   <label style={labelStyle}>Appt. Date</label>
-                  <DatePicker value={eApptDate} onChange={setEApptDate} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
+                  {clientLocked
+                    ? <LockedInput value={eApptDate || "—"} />
+                    : <DatePicker value={eApptDate} onChange={setEApptDate} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
                 </div>
               )}
               <div />
@@ -3225,40 +3265,46 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>Type of Business:</label>
-                <div className="relative" onClick={e => e.stopPropagation()}>
-                  <button type="button" onClick={() => { setEBizTypeOpen(o => !o); setEStatusOpen(false); }}
-                    className="w-full flex items-center justify-between outline-none"
-                    style={{ ...inputStyle, cursor: "pointer" }}>
-                    <span style={{ color: eBizType && eBizType !== "-Business Type" ? c.text : c.muted }}>{eBizType && eBizType !== "-Business Type" ? eBizType : "-Business Type"}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eBizTypeOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
-                  </button>
-                  {eBizTypeOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
-                      style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                      {["Corporation","Joint Venture","Limited Liability Company","Limited Partnership","Partnership","Sole Proprietorship or individual","Sole Proprietorship"].map(opt => {
-                        const active = eBizType === opt;
-                        return (
-                          <button key={opt} type="button" onClick={() => { setEBizType(opt); setEBizTypeOpen(false); }}
-                            className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
-                            style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
-                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
-                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                            <span>{opt}</span>
-                            {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                {clientLocked ? <LockedInput value={eBizType && eBizType !== "-Business Type" ? eBizType : "—"} /> : (
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <button type="button" onClick={() => { setEBizTypeOpen(o => !o); setEStatusOpen(false); }}
+                      className="w-full flex items-center justify-between outline-none"
+                      style={{ ...inputStyle, cursor: "pointer" }}>
+                      <span style={{ color: eBizType && eBizType !== "-Business Type" ? c.text : c.muted }}>{eBizType && eBizType !== "-Business Type" ? eBizType : "-Business Type"}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${eBizTypeOpen ? "rotate-180" : ""}`} style={{ color: c.muted }} />
+                    </button>
+                    {eBizTypeOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                        style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                        {["Corporation","Joint Venture","Limited Liability Company","Limited Partnership","Partnership","Sole Proprietorship or individual","Sole Proprietorship"].map(opt => {
+                          const active = eBizType === opt;
+                          return (
+                            <button key={opt} type="button" onClick={() => { setEBizType(opt); setEBizTypeOpen(false); }}
+                              className="w-full text-left px-3 py-2 text-[13px] flex items-center justify-between transition-colors"
+                              style={{ ...font, color: active ? "#A614C3" : c.text, background: active ? "rgba(168,85,247,0.08)" : "transparent" }}
+                              onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                              onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                              <span>{opt}</span>
+                              {active && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label style={labelStyle}>Tax ID:</label>
-                <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={inputStyle} />
+                {clientLocked
+                  ? <LockedInput value={eTaxId || "—"} />
+                  : <input value={eTaxId} onChange={e => setETaxId(e.target.value)} style={inputStyle} />}
               </div>
               <div>
                 <label style={labelStyle}>Website Url:</label>
-                <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={inputStyle} />
+                {clientLocked
+                  ? <LockedInput value={eWebsite || "—"} />
+                  : <input value={eWebsite} onChange={e => setEWebsite(e.target.value)} style={inputStyle} />}
               </div>
             </div>
 
@@ -3270,7 +3316,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>Toll Free Number:</label>
-                <input value={eTollFree} onChange={e => setETollFree(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />
+                {clientLocked
+                  ? <LockedInput value={eTollFree || "—"} />
+                  : <input value={eTollFree} onChange={e => setETollFree(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />}
               </div>
               <div />
             </div>
@@ -3279,11 +3327,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>License Number:</label>
-                <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={inputStyle} />
+                {clientLocked
+                  ? <LockedInput value={eLicNo || "—"} />
+                  : <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={inputStyle} />}
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <DatePicker value={eLicExp} onChange={setELicExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
+                {clientLocked
+                  ? <LockedInput value={eLicExp || "—"} />
+                  : <DatePicker value={eLicExp} onChange={setELicExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
               </div>
               <div />
             </div>
@@ -3292,11 +3344,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
                 <label style={labelStyle}>E&O Policy #:</label>
-                <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={inputStyle} />
+                {clientLocked
+                  ? <LockedInput value={eEoNo || "—"} />
+                  : <input value={eEoNo} onChange={e => setEEoNo(e.target.value)} style={inputStyle} />}
               </div>
               <div>
                 <label style={labelStyle}>Expiration Date:</label>
-                <DatePicker value={eEoExp} onChange={setEEoExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />
+                {clientLocked
+                  ? <LockedInput value={eEoExp || "—"} />
+                  : <DatePicker value={eEoExp} onChange={setEEoExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
               </div>
               <div />
             </div>
@@ -3310,84 +3366,102 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               ] as [string, boolean, (v: boolean) => void][]).map(([lbl, val, set]) => (
                 <div key={lbl}>
                   <label style={labelStyle}>{lbl}</label>
-                  <div className="flex gap-3">
-                    {([["Yes", true], ["No", false]] as [string, boolean][]).map(([opt, bool]) => {
-                      const active = val === bool;
-                      return (
-                        <button key={opt} onClick={() => set(bool)}
-                          className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
-                          style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                            border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
-                            background: active ? undefined : c.cardBg,
-                            backgroundImage: active
-                              ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                              : undefined,
-                            backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
-                            backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
-                          }}>
-                          <Radio checked={active} onClick={() => set(bool)} />
-                          {active
-                            ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
-                            : <span style={{ color: c.muted }}>{opt}</span>
-                          }
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {clientLocked ? <LockedInput value={val ? "Yes" : "No"} /> : (
+                    <div className="flex gap-3">
+                      {([["Yes", true], ["No", false]] as [string, boolean][]).map(([opt, bool]) => {
+                        const active = val === bool;
+                        return (
+                          <button key={opt} onClick={() => set(bool)}
+                            className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                            style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
+                              border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                              background: active ? undefined : c.cardBg,
+                              backgroundImage: active
+                                ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
+                                : undefined,
+                              backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
+                              backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
+                            }}>
+                            <Radio checked={active} onClick={() => set(bool)} />
+                            {active
+                              ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
+                              : <span style={{ color: c.muted }}>{opt}</span>
+                            }
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
-            {/* Affiliations */}
+            {/* Affiliations — checkbox grid, wrapped in LockedGroupOverlay for client mode so
+                the reader can still see which affiliations are selected but can't edit. */}
             <SectionDivider title="Affiliations" />
-            <div className="grid grid-cols-4 gap-x-6 gap-y-3">
-              {AFFILIATIONS.map(aff => (
-                <label key={aff} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
-                  <div className="flex-shrink-0">
-                    <Checkbox checked={eAffil.has(aff)} onClick={() => toggleSet(eAffil, aff, setEAffil)} />
-                  </div>
-                  <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={aff}>{aff}</span>
-                </label>
-              ))}
-            </div>
+            {(() => {
+              const grid = (
+                <div className="grid grid-cols-4 gap-x-6 gap-y-3">
+                  {AFFILIATIONS.map(aff => (
+                    <label key={aff} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                      <div className="flex-shrink-0">
+                        <Checkbox checked={eAffil.has(aff)} onClick={() => toggleSet(eAffil, aff, setEAffil)} />
+                      </div>
+                      <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={aff}>{aff}</span>
+                    </label>
+                  ))}
+                </div>
+              );
+              return clientLocked ? <LockedGroupOverlay>{grid}</LockedGroupOverlay> : grid;
+            })()}
 
             {/* Direct Appointments */}
             <SectionDivider title="Direct Appointments" />
             <p className="text-[12px] mb-3" style={{ ...font, color: c.muted }}>Workers Compensation</p>
-            <div className="grid grid-cols-4 gap-x-6 gap-y-3">
-              {WORKERS_COMP.map(w => (
-                <label key={w} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
-                  <div className="flex-shrink-0">
-                    <Checkbox checked={eWC.has(w)} onClick={() => toggleSet(eWC, w, setEWC)} />
-                  </div>
-                  <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={w}>{w}</span>
-                </label>
-              ))}
-            </div>
+            {(() => {
+              const grid = (
+                <div className="grid grid-cols-4 gap-x-6 gap-y-3">
+                  {WORKERS_COMP.map(w => (
+                    <label key={w} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                      <div className="flex-shrink-0">
+                        <Checkbox checked={eWC.has(w)} onClick={() => toggleSet(eWC, w, setEWC)} />
+                      </div>
+                      <span className="text-[12px] truncate" style={{ ...font, color: c.text }} title={w}>{w}</span>
+                    </label>
+                  ))}
+                </div>
+              );
+              return clientLocked ? <LockedGroupOverlay>{grid}</LockedGroupOverlay> : grid;
+            })()}
 
             {/* Tags */}
             <SectionDivider title="Tags" />
             <p className="text-[12px] mb-3" style={{ ...font, color: c.muted }}>Shown on the Agency Status card. Pick any that apply.</p>
-            <div className="grid grid-cols-4 gap-x-6 gap-y-3">
-              {AGENCY_BADGES.map(b => {
-                const checked = eBadges.has(b);
-                return (
-                  <label key={b} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
-                    <div className="flex-shrink-0">
-                      <Checkbox checked={checked} onClick={() => toggleSet(eBadges, b, setEBadges)} />
-                    </div>
-                    <span className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
-                      style={{ background: checked ? (isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)") : (isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"), padding: "3px 10px" }}>
-                      {checked ? (
-                        <span style={{ backgroundImage: isDark ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)" : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
-                      ) : (
-                        <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
-                      )}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
+            {(() => {
+              const grid = (
+                <div className="grid grid-cols-4 gap-x-6 gap-y-3">
+                  {AGENCY_BADGES.map(b => {
+                    const checked = eBadges.has(b);
+                    return (
+                      <label key={b} className="flex items-center gap-2.5 cursor-pointer select-none min-w-0" style={{ height: 24 }}>
+                        <div className="flex-shrink-0">
+                          <Checkbox checked={checked} onClick={() => toggleSet(eBadges, b, setEBadges)} />
+                        </div>
+                        <span className="inline-flex items-center justify-center rounded-full whitespace-nowrap"
+                          style={{ background: checked ? (isDark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.10)") : (isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"), padding: "3px 10px" }}>
+                          {checked ? (
+                            <span style={{ backgroundImage: isDark ? "linear-gradient(88.54deg, #A855F7 0.1%, #D946EF 63.88%)" : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
+                          ) : (
+                            <span style={{ color: c.muted, fontSize: 11, fontWeight: 600, lineHeight: "16px" }}>{b}</span>
+                          )}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              );
+              return clientLocked ? <LockedGroupOverlay>{grid}</LockedGroupOverlay> : grid;
+            })()}
 
             {/* Footer buttons — inside the card so they share width and don't float independently */}
             <div className="flex items-center justify-between" style={{ marginTop: 36, paddingTop: 28, paddingBottom: 8, borderTop: `1px solid ${c.border}` }}>
@@ -3399,26 +3473,41 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 Cancel
               </button>
               <button onClick={() => {
-                  const w9Changed = (
-                    eName !== agency.name
-                    || eType !== agency.agencyType
-                    || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
-                    || eTaxId !== agency.taxId
-                  );
-                  const licChanged = eLicNo !== agency.licenseNo;
-                  if (w9Changed || licChanged) {
-                    // Block save — modal will require new docs to be uploaded before allowing it.
-                    // The uploaded W-9 lands in agencyDocs with category "w9", but because that
-                    // category is in HIDDEN_AGENCY_DOC_CATEGORIES it never surfaces in the agency
-                    // docs UI — kept in mock data only, per the soft-hide product decision.
-                    setDocModalUploads({});
-                    setDocUpdateModal({ w9: w9Changed, license: licChanged });
-                    return;
+                  // Doc-refresh gate is internal-staff only. External (client) principals go
+                  // straight through — their edits are forwarded to the Register Team for
+                  // review instead of forcing a W-9 / license upload here.
+                  if (!clientLocked) {
+                    const w9Changed = (
+                      eName !== agency.name
+                      || eType !== agency.agencyType
+                      || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
+                      || eTaxId !== agency.taxId
+                    );
+                    const licChanged = eLicNo !== agency.licenseNo;
+                    if (w9Changed || licChanged) {
+                      // Block save — modal will require new docs to be uploaded before allowing it.
+                      // The uploaded W-9 lands in agencyDocs with category "w9", but because that
+                      // category is in HIDDEN_AGENCY_DOC_CATEGORIES it never surfaces in the agency
+                      // docs UI — kept in mock data only, per the soft-hide product decision.
+                      setDocModalUploads({});
+                      setDocUpdateModal({ w9: w9Changed, license: licChanged });
+                      return;
+                    }
                   }
                   setBadgesOverride(Array.from(eBadges));
                   setAffilOverride(Array.from(eAffil));
                   setWcOverride(Array.from(eWC));
                   setIsEditing(false);
+                  if (clientLocked) {
+                    // Principal (external admin) submitted their editable-tier changes.
+                    // Show a top-right toast so they know we've forwarded the update to
+                    // the Register Team for review. Generic stable copy — no echoing of
+                    // user-entered values into transient UI.
+                    showToast({
+                      title: "Changes sent to Register Team",
+                      description: "We've forwarded your update — you'll hear back once it's reviewed.",
+                    }, 5000);
+                  }
                 }}
                 className="text-[13px] font-semibold text-white transition-all"
                 style={{ ...font, background: btnGrad, padding:"10px 24px", borderRadius:"5.58px" }}
