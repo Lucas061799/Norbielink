@@ -302,6 +302,7 @@ interface AgencyDetail extends Agency {
   taxId: string;
   phone: string;
   tollFree: string;
+  npn: string;             // National Producer Number — persists to agency_details on Register
   licenseNo: string;
   licenseExp: string;
   eoPolicyNo: string;
@@ -316,9 +317,9 @@ interface AgencyDetail extends Agency {
 }
 
 const mockDetails: Record<string, Partial<AgencyDetail>> = {
-  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badges: ["Strategic Partner", "VIP"] },
-  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badges: ["DreamTeam"] },
-  "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badges: [] },
+  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             npn: "17482910", licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badges: ["Strategic Partner", "VIP"] },
+  "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", npn: "20911345", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badges: ["DreamTeam"] },
+  "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             npn: "",         licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badges: [] },
 };
 
 function getDetail(a: Agency): AgencyDetail {
@@ -336,6 +337,7 @@ function getDetail(a: Agency): AgencyDetail {
     taxId:         d.taxId         ?? "",
     phone:         d.phone         ?? "000-000-0000",
     tollFree:      d.tollFree      ?? "",
+    npn:           d.npn           ?? "",
     licenseNo:     d.licenseNo     ?? "",
     licenseExp:    d.licenseExp    ?? "03/24/2026",
     eoPolicyNo:    d.eoPolicyNo    ?? "",
@@ -570,6 +572,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [eWebsite,    setEWebsite]    = useState(agency.website);
   const [ePhone,      setEPhone]      = useState(agency.phone);
   const [eTollFree,   setETollFree]   = useState(agency.tollFree);
+  const [eNpn,        setENpn]        = useState(agency.npn);
   const [eLicNo,      setELicNo]      = useState(agency.licenseNo);
   const [eLicExp,     setELicExp]     = useState(agency.licenseExp);
   const [eEoNo,       setEEoNo]       = useState(agency.eoPolicyNo);
@@ -2913,7 +2916,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <div />
               <LabelValue label="License Number"  value={agency.licenseNo || "—"} />
               <LabelValue label="Expiration Date" value={agency.licenseExp} />
-              <div />
+              <LabelValue label="NPN"             value={agency.npn || "—"} />
               <LabelValue label="E&O Policy #"    value={agency.eoPolicyNo || "—"} />
               <LabelValue label="Expiration Date" value={agency.eoExp} />
               <div />
@@ -3337,7 +3340,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   ? <LockedInput value={eLicExp || "—"} />
                   : <DatePicker value={eLicExp} onChange={setELicExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
               </div>
-              <div />
+              <div>
+                <label style={labelStyle}>NPN:</label>
+                {clientLocked
+                  ? <LockedInput value={eNpn || "—"} />
+                  : <input value={eNpn} onChange={e => setENpn(e.target.value)} placeholder="National Producer Number" style={inputStyle} />}
+              </div>
             </div>
 
             {/* E&O */}
@@ -7492,6 +7500,7 @@ export type AgencyDraft = {
   contact: string; email: string;
   bizType: string; taxId: string; website: string;
   phone: string; tollFree: string;
+  npn: string;
   licenseNo: string; licenseExp: string;
   eoPolicyNo: string; eoExp: string;
   agencyBill: boolean; directBill: boolean; premiumFin: boolean;
@@ -7527,6 +7536,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
   const [website, setWebsite]         = useState(initialDraft?.website ?? "");
   const [phone, setPhone]             = useState(initialDraft?.phone ?? "");
   const [tollFree, setTollFree]       = useState(initialDraft?.tollFree ?? "");
+  const [npn, setNpn]                 = useState(initialDraft?.npn ?? "");
   const [licenseNo, setLicenseNo]     = useState(initialDraft?.licenseNo ?? "");
   const [licenseExp, setLicenseExp]   = useState(initialDraft?.licenseExp ?? "03/24/2026");
   const [eoPolicyNo, setEoPolicyNo]   = useState(initialDraft?.eoPolicyNo ?? "");
@@ -7677,7 +7687,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
     sameAddress, mCountry, mStreet, mCity, mState, mZip,
     status, apptDate, contact, email,
     bizType, taxId, website, phone, tollFree,
-    licenseNo, licenseExp, eoPolicyNo, eoExp,
+    npn, licenseNo, licenseExp, eoPolicyNo, eoExp,
     agencyBill, directBill, premiumFin,
     affiliations: Array.from(affiliations), workersComp: Array.from(workersComp),
     badges: Array.from(badges),
@@ -8078,7 +8088,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             <div />
           </div>
 
-          {/* License + Expiry */}
+          {/* License + Expiry + NPN */}
           <div className="grid grid-cols-3 gap-6 mb-6">
             <div>
               <label style={labelStyle}>License Number:</label>
@@ -8091,7 +8101,12 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
               <label style={labelStyle}>Expiration Date:</label>
               <DatePicker value={licenseExp} onChange={setLicenseExp} inputStyle={inputStyle} c={c as any} btnGrad={btnGrad} font={font} />
             </div>
-            <div />
+            <div>
+              <label style={labelStyle}>NPN:</label>
+              <input value={npn}
+                onChange={e => setNpn(e.target.value)}
+                placeholder="National Producer Number" style={inputStyle} inputMode="numeric" />
+            </div>
           </div>
 
           {/* E&O Policy + Expiry */}
