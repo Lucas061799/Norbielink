@@ -371,7 +371,7 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
               letterSpacing: "0.08em",
             }}
           >
-            Placeholder
+            Placeholder — waiting for approval
           </div>
         </aside>
       </div>
