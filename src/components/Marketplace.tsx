@@ -355,7 +355,7 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
             gridColumn: 2,
             gridRow: 2,
             border: `1.5px dashed ${border}`,
-            background: tile,
+            background: cardBg,
             minHeight: 320,
             padding: 32,
             textAlign: "center",
@@ -368,7 +368,7 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
               borderRadius: 12,
               background: tileHover,
               color: muted,
-              fontFamily: FONT,
+              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
               fontSize: 16,
               fontWeight: 700,
             }}
@@ -377,7 +377,7 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
           </div>
           <div
             style={{
-              fontFamily: FONT,
+              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
               fontSize: 14,
               fontWeight: 600,
               color: heading,
@@ -388,7 +388,7 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
           </div>
           <div
             style={{
-              fontFamily: FONT,
+              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
               fontSize: 12.5,
               color: muted,
               maxWidth: 280,
