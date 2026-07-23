@@ -362,40 +362,16 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
           }}
         >
           <div
-            className="flex items-center justify-center mb-4"
             style={{
-              width: 44, height: 44,
-              borderRadius: 12,
-              background: tileHover,
+              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
+              fontSize: 13,
+              fontWeight: 500,
               color: muted,
-              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
-              fontSize: 16,
-              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
-            —
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
-              fontSize: 14,
-              fontWeight: 600,
-              color: heading,
-              marginBottom: 4,
-            }}
-          >
-            Sidebar content coming soon
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
-              fontSize: 12.5,
-              color: muted,
-              maxWidth: 280,
-              lineHeight: 1.5,
-            }}
-          >
-            Weekly highlights, spotlights, and quick-actions will live here.
+            Placeholder
           </div>
         </aside>
       </div>
