@@ -805,7 +805,7 @@ function BuildersRiskModal({ open, onClose }: BuildersRiskModalProps) {
           </h3>
         </div>
 
-        <div style={{ padding: "0 32px 32px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }}>
+        <div style={{ padding: "0 32px 32px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
           <div
             style={squareCardStyle}
             onMouseEnter={e => (e.currentTarget.style.borderColor = "#A614C3")}
@@ -813,7 +813,7 @@ function BuildersRiskModal({ open, onClose }: BuildersRiskModalProps) {
           >
             <ExternalLink size={19} strokeWidth={1.8} style={externalIconStyle} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/vendor-logos/rivet.png" alt="Rivet" style={{ maxWidth: "70%", maxHeight: "60%", objectFit: "contain" }} />
+            <img src="/vendor-logos/rivet.png" alt="Rivet" style={{ height: 38, width: "auto", maxWidth: "70%", objectFit: "contain" }} />
           </div>
           <div
             style={squareCardStyle}
@@ -822,7 +822,7 @@ function BuildersRiskModal({ open, onClose }: BuildersRiskModalProps) {
           >
             <ExternalLink size={19} strokeWidth={1.8} style={externalIconStyle} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/vendor-logos/one-shot.png" alt="One-Shot" style={{ maxWidth: "70%", maxHeight: "60%", objectFit: "contain" }} />
+            <img src="/vendor-logos/one-shot.png" alt="One-Shot" style={{ height: 38, width: "auto", maxWidth: "70%", objectFit: "contain" }} />
           </div>
         </div>
       </div>
