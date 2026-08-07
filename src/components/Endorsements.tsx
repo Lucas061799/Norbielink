@@ -124,15 +124,14 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
     setChooseOpen(false);
   };
 
-  // "View Existing" — drop straight into the submission success view so the
-  // user sees the submitted-request recap (the same page they'd reach after
-  // clicking Submit on a New Request). In the mock this shows the confirmation
-  // recap; wired against a real backend it would hydrate with the previously-
-  // submitted request's data.
+  // "View Existing" — button stays in the chooser as a placeholder for now.
+  // Both onward destinations (the intake page and the submission recap page)
+  // are out of scope in the current mock, so clicking just dismisses the modal.
+  // To re-enable the recap flow later, restore `if (pendingResult)
+  // setIntakePolicy(pendingResult);` and `setView("success");` below; the
+  // `view === "success"` render branch is still in place.
   const handleChooseExisting = () => {
-    if (pendingResult) setIntakePolicy(pendingResult);
     setChooseOpen(false);
-    setView("success");
   };
 
   const handleSubmit = () => setView("success");
