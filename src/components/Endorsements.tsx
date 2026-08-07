@@ -114,11 +114,14 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
     setChooseOpen(true);
   };
 
-  // "New Request" → snapshot the row and open the structured intake.
+  // "New Request" — button is intentionally a placeholder for now. It still
+  // exists in the chooser modal (product wants the affordance visible), but the
+  // structured intake page is out of scope, so clicking just dismisses the modal.
+  // To wire it up later, restore `if (pendingResult) setIntakePolicy(pendingResult);`
+  // and `setView("form");` below — everything else (EndorsementIntake import + the
+  // `view === "form"` render branch) is still in place.
   const handleChooseNew = () => {
-    if (pendingResult) setIntakePolicy(pendingResult);
     setChooseOpen(false);
-    setView("form");
   };
 
   // "View Existing" — drop straight into the submission success view so the
