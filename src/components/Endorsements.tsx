@@ -272,8 +272,8 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             {[
               { icon: Search,        title: "1. Find your policy",   body: "Search by policy number, submission ID, or insured name — we'll pull it up instantly." },
-              { icon: ClipboardList, title: "2. Tell us what changed", body: "Add coverage, update limits, swap a vehicle — just describe the change and attach docs." },
-              { icon: Send,          title: "3. We route it",         body: "Your request lands with the right carrier team the moment you hit submit." },
+              { icon: ClipboardList, title: "2. Tell us what changed", body: "Pick from the catalog — class codes, officers, locations, cancellations — and fill in just the fields that apply." },
+              { icon: Send,          title: "3. Review & submit",     body: "Preview your request, send it to the carrier, and download a PDF confirmation for your records." },
             ].map(step => {
               const Icon = step.icon;
               return (
