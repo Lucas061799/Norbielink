@@ -121,14 +121,15 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
     setView("form");
   };
 
-  // "View Existing" — open the same intake surface the user would see after
-  // filling out a New Request. For the design mock we just reuse the intake
-  // (empty) so click-through works; wired against a real backend this would
-  // hydrate the fields with the previously-submitted values for review.
+  // "View Existing" — drop straight into the submission success view so the
+  // user sees the submitted-request recap (the same page they'd reach after
+  // clicking Submit on a New Request). In the mock this shows the confirmation
+  // recap; wired against a real backend it would hydrate with the previously-
+  // submitted request's data.
   const handleChooseExisting = () => {
     if (pendingResult) setIntakePolicy(pendingResult);
     setChooseOpen(false);
-    setView("form");
+    setView("success");
   };
 
   const handleSubmit = () => setView("success");
