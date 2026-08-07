@@ -273,7 +273,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
             {[
               { icon: Search,        title: "1. Find Your Policy",   body: "Search by policy number, DBA, applicant name, or bond number — we'll pull it up instantly." },
               { icon: ClipboardList, title: "2. Tell Us What Changed", body: "Pick from the catalog — class codes, officers, locations, cancellations — and fill in just the fields that apply." },
-              { icon: Send,          title: "3. We Route It",         body: "Preview your request, send it to our team for review, and download a PDF confirmation for your records." },
+              { icon: Send,          title: "3. We Route It",         body: "Preview your request and send it to our team for review." },
             ].map(step => {
               const Icon = step.icon;
               return (
