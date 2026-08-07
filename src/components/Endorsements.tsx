@@ -271,9 +271,9 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
           {/* How it works */}
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             {[
-              { icon: Search,        title: "1. Find your policy",   body: "Search by policy number, DBA, applicant name, or bond number — we'll pull it up instantly." },
-              { icon: ClipboardList, title: "2. Tell us what changed", body: "Pick from the catalog — class codes, officers, locations, cancellations — and fill in just the fields that apply." },
-              { icon: Send,          title: "3. Review & submit",     body: "Preview your request, send it to our team for review, and download a PDF confirmation for your records." },
+              { icon: Search,        title: "1. Find Your Policy",   body: "Search by policy number, DBA, applicant name, or bond number — we'll pull it up instantly." },
+              { icon: ClipboardList, title: "2. Tell Us What Changed", body: "Pick from the catalog — class codes, officers, locations, cancellations — and fill in just the fields that apply." },
+              { icon: Send,          title: "3. We Route It",         body: "Preview your request, send it to our team for review, and download a PDF confirmation for your records." },
             ].map(step => {
               const Icon = step.icon;
               return (
@@ -301,7 +301,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
               style={{ borderBottom: `1px solid ${c.border}` }}>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" style={{ color: c.muted }} />
-                <span className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>Recent endorsement requests</span>
+                <span className="text-[14px] font-semibold" style={{ fontFamily: FONT, color: c.text }}>Recent Endorsement Requests</span>
               </div>
               <button className="text-[12px] font-semibold transition-opacity hover:opacity-70"
                 style={{ fontFamily: FONT, color: "#A614C3" }}>View all</button>
