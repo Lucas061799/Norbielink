@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import norbielinkLogo from "@/assets/norbielink-logo.png";
 import norbielinkLogoDark from "@/assets/norbielink-logo-dark.png";
@@ -10,7 +10,8 @@ import {
   LayoutGrid, Sparkles, FileText, Shield,
   Briefcase, CreditCard, BookOpen, FileEdit,
   Wrench, HelpCircle, UserCog, Building2, Globe, ChevronDown, Users,
-  User, LogOut, X, Images, Pencil, ZoomIn, ZoomOut, AlertTriangle,
+  User, LogOut, X, Images, Pencil, ZoomIn, ZoomOut, AlertTriangle, Rocket,
+  Mail, MessageSquare, Check,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -113,6 +114,19 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
   const [lastName,  setLastName]  = useState("Smith");
   const [savedFirstName, setSavedFirstName] = useState("John");
   const [savedLastName,  setSavedLastName]  = useState("Smith");
+  // Contact + security fields — profile-scoped so users can add their phone
+  // and choose how they receive the login one-time code. Admin-only fields
+  // (Admin toggle, Job title, Status, Address, Ext) live in the Agencies
+  // user editor, not here.
+  const [mobilePhone, setMobilePhone] = useState("");
+  const [smsOptIn, setSmsOptIn] = useState(false);
+  const [mfaPref, setMfaPref] = useState<"email" | "phone">("email");
+  const formatPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 10);
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
+    return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  };
   const userId = "johnsmith01"; // system-assigned, shown as @userId, never edited by the user
   // Inline validation (required-field) for the User Name fields. Duplicates are allowed.
   const [userNameError, setUserNameError] = useState<string | null>(null);
@@ -146,7 +160,7 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
 
   const darkMode = isDark;
 
-  const navItems = [
+  const navItems: { label: string; icon: React.ReactNode; badge?: string; hasChevron?: boolean; children?: { label: string }[] }[] = [
     { label: "Marketplace",       icon: <LayoutGrid className="w-[18px] h-[18px]" /> },
     { label: "Appetite Assistant", icon: <Sparkles  className="w-[16px] h-[16px]" /> },
     { label: "Quotes",            icon: <FileText   className="w-[18px] h-[18px]" /> },
@@ -154,14 +168,22 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
     { label: "Clients",           icon: <Users      className="w-[18px] h-[18px]" /> },
     { label: "ProSuite",          icon: <Briefcase  className="w-[18px] h-[18px]" />, badge: "PRO", hasChevron: true },
     { label: "Make a Payment",    icon: <CreditCard className="w-[18px] h-[18px]" /> },
-    { label: "Accounting",        icon: <BookOpen   className="w-[18px] h-[18px]" />, hasChevron: true },
+    { label: "Payment Info",      icon: <BookOpen   className="w-[18px] h-[18px]" />, hasChevron: true, children: [
+      { label: "Make a Payment" },
+      { label: "eCheck / Credit Authorization Form" },
+      { label: "Payment Types" },
+    ] },
     { label: "Endorsements",      icon: <FileEdit   className="w-[18px] h-[18px]" /> },
     { label: "Tools & Resources", icon: <Wrench     className="w-[18px] h-[18px]" />, hasChevron: true },
     { label: "Support",           icon: <HelpCircle className="w-[18px] h-[18px]" /> },
     { label: "Admin",             icon: <UserCog    className="w-[18px] h-[18px]" /> },
     { label: "Agencies",          icon: <Building2  className="w-[18px] h-[18px]" /> },
     { label: "Website",           icon: <Globe      className="w-[18px] h-[18px]" /> },
+    { label: "Pricing",           icon: <Rocket     className="w-[18px] h-[18px]" /> },
   ];
+
+  // Which parent nav is currently showing its children.
+  const [expandedNav, setExpandedNav] = useState<string | null>(null);
 
   return (
     <aside
@@ -288,18 +310,53 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
 
       {/* Nav Items */}
       <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto relative z-10" style={{ scrollbarWidth: "none" }}>
-        {navItems.map((item) => (
-          <NavItem
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            active={activeItem === item.label}
-            badge={item.badge}
-            hasChevron={item.hasChevron}
-            isDark={isDark}
-            onClick={() => onActiveChange?.(item.label)}
-          />
-        ))}
+        {navItems.map((item) => {
+          const hasKids = !!item.children?.length;
+          const isExpanded = expandedNav === item.label;
+          const childActive = hasKids && item.children!.some(ch => activeItem === `${item.label} · ${ch.label}`);
+          return (
+            <React.Fragment key={item.label}>
+              <NavItem
+                icon={item.icon}
+                label={item.label}
+                // Parent lights up as "active" whenever one of its children is the current page.
+                active={activeItem === item.label || childActive}
+                badge={item.badge}
+                hasChevron={item.hasChevron}
+                isDark={isDark}
+                onClick={() => {
+                  if (hasKids) setExpandedNav(prev => (prev === item.label ? null : item.label));
+                  else onActiveChange?.(item.label);
+                }}
+              />
+              {hasKids && isExpanded && (
+                <div className="pl-8 py-0.5 space-y-0.5">
+                  {item.children!.map(ch => {
+                    const childLabel = `${item.label} · ${ch.label}`;
+                    const isActive = activeItem === childLabel;
+                    return (
+                      <button
+                        key={ch.label}
+                        onClick={() => onActiveChange?.(childLabel)}
+                        className="w-full text-left px-2 py-1 rounded-md text-[12px] transition-colors"
+                        style={{
+                          fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
+                          fontWeight: isActive ? 600 : 500,
+                          color: isActive ? "#A614C3" : (isDark ? "#8B8FA8" : "#6B7280"),
+                          background: isActive ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent",
+                        }}
+                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"; }}
+                        onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {ch.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
       </nav>
 
       {/* Bottom Section */}
@@ -517,6 +574,102 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
                         {userNameError}
                       </div>
                     )}
+                  </div>
+
+                  {/* Contact info — personal fields the user can update. Admin-only
+                      fields (Admin toggle, Job Title, Status, Ext) stay in the
+                      Agencies user editor. */}
+                  <div className="px-6 pt-3 pb-2">
+                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>Mobile phone</label>
+                    <input
+                      value={mobilePhone}
+                      onChange={e => setMobilePhone(formatPhone(e.target.value))}
+                      inputMode="numeric"
+                      maxLength={12}
+                      placeholder="(555) 555-5555"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                      style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                      onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                      onBlur={e => (e.currentTarget.style.borderColor = border)}
+                    />
+                    <label className="mt-2 flex items-center gap-2 cursor-pointer" style={{ fontSize: 11.5, color: muted }}>
+                      <input
+                        type="checkbox"
+                        checked={smsOptIn}
+                        onChange={e => setSmsOptIn(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <span
+                        className="flex-shrink-0 flex items-center justify-center"
+                        style={{
+                          width: 14, height: 14, borderRadius: 3,
+                          border: `1.5px solid ${smsOptIn ? "transparent" : border}`,
+                          background: smsOptIn ? "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)" : "transparent",
+                        }}
+                      >
+                        {smsOptIn && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                      </span>
+                      I agree to receive SMS texts for verification
+                    </label>
+                  </div>
+
+                  <div className="px-6 pt-3 pb-2">
+                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>Email</label>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      defaultValue="john.smith@example.com"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                      style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                      onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                      onBlur={e => (e.currentTarget.style.borderColor = border)}
+                    />
+                  </div>
+
+                  <div className="px-6 pt-3 pb-2">
+                    <label className="text-[12px] font-semibold block mb-1.5" style={{ color: text }}>Address</label>
+                    <input
+                      placeholder="123 Main Street"
+                      className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                      style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                      onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                      onBlur={e => (e.currentTarget.style.borderColor = border)}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <div className="flex-1 min-w-0">
+                        <label className="text-[11px] block mb-1" style={{ color: muted }}>City</label>
+                        <input
+                          placeholder="Anytown"
+                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                          style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                          onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                          onBlur={e => (e.currentTarget.style.borderColor = border)}
+                        />
+                      </div>
+                      <div style={{ width: 72 }}>
+                        <label className="text-[11px] block mb-1" style={{ color: muted }}>State</label>
+                        <input
+                          placeholder="CA"
+                          maxLength={2}
+                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors uppercase"
+                          style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                          onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                          onBlur={e => (e.currentTarget.style.borderColor = border)}
+                        />
+                      </div>
+                      <div style={{ width: 96 }}>
+                        <label className="text-[11px] block mb-1" style={{ color: muted }}>Zip</label>
+                        <input
+                          placeholder="21354"
+                          inputMode="numeric"
+                          maxLength={5}
+                          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none transition-colors"
+                          style={{ background: cardBg, border: `1px solid ${border}`, color: text }}
+                          onFocus={e => (e.currentTarget.style.borderColor = "#A614C3")}
+                          onBlur={e => (e.currentTarget.style.borderColor = border)}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </>
               )}

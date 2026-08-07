@@ -55,25 +55,25 @@ const QUOTE_STATUSES = [
   "Issued", "Bind Incomplete",
 ];
 
-// Status palette: each status has its own distinct hue so the dot is meaningful
-// at a glance. Brand teal + magenta still anchor "done" and "urgent action";
-// the other slots use semantic colors (amber/red/blue/orange/emerald/gray).
+// Simplified 4-hue palette so the status column reads calmly:
+// teal = complete/positive · razz = active/in-progress (brand accent) ·
+// red = terminal negative · gray = neutral/inactive.
 const STATUS_DOT: Record<string, string> = {
   "Incomplete":            "#9CA3AF", // gray — missing data
-  "Submitted":             "#3B82F6", // blue — sent, awaiting review
-  "Under Review":          "#8B5CF6", // violet — active review
-  "Requested Info":        "#0EA5E9", // sky — info requested from insured
+  "Submitted":             "#A614C3", // razz — in flight
+  "Under Review":          "#A614C3", // razz — active review
+  "Requested Info":        "#A614C3", // razz — info requested
   "Declined":              "#EF4444", // red — terminal failure
-  "File Closed":           "#64748B", // slate — closed file
+  "File Closed":           "#9CA3AF", // gray — closed / inactive
   "Cancelled":             "#EF4444", // red — cancelled
-  "Renewal Pending":       "#F59E0B", // amber — awaiting renewal
-  "Renewal Created":       "#10B981", // emerald — renewal ready
-  "Approved":              "#10B981", // emerald — success/affirmative
+  "Renewal Pending":       "#A614C3", // razz — awaiting renewal
+  "Renewal Created":       "#73C9B7", // teal — renewal ready
+  "Approved":              "#73C9B7", // teal — success
   "Bound":                 "#73C9B7", // brand teal — bound
-  "Paid-Bind Incomplete":  "#F59E0B", // amber — paid but pending bind
-  "Submission Incomplete": "#9CA3AF",
+  "Paid-Bind Incomplete":  "#A614C3", // razz — awaiting bind finalization
+  "Submission Incomplete": "#9CA3AF", // gray — inactive
   "Issued":                "#73C9B7", // brand teal — issued
-  "Bind Incomplete":       "#9CA3AF",
+  "Bind Incomplete":       "#A614C3", // razz — awaiting bind finalization
 };
 
 // Used by the detail view's heading accent — same palette as the dots.
@@ -523,13 +523,14 @@ export default function Quotes({ isDark }: { isDark: boolean }) {
   // Counts per status — for the quick-filter KPI cards.
   const inReviewCount      = mockQuotes.filter(q => q.status === "Submitted" || q.status === "Under Review").length;
   const soldCount          = mockQuotes.filter(q => q.status === "Bound" || q.status === "Issued" || q.status === "Approved").length;
+  // "Action Required" folds together every status that needs agent attention.
   const actionReqCount     = mockQuotes.filter(q =>
     q.status === "Requested Info" || q.status === "Incomplete" || q.status === "Submission Incomplete" || q.status === "Bind Incomplete" || q.status === "Paid-Bind Incomplete"
   ).length;
   const statusSummary: { keys: string[]; label: string; sub: string; count: number }[] = [
     { keys: ["Submitted", "Under Review"],                                                                         label: "In Review",       sub: "Submitted · Under Review",              count: inReviewCount  },
     { keys: ["Bound", "Issued", "Approved"],                                                                       label: "Sold & Approved", sub: "Bound this period",                     count: soldCount      },
-    { keys: ["Requested Info", "Incomplete", "Submission Incomplete", "Bind Incomplete", "Paid-Bind Incomplete"],  label: "Action Required", sub: "Info requested · Incomplete",           count: actionReqCount },
+    { keys: ["Requested Info", "Incomplete", "Submission Incomplete", "Bind Incomplete", "Paid-Bind Incomplete"],  label: "Action Required", sub: "Info requested · Incomplete",           count: actionReqCount},
   ];
 
   return (

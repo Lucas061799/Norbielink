@@ -166,10 +166,16 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
   const surface  = isDark ? "#191D35" : "#FFFFFF";
   const tileHover = isDark ? "rgba(166,20,195,0.10)" : "rgba(166,20,195,0.06)";
 
+  const [filter, setFilter] = useState<"All" | PromoCategory>("All");
   const [inlandOpen, setInlandOpen] = useState(false);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [affinityOpen, setAffinityOpen] = useState(false);
   const [buildersOpen, setBuildersOpen] = useState(false);
+  // Hero is HIGHLIGHTS[0] and stays fixed regardless of filter. The rest of
+  // the list is what the tabs toggle. "All" bypasses the category check.
+  const visibleMinis = HIGHLIGHTS.slice(1).filter(
+    h => filter === "All" || h.category === filter
+  );
 
   return (
     <div
@@ -348,32 +354,271 @@ export default function Marketplace({ isDark = false }: MarketplaceProps) {
             HIGHLIGHTS[0] renders as the featured hero; the rest render as a
             compact "More this week" list so the layout scales to N items without
             pagination. */}
-        {/* RIGHT rail — placeholder. Real content (This Week's Highlights /
-            spotlights) lives in the internal design repo; deliberately
-            unpushed here until copy + editorial approvals land. */}
-        <aside
-          className="flex flex-col items-center justify-center rounded-2xl"
-          style={{
-            gridColumn: 2,
-            gridRow: 2,
-            border: `1.5px dashed ${border}`,
-            background: cardBg,
-            minHeight: 320,
-            padding: 32,
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-montserrat), Montserrat, sans-serif",
-              fontSize: 13,
-              fontWeight: 500,
-              color: muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Placeholder — waiting for approval
+        <aside className="flex flex-col gap-5" style={{ gridColumn: 2, gridRow: 2 }}>
+          {/* Section eyebrow — signals editorial rather than ad */}
+          <div className="flex items-center gap-2">
+            <span
+              className="flex items-center justify-center rounded-md"
+              style={{ width: 20, height: 20, background: "linear-gradient(135deg,#5C2ED4 0%,#A614C3 65%)" }}
+            >
+              <Sparkles className="w-3 h-3 text-white" strokeWidth={2.25} />
+            </span>
+            <span
+              className="text-[11px] font-semibold uppercase"
+              style={{ color: heading, letterSpacing: "0.14em" }}
+            >
+              This week&apos;s highlights
+            </span>
+          </div>
+
+          {/* Featured spotlight — HIGHLIGHTS[0] */}
+          {(() => {
+            const hero = HIGHLIGHTS[0];
+            return (
+              <div
+                className="relative rounded-2xl overflow-hidden flex-shrink-0"
+                style={{
+                  minHeight: 220,
+                  background: hero.gradient,
+                }}
+              >
+                {/* Full-cover promo art — sits behind text; `objectPosition:
+                    center right` keeps the banner's key illustration visible
+                    on the right while the left is dimmed for text legibility. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={hero.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center right",
+                  }}
+                />
+                {/* Legibility overlay — nearly-opaque deep-purple wash
+                    across the text column (~80% width), then a sharp fade
+                    to a much lighter tint on the right ~20% so the FF stamp
+                    reads through crisply instead of getting washed out. */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(20,5,60,0.97) 0%, rgba(20,5,60,0.94) 80%, rgba(58,20,128,0.20) 100%)",
+                  }}
+                />
+
+                <div className="relative z-10 h-full p-6 flex flex-col gap-5">
+                  {/* Title keeps its natural card-wide wrap for a poster
+                      feel; only the body gets a max-width so the smaller
+                      copy doesn't stretch into the FF-stamp fade zone. */}
+                  <div className="flex flex-col gap-3">
+                    <span
+                      className="self-start text-[10px] font-bold uppercase px-2.5 py-1 rounded-md"
+                      style={{
+                        color: "#ffffff",
+                        background: "rgba(255,255,255,0.20)",
+                        letterSpacing: "0.14em",
+                        border: "1px solid rgba(255,255,255,0.28)",
+                      }}
+                    >
+                      {hero.tag}
+                    </span>
+                    <div className="text-white text-[20px] font-bold leading-tight">
+                      {hero.title}
+                    </div>
+                    {hero.body && (
+                      <div className="text-white text-[12.5px] leading-relaxed" style={{ maxWidth: 300 }}>
+                        {hero.body}
+                      </div>
+                    )}
+                  </div>
+                  {hero.cta && (
+                    <button
+                      className="self-start px-4 py-2 rounded-lg text-[12px] font-semibold transition-all inline-flex items-center gap-1.5"
+                      style={{
+                        background: "#ffffff",
+                        color: "#5C2ED4",
+                        border: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.10)"; }}
+                    >
+                      {hero.cta}
+                      <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Category filter — five pills toggle which slider promos show.
+              The hero above is fixed; only the slider below responds. */}
+          <div className="flex flex-wrap gap-1.5">
+            {FILTERS.map(f => {
+              const active = filter === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className="text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors"
+                  style={{
+                    background: active
+                      ? "linear-gradient(90deg,#5C2ED4 0%,#A614C3 100%)"
+                      : "transparent",
+                    color: active ? "#ffffff" : muted,
+                    border: active ? "1px solid transparent" : `1px solid ${border}`,
+                    cursor: "pointer",
+                  }}
+                >
+                  {f}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Vertical list of image-left mini cards. Real promos render first;
+              remaining slots (up to 5 total) fill with dashed "Coming soon"
+              placeholders so the aside height stays roughly constant across
+              filter switches. */}
+          <div className="flex flex-col gap-3">
+            {visibleMinis.map(h => {
+              const Thumb = h.thumb;
+              return (
+                <a
+                  key={h.title}
+                  href="#"
+                  className="group rounded-2xl p-3 flex items-stretch gap-3 transition-all overflow-hidden"
+                  style={{
+                    height: 120,
+                    background: surface,
+                    border: `1px solid ${border}`,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.background = `linear-gradient(${surface}, ${surface}) padding-box, linear-gradient(to right, #5C2ED4 0%, #A614C3 65%) border-box`;
+                    e.currentTarget.style.border = "1px solid transparent";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.background = surface;
+                    e.currentTarget.style.border = `1px solid ${border}`;
+                  }}
+                >
+                  <span
+                    className="relative flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center"
+                    style={{
+                      width: 96,
+                      background: h.image ? undefined : h.imageGradient,
+                    }}
+                    aria-hidden="true"
+                  >
+                    {h.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={h.image}
+                        alt=""
+                        className="absolute inset-0"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          objectPosition: h.imagePosition ?? "right center",
+                        }}
+                      />
+                    ) : Thumb ? (
+                      <Thumb className="w-7 h-7 text-white" strokeWidth={1.75} />
+                    ) : null}
+                  </span>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                      <div
+                        className="text-[10px] font-bold uppercase mb-0.5"
+                        style={{ color: h.tagColor, letterSpacing: "0.10em" }}
+                      >
+                        {h.tag}
+                      </div>
+                      <div className="text-[13px] font-bold leading-tight mb-1" style={{ color: heading }}>
+                        {h.title}
+                      </div>
+                      <div className="text-[11px] leading-snug" style={{
+                        color: muted,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {h.body}
+                      </div>
+                    </div>
+                    <span
+                      className="mt-1.5 text-[11px] font-semibold inline-flex items-center gap-1 transition-transform group-hover:translate-x-0.5"
+                      style={{ color: h.tagColor }}
+                    >
+                      {h.cta}
+                      <ChevronRight className="w-3 h-3" strokeWidth={2.5} />
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+            {/* Empty state — shown only when a filter has zero live cards
+                so the list doesn't collapse to nothing. Kept as a single
+                dashed slot instead of padding-to-N so it reads as "we're
+                cooking something up" rather than as an intentional layout. */}
+            {visibleMinis.length === 0 && (
+              <div
+                className="rounded-2xl flex items-center justify-center text-[12px] text-center py-8 px-4"
+                style={{
+                  border: `1px dashed ${border}`,
+                  color: muted,
+                }}
+              >
+                {EMPTY_STATE_COPY[filter]}
+              </div>
+            )}
+          </div>
+
+          {/* Quick-link cards — compact horizontal rows */}
+          <div className="grid grid-cols-2 gap-3">
+            <QuickCard
+              icon={<Lightbulb className="w-4 h-4 text-white" strokeWidth={2} />}
+              title="NorbieLink Tour"
+              subtitle="Guided tour"
+              surface={surface}
+              border={border}
+              heading={heading}
+              muted={muted}
+            />
+            <QuickCard
+              icon={<ClipboardCheck className="w-4 h-4 text-white" strokeWidth={2} />}
+              title="Appetite Search"
+              subtitle="Find a market"
+              surface={surface}
+              border={border}
+              heading={heading}
+              muted={muted}
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="mt-2 text-center leading-relaxed" style={{ color: subtle }}>
+            <div className="text-[10px]">
+              Copyright © 2026 Builders &amp; Tradesmen&apos;s Insurance Services, Inc. (lic.#:0D10271)
+            </div>
+            <div className="text-[10px]">
+              A Division of The Amynta Group |{" "}
+              <a href="#" className="hover:underline">Privacy Policy</a>
+              {" | "}
+              <a href="#" className="hover:underline">Terms of Use</a>
+            </div>
           </div>
         </aside>
       </div>
@@ -787,6 +1032,7 @@ function BuildersRiskModal({ open, onClose }: BuildersRiskModalProps) {
           overflowY: "auto",
         }}
       >
+        {/* Header */}
         <div style={{ padding: "29px 26px 16px", display: "flex", flexDirection: "column", gap: 19 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ padding: "4px 14px", border: "1.5px solid #A614C3", borderRadius: 15, color: "#A614C3", fontWeight: 500, fontSize: 12, lineHeight: "14px" }}>
@@ -805,6 +1051,7 @@ function BuildersRiskModal({ open, onClose }: BuildersRiskModalProps) {
           </h3>
         </div>
 
+        {/* Body — 2-col square-card grid */}
         <div style={{ padding: "0 32px 32px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
           <div
             style={squareCardStyle}

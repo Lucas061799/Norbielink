@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { Eye, EyeOff, X, Check, Lock, IdCard, HelpCircle, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, X, Check, Lock, IdCard, HelpCircle, Mail, MessageSquare, AlertCircle, ChevronRight } from "lucide-react";
 import norbielinkLogoDark from "@/assets/norbielink-logo-dark.png";
 import btisLogoDark from "@/assets/btislogo-dark.png";
 import loginN from "@/assets/login-n.svg";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
-type Step = "login" | "signup" | "verify" | "create" | "reset";
+type Step = "login" | "mfa" | "addphone" | "signup" | "verify" | "create" | "reset";
+type MfaMethod = "email" | "phone";
 
 interface WebsiteProps {
   isDark?: boolean;
@@ -18,6 +19,11 @@ interface WebsiteProps {
 
 export default function Website({ isDark = false }: WebsiteProps) {
   const [step, setStep] = useState<Step>("login");
+  // Mock: does the returning user have a phone number on file? Controls whether
+  // the MFA method-picker step ("mfa") appears between login and the code entry.
+  // Email-only users skip method selection and the code is sent to their inbox.
+  const [userHasPhone] = useState(true);
+  const [mfaMethod, setMfaMethod] = useState<MfaMethod>("email");
   // description is a ReactNode so we can highlight key words (e.g. "Principal's") with the brand magenta.
   // `kind` switches the icon + chip color: "email" for confirmation messages (brand purple
   // Mail icon), "warning" for validation nudges like the agency-code-detected case (amber
@@ -133,7 +139,7 @@ export default function Website({ isDark = false }: WebsiteProps) {
         >
         {/* Step indicator (top-right) — clickable for demo navigation */}
         <div className="absolute top-6 right-8 flex items-center gap-2">
-          {(["login", "signup", "verify", "create", "reset"] as Step[]).map((s, i) => (
+          {(["login", "mfa", "addphone", "signup", "verify", "create", "reset"] as Step[]).map((s, i) => (
             <button
               key={s}
               onClick={() => setStep(s)}
@@ -157,9 +163,11 @@ export default function Website({ isDark = false }: WebsiteProps) {
           <div className="w-full" style={{ maxWidth: step === "signup" ? 760 : 520, transform: "scale(0.85)", transformOrigin: "center" }}>
             {step === "login"  && <LoginView  c={c} font={font} inputStyle={inputStyle} labelStyle={labelStyle} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad}
               onContinue={() => {
-                // Continue stays a no-op for now — clicking shouldn't navigate the demo away
-                // from the login page. Re-wire to `setStep("verify")` (or a real auth call)
-                // when the next step is ready.
+                // Users with a phone on file → MFA method picker.
+                // Users with only email → "add phone" reminder page, from
+                // which they can still finish signing in with email.
+                if (userHasPhone) setStep("mfa");
+                else setStep("addphone");
               }}
               onResetLinkClicked={() => setStep("reset")}
               onCreateLinkClicked={() => setStep("signup")}
@@ -195,8 +203,16 @@ export default function Website({ isDark = false }: WebsiteProps) {
                 setStep("reset");
               }}
             />}
+            {step === "mfa" && <MfaMethodView c={c} font={font} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad}
+              onSelect={(m) => { setMfaMethod(m); setStep("verify"); }}
+              onBack={() => setStep("login")}
+            />}
+            {step === "addphone" && <AddPhoneView c={c} font={font} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad}
+              onContinueEmail={() => { setMfaMethod("email"); setStep("verify"); }}
+              onBack={() => setStep("login")}
+            />}
             {step === "signup" && <SignupView c={c} font={font} inputStyle={inputStyle} labelStyle={labelStyle} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} isDark={isDark} onContinue={() => setStep("verify")} onSignInClicked={() => setStep("login")} />}
-            {step === "verify" && <VerifyView c={c} font={font} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} onVerify={() => setStep("create")} />}
+            {step === "verify" && <VerifyView c={c} font={font} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} method={mfaMethod} onVerify={() => setStep("create")} />}
             {step === "create" && <CreateView c={c} font={font} inputStyle={inputStyle} labelStyle={labelStyle} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} isDark={isDark} onContinue={() => setStep("login")} />}
             {step === "reset"  && <ResetPasswordView c={c} font={font} inputStyle={inputStyle} labelStyle={labelStyle} primaryBtnStyle={primaryBtnStyle} btnGrad={btnGrad} isDark={isDark} onContinue={() => setStep("login")} />}
           </div>
@@ -280,7 +296,6 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
   const [remember, setRemember] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
-  const [userIdTipOpen, setUserIdTipOpen] = useState(false);
   // Demo: always allow Continue. Production would require identifier + password.
   const enabled = true;
 
@@ -299,70 +314,20 @@ function LoginView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, 
           NorbieLink!
         </span>
       </h1>
-      <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted }}>
-        Sign in to continue to your account.
+      <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted, lineHeight: 1.5 }}>
+        Your User ID can be found in your invitation email. Otherwise, sign in with your email address.{" "}
+        <span style={{ fontWeight: 600, color: "#A614C3" }}>Agency codes cannot be used as your User ID.</span>
       </p>
 
       <div className="mb-5">
-        {/* Label suffix carries ONLY the warning ("not your agency code") since the input's
-            placeholder already says "Enter your email or User ID" — duplicating that in the
-            label suffix would be redundant. The two pieces complement each other:
-              label → what NOT to use
-              placeholder → what TO use */}
-        {/* "User ID" label + a HelpCircle that reveals the full "what is a User ID" tooltip
-            on hover/focus. The detail (format example, email fallback, agency-code caveat)
-            is too long to live inline next to the label — gating it behind the icon keeps
-            the label calm while still surfacing the explanation to anyone unsure. */}
-        <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 6, lineHeight: 1 }}>
-          <span style={{ lineHeight: 1 }}>User ID</span>
-          <span
-            style={{ position: "relative", display: "inline-flex", cursor: "help" }}
-            onMouseEnter={() => setUserIdTipOpen(true)}
-            onMouseLeave={() => setUserIdTipOpen(false)}
-            onFocus={() => setUserIdTipOpen(true)}
-            onBlur={() => setUserIdTipOpen(false)}
-            tabIndex={0}
-            aria-describedby="user-id-tooltip"
-          >
-            <HelpCircle style={{ width: 13, height: 13, color: c.muted, display: "block" }} strokeWidth={2} />
-            {userIdTipOpen && (
-              <div
-                id="user-id-tooltip"
-                role="tooltip"
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 8px)",
-                  left: -8,
-                  width: 280,
-                  padding: "12px 14px",
-                  background: c.cardBg,
-                  color: c.text,
-                  fontSize: 12,
-                  lineHeight: "17px",
-                  fontWeight: 400,
-                  border: `1px solid ${c.border}`,
-                  borderRadius: 12,
-                  boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-                  zIndex: 10,
-                  pointerEvents: "none",
-                  fontFamily: FONT,
-                }}
-              >
-                User IDs are your first name, last name, and numbers (e.g.,{" "}
-                <span style={{ fontFamily: "monospace", color: "#4B5563" }}>johnsmith00110</span>).
-                If that doesn&apos;t work, try your email address.{" "}
-                <span style={{ fontWeight: 600, color: "#4B5563" }}>Agency codes cannot be used as User IDs.</span>
-              </div>
-            )}
-          </span>
-        </label>
+        <label style={labelStyle}>User ID</label>
         <input type="text" value={identifier} onChange={e => setIdentifier(e.target.value)}
           onBlur={() => {
             // Detect on blur (when the user leaves the field) rather than every keystroke —
             // avoids firing the toast while they're still typing their actual identifier.
             if (looksLikeAgencyCode(identifier)) onAgencyCodeDetected(identifier.trim());
           }}
-          placeholder="Enter your User ID"
+          placeholder="Cannot be your Agency code"
           style={inputStyle} />
         {/* No persistent hint here — most users don't have an agency code at all, so a
             preemptive "agency code isn't a login" line would be both presumptuous and noisy
@@ -763,13 +728,243 @@ function ResetModal({ c, font, inputStyle, labelStyle, btnGrad, onClose, onSimul
   ), document.body);
 }
 
+/* ──────────────────────────── MFA METHOD SELECTION ──────────────────────────── */
+// Shown between login and verify only when the returning user has both an
+// email AND a phone on file. Email-only users skip straight to the verify
+// screen with the code pre-sent to their inbox.
+function MfaMethodView({ c, font, primaryBtnStyle, btnGrad, onSelect, onBack }: {
+  c: Record<string, string>;
+  font: React.CSSProperties;
+  primaryBtnStyle: (enabled: boolean) => React.CSSProperties;
+  btnGrad: string;
+  onSelect: (method: MfaMethod) => void;
+  onBack: () => void;
+}) {
+  void primaryBtnStyle;
+  const options: { key: MfaMethod; icon: typeof Mail; title: string; detail: string }[] = [
+    { key: "email", icon: Mail,          title: "Email me a code",     detail: "l***********e@amyntagroup.com" },
+    { key: "phone", icon: MessageSquare, title: "Text me a code",      detail: "(•••) •••-4102" },
+  ];
+  return (
+    <>
+      <h1 className="mb-3" style={{ ...font, fontSize: 28, fontWeight: 600, lineHeight: "34px", color: c.text, whiteSpace: "nowrap" }}>
+        Choose your{" "}
+        <span
+          style={{
+            background: btnGrad,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Verification Method
+        </span>
+      </h1>
+      <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted }}>
+        Pick how you&apos;d like to receive your one-time code.
+      </p>
+
+      <div className="flex flex-col gap-3 mb-6">
+        {options.map(o => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => onSelect(o.key)}
+              className="w-full flex items-center gap-3 text-left transition-colors group"
+              style={{
+                fontFamily: FONT,
+                background: c.cardBg,
+                border: `1px solid ${c.border}`,
+                borderRadius: 12,
+                padding: "14px 16px",
+                cursor: "pointer",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#A614C3"; e.currentTarget.style.background = "rgba(166,20,195,0.04)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}
+            >
+              <span
+                className="flex-shrink-0 flex items-center justify-center"
+                style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: "rgba(166,20,195,0.10)",
+                  color: "#A614C3",
+                }}
+              >
+                <Icon className="w-4 h-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <div style={{ fontSize: 14, fontWeight: 600, color: c.text }}>{o.title}</div>
+                <div style={{ fontSize: 12.5, color: c.muted, marginTop: 1 }}>{o.detail}</div>
+              </span>
+              <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onBack}
+        className="transition-opacity hover:opacity-70"
+        style={{
+          fontFamily: FONT,
+          fontSize: 13,
+          color: c.muted,
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+        }}
+      >
+        ← Back to sign in
+      </button>
+    </>
+  );
+}
+
+/* ──────────────────────────── ADD PHONE (nudge, shown when only email is on file) ──────────────────────────── */
+function AddPhoneView({ c, font, primaryBtnStyle, btnGrad, onContinueEmail, onBack }: {
+  c: Record<string, string>;
+  font: React.CSSProperties;
+  primaryBtnStyle: (enabled: boolean) => React.CSSProperties;
+  btnGrad: string;
+  onContinueEmail: () => void;
+  onBack: () => void;
+}) {
+  void primaryBtnStyle;
+  // Same shape as MfaMethodView options — but here "phone" is unavailable
+  // (no mobile on file) so it renders as a disabled row.
+  const options: { key: MfaMethod; icon: typeof Mail; title: string; detail: string; disabled: boolean }[] = [
+    { key: "email", icon: Mail,          title: "Email me a code",  detail: "l***********e@amyntagroup.com", disabled: false },
+    { key: "phone", icon: MessageSquare, title: "Text me a code",   detail: "No mobile number on file",       disabled: true  },
+  ];
+  return (
+    <>
+      <h1 className="mb-3" style={{ ...font, fontSize: 28, fontWeight: 600, lineHeight: "34px", color: c.text, whiteSpace: "nowrap" }}>
+        Choose your{" "}
+        <span
+          style={{
+            background: btnGrad,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Verification Method
+        </span>
+      </h1>
+      <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted }}>
+        Pick how you&apos;d like to receive your one-time code.
+      </p>
+
+      <div className="flex flex-col gap-3 mb-6">
+        {options.map(o => {
+          const Icon = o.icon;
+          const disabled = o.disabled;
+          return (
+            <button
+              key={o.key}
+              type="button"
+              disabled={disabled}
+              onClick={() => { if (!disabled) onContinueEmail(); }}
+              className="w-full text-left transition-colors group"
+              style={{
+                fontFamily: FONT,
+                background: c.cardBg,
+                border: `1px solid ${c.border}`,
+                borderRadius: 12,
+                padding: "14px 16px",
+                cursor: disabled ? "not-allowed" : "pointer",
+              }}
+              onMouseEnter={e => { if (disabled) return; e.currentTarget.style.borderColor = "#A614C3"; e.currentTarget.style.background = "rgba(166,20,195,0.04)"; }}
+              onMouseLeave={e => { if (disabled) return; e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.cardBg; }}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex-shrink-0 flex items-center justify-center"
+                  style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: disabled ? (c.hoverBg || "rgba(0,0,0,0.05)") : "rgba(166,20,195,0.10)",
+                    color: disabled ? c.muted : "#A614C3",
+                  }}
+                >
+                  <Icon className="w-4 h-4" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <div style={{ fontSize: 14, fontWeight: 600, color: disabled ? c.muted : c.text }}>{o.title}</div>
+                  <div style={{ fontSize: 12.5, color: c.muted, marginTop: 1 }}>{o.detail}</div>
+                </span>
+                {!disabled && <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: c.muted }} />}
+              </div>
+
+              {/* Inline explanation — only for the unavailable option. Text
+                  is indented 48px (36px icon + 12px gap) so it flows under
+                  the "Text me a code" text column above, and paragraphs use
+                  a small "How to enable" eyebrow for structure. */}
+              {disabled && (
+                <div
+                  className="mt-3 pt-3"
+                  style={{
+                    borderTop: `1px solid ${c.border}`,
+                    paddingLeft: 48,
+                    fontSize: 13,
+                    color: c.text,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#A614C3",
+                      marginBottom: 6,
+                    }}
+                  >
+                    How to enable
+                  </div>
+                  <p style={{ margin: 0 }}>
+                    Sign in with an email code, then in the NorbieLink Marketplace click your name, select{" "}
+                    <span style={{ color: "#A614C3", fontWeight: 600 }}>Profile</span>, and add your mobile number. Text verification will be available on your next login.
+                  </p>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onBack}
+        className="transition-opacity hover:opacity-70"
+        style={{
+          fontFamily: FONT,
+          fontSize: 13,
+          color: c.muted,
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+        }}
+      >
+        ← Back to sign in
+      </button>
+    </>
+  );
+}
+
 /* ──────────────────────────── VERIFY ──────────────────────────── */
-function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
+function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify, method = "email" }: {
   c: Record<string, string>;
   font: React.CSSProperties;
   primaryBtnStyle: (enabled: boolean) => React.CSSProperties;
   btnGrad: string;
   onVerify: () => void;
+  method?: MfaMethod;
 }) {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [seconds, setSeconds] = useState(594); // 9:54 like original
@@ -813,7 +1008,9 @@ function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
       </h1>
       <p className="mb-8" style={{ ...font, fontSize: 14, color: c.muted }}>
         We sent a 6-digit code to{" "}
-        <span style={{ fontWeight: 600, color: c.text }}>l***********e@amyntagroup.com</span>
+        <span style={{ fontWeight: 600, color: c.text }}>
+          {method === "phone" ? "(•••) •••-4102" : "l***********e@amyntagroup.com"}
+        </span>
       </p>
 
       <div className="flex gap-2 mb-3 w-full">
@@ -885,7 +1082,7 @@ function VerifyView({ c, font, primaryBtnStyle, btnGrad, onVerify }: {
   );
 }
 
-/* ──────────────────────────────── SIGNUP ──────────────────────────────── */
+/* ──────────────────────────── CREATE PASSWORD ──────────────────────────── */
 function SignupView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, isDark, onContinue, onSignInClicked }: {
   c: Record<string, string>;
   font: React.CSSProperties;
@@ -1061,11 +1258,11 @@ function SignupView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad,
       <div className="mb-6 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {rules.map(r => (
           <div key={r.label} className="flex items-center gap-2"
-            style={{ ...font, fontSize: 12, color: r.ok ? "#10B981" : c.muted }}>
+            style={{ ...font, fontSize: 12, color: r.ok ? "#73C9B7" : c.muted }}>
             <span className="flex items-center justify-center flex-shrink-0"
               style={{ width: 14, height: 14, borderRadius: 9999,
-                background: r.ok ? "rgba(16,185,129,0.14)" : (isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB") }}>
-              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#10B981" }} strokeWidth={3} />}
+                background: r.ok ? "rgba(115,201,183,0.14)" : (isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB") }}>
+              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#73C9B7" }} strokeWidth={3} />}
             </span>
             {r.label}
           </div>
@@ -1113,7 +1310,6 @@ function SignupView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad,
   );
 }
 
-/* ──────────────────────────── CREATE PASSWORD ──────────────────────────── */
 function CreateView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad, isDark, onContinue }: {
   c: Record<string, string>;
   font: React.CSSProperties;
@@ -1214,11 +1410,11 @@ function CreateView({ c, font, inputStyle, labelStyle, primaryBtnStyle, btnGrad,
       <div className="mb-6 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {rules.map(r => (
           <div key={r.label} className="flex items-center gap-2"
-            style={{ ...font, fontSize: 12, color: r.ok ? "#10B981" : c.muted }}>
+            style={{ ...font, fontSize: 12, color: r.ok ? "#73C9B7" : c.muted }}>
             <span className="flex items-center justify-center flex-shrink-0"
               style={{ width: 14, height: 14, borderRadius: 9999,
-                background: r.ok ? "rgba(16,185,129,0.12)" : (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6") }}>
-              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#10B981" }} strokeWidth={3} />}
+                background: r.ok ? "rgba(115,201,183,0.12)" : (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6") }}>
+              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#73C9B7" }} strokeWidth={3} />}
             </span>
             {r.label}
           </div>
@@ -1398,11 +1594,11 @@ function ResetPasswordView({ c, font, inputStyle, labelStyle, primaryBtnStyle, b
       <div className="mb-6 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {rules.map(r => (
           <div key={r.label} className="flex items-center gap-2"
-            style={{ ...font, fontSize: 12, color: r.ok ? "#10B981" : c.muted }}>
+            style={{ ...font, fontSize: 12, color: r.ok ? "#73C9B7" : c.muted }}>
             <span className="flex items-center justify-center flex-shrink-0"
               style={{ width: 14, height: 14, borderRadius: 9999,
-                background: r.ok ? "rgba(16,185,129,0.12)" : (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6") }}>
-              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#10B981" }} strokeWidth={3} />}
+                background: r.ok ? "rgba(115,201,183,0.12)" : (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6") }}>
+              {r.ok && <Check className="w-2.5 h-2.5" style={{ color: "#73C9B7" }} strokeWidth={3} />}
             </span>
             {r.label}
           </div>

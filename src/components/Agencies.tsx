@@ -9,8 +9,10 @@ import {
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
   CheckSquare, Maximize2, Minimize2, Lock, Unlock, Copy, CopyPlus,
   MoreVertical, UserCircle, UserX, UserMinus, Download, Upload, UserCog, Pencil, Globe, Eye, Mail, Phone, Bell, Bookmark, FilePen, AlertCircle, Filter, Paperclip, Check, Send,
+  Landmark,
 } from "lucide-react";
 import { AddressAutocomplete } from "./AddressAutocomplete";
+import { StyledSelect } from "./StyledSelect";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 const AGENCY_PHONE = "+1 (888) 555-0188";
@@ -289,6 +291,160 @@ const mockAgencies: Agency[] = [
   { id: "12", name: "Ironclad Insurance",   code: "IRON12",  city: "Dallas",     state: "TX", totalUsers: 15, status: "Appointed",   isStarred: false, affiliations: ["LTA Marketing Group (LT006)", "Pacific Crest (PA004)", "TWFG (TW037)"], lastLogin: "04/24/2026" },
 ];
 
+// ── ITC (accounting) records ─────────────────────────────────────────────
+// Super-admin-only surface — mirrors the downstream ITC producer record
+// (ViewProducer API). Field set matches the AddProducer / EditProducer
+// payloads so the Norbielink UI stays 1:1 with what ITC round-trips. A
+// `null` value means the agency exists in Norbielink but has NOT been
+// registered in ITC yet (empty state).
+type ITCStatus = "Active" | "Suspended" | "Terminated" | "Pending";
+type AgentBroker = "Agent" | "Broker";
+type Tax1099Type = "Individual" | "Corporation" | "Partnership" | "LLC";
+
+interface ITCRecord {
+  // Producer
+  producerCode: string;
+  agentOrBroker: AgentBroker;
+  shortName: string;
+  name: string;
+  dba: string;
+  status: ITCStatus;
+
+  // Contact
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  telephone: string;
+  email: string;
+  accountingEmail: string;
+  statementEmail: string;
+
+  // Appointment & compliance
+  appointmentDate: string;   // MM/DD/YYYY
+  licenseNo: string;
+  licenseExpires: string;
+  eoPolicyNo: string;
+  eoPolicyExpires: string;
+  taxId: string;
+  tax1099Type: Tax1099Type;
+  tax1099Name: string;
+
+  // Preferences
+  emailStatements: boolean;
+  directDeposits: boolean;
+  directDepositsCommissionOnly: boolean;
+  farmersAgent: boolean;
+  smartChoiceAgent: boolean;
+  piibAgent: boolean;
+
+  // Consolidated Billing
+  useConsolidatedBillingId: boolean;
+  consolidatedBillingId: string;
+  isConsolidatedBillingProducer: boolean;
+
+  // Affiliation
+  isAffiliatedWith: boolean;
+  affiliatedWithId: string;
+  isAffiliationMain: boolean;
+  subProducerName: string;
+}
+
+const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
+  ACME01: {
+    producerCode: "AC192", agentOrBroker: "Agent", shortName: "AC192", name: "ACME INSURANCE AGENCY", dba: "", status: "Active",
+    address: "1111 6th Ave", city: "Des Moines", state: "IA", zip: "50314",
+    telephone: "5152221000", email: "jason@acmeins.com", accountingEmail: "d.kim@acmeins.com", statementEmail: "d.kim@acmeins.com",
+    appointmentDate: "03/24/2026", licenseNo: "LC-88210", licenseExpires: "03/24/2028",
+    eoPolicyNo: "EO-4421", eoPolicyExpires: "03/24/2027", taxId: "121222334455", tax1099Type: "LLC", tax1099Name: "Acme Insurance Agency LLC",
+    emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: true, piibAgent: false,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: true, affiliatedWithId: "ACRS01", isAffiliationMain: false, subProducerName: "",
+  },
+  SUMIT22: {
+    producerCode: "SU447", agentOrBroker: "Agent", shortName: "SU447", name: "SUMMIT SOLUTIONS INC", dba: "Summit Sol", status: "Active",
+    address: "200 N Michigan", city: "Chicago", state: "IL", zip: "60601",
+    telephone: "3125550100", email: "m.chen@summitsol.com", accountingEmail: "billing@summitsol.com", statementEmail: "billing@summitsol.com",
+    appointmentDate: "01/12/2024", licenseNo: "LC-22110", licenseExpires: "01/15/2027",
+    eoPolicyNo: "EO-1120", eoPolicyExpires: "01/15/2027", taxId: "930011223", tax1099Type: "Corporation", tax1099Name: "Summit Solutions Inc",
+    emailStatements: true, directDeposits: false, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: true,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+  PION33: null, // Not registered in ITC — demo empty state
+  LAKE04: {
+    producerCode: "LK211", agentOrBroker: "Broker", shortName: "LK211", name: "LAKEFRONT COVERAGE", dba: "", status: "Active",
+    address: "820 Lakefront Blvd", city: "Denver", state: "CO", zip: "80203",
+    telephone: "3035551010", email: "o.bennett@lakefrontcov.com", accountingEmail: "", statementEmail: "",
+    appointmentDate: "08/02/2023", licenseNo: "LC-11245", licenseExpires: "08/02/2027",
+    eoPolicyNo: "EO-9911", eoPolicyExpires: "08/02/2026", taxId: "845123765", tax1099Type: "Corporation", tax1099Name: "Lakefront Coverage",
+    emailStatements: true, directDeposits: true, directDepositsCommissionOnly: true,
+    farmersAgent: false, smartChoiceAgent: false, piibAgent: true,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+  RIDG05: {
+    producerCode: "RI083", agentOrBroker: "Agent", shortName: "RI083", name: "RIDGELINE INSURANCE", dba: "", status: "Suspended",
+    address: "445 Ridgeway Dr", city: "Des Moines", state: "IA", zip: "50310",
+    telephone: "5155552020", email: "n.avery@ridgelineins.com", accountingEmail: "n.avery@ridgelineins.com", statementEmail: "n.avery@ridgelineins.com",
+    appointmentDate: "11/15/2022", licenseNo: "LC-33902", licenseExpires: "11/15/2026",
+    eoPolicyNo: "EO-2210", eoPolicyExpires: "11/15/2025", taxId: "223456781", tax1099Type: "Individual", tax1099Name: "Nicole Avery",
+    emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
+    farmersAgent: true, smartChoiceAgent: false, piibAgent: false,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+  HARB06: null,
+  MIDL07: {
+    producerCode: "MD020", agentOrBroker: "Agent", shortName: "MD020", name: "MIDLAND INSURANCE PARTNERS", dba: "", status: "Pending",
+    address: "77 Main St", city: "Wichita", state: "KS", zip: "67202",
+    telephone: "3165550707", email: "contact@midlandins.com", accountingEmail: "", statementEmail: "",
+    appointmentDate: "04/01/2026", licenseNo: "LC-77801", licenseExpires: "04/01/2028",
+    eoPolicyNo: "EO-4408", eoPolicyExpires: "04/01/2027", taxId: "556789012", tax1099Type: "LLC", tax1099Name: "Midland Insurance Partners LLC",
+    emailStatements: false, directDeposits: false, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: true, piibAgent: false,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+  COAS08: null,
+  APEX09: {
+    producerCode: "AP188", agentOrBroker: "Agent", shortName: "AP188", name: "APEX RISK ADVISORS", dba: "", status: "Active",
+    address: "500 Congress Ave", city: "Austin", state: "TX", zip: "78701",
+    telephone: "5125559090", email: "b.carlson@apexrisk.com", accountingEmail: "billing@apexrisk.com", statementEmail: "billing@apexrisk.com",
+    appointmentDate: "06/14/2024", licenseNo: "LC-55621", licenseExpires: "06/14/2027",
+    eoPolicyNo: "EO-8801", eoPolicyExpires: "06/14/2027", taxId: "743210987", tax1099Type: "Corporation", tax1099Name: "Apex Risk Advisors",
+    emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
+    useConsolidatedBillingId: true, consolidatedBillingId: "CB-9902", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "Apex-Central",
+  },
+  KEYS10: {
+    producerCode: "KY145", agentOrBroker: "Broker", shortName: "KY145", name: "KEYSTONE UNDERWRITERS", dba: "", status: "Active",
+    address: "18 Market St", city: "Philadelphia", state: "PA", zip: "19107",
+    telephone: "2155551045", email: "ops@keystone-uw.com", accountingEmail: "", statementEmail: "",
+    appointmentDate: "09/03/2023", licenseNo: "LC-90112", licenseExpires: "09/03/2026",
+    eoPolicyNo: "EO-6620", eoPolicyExpires: "09/03/2026", taxId: "334567890", tax1099Type: "Corporation", tax1099Name: "Keystone Underwriters",
+    emailStatements: true, directDeposits: false, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+  BLUE11: null,
+  IRON12: {
+    producerCode: "IR203", agentOrBroker: "Agent", shortName: "IR203", name: "IRONBRIDGE INSURANCE GROUP", dba: "", status: "Active",
+    address: "9 Founders Way", city: "Boston", state: "MA", zip: "02110",
+    telephone: "6175551212", email: "info@ironbridge.com", accountingEmail: "acct@ironbridge.com", statementEmail: "acct@ironbridge.com",
+    appointmentDate: "02/28/2025", licenseNo: "LC-44412", licenseExpires: "02/28/2028",
+    eoPolicyNo: "EO-3341", eoPolicyExpires: "02/28/2027", taxId: "998765432", tax1099Type: "LLC", tax1099Name: "Ironbridge Insurance Group LLC",
+    emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
+    farmersAgent: false, smartChoiceAgent: false, piibAgent: true,
+    useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
+    isAffiliatedWith: false, affiliatedWithId: "", isAffiliationMain: false, subProducerName: "",
+  },
+};
+
 /* ─── Extended mock detail data ─────────────────────────────────────────── */
 interface AgencyDetail extends Agency {
   website: string;
@@ -365,20 +521,20 @@ interface AgencyPolicy {
 }
 
 const mockAgencyQuotes: AgencyQuote[] = [
-  { id:"aq1",  quoteId:"QMWC-A001-2026", applicant:"Riverside Auto LLC",   dba:"Riverside",    createdDate:"2026-01-10", effectiveDate:"2026-02-01", lob:"Commercial Auto",  status:"Sold/Issued", producer:"Jane Smith",    agencyId:"1", premium:14200 },
-  { id:"aq2",  quoteId:"QMWC-A002-2026", applicant:"Summit Builders Inc",  dba:"SummitBuild",  createdDate:"2026-02-05", effectiveDate:"2026-03-01", lob:"General Liability", status:"Pending",     producer:"Sarah Johnson", agencyId:"1", premium:8500  },
-  { id:"aq3",  quoteId:"QMWC-A003-2026", applicant:"NorthStar Logistics",  dba:"NSL",          createdDate:"2026-02-18", effectiveDate:"2026-04-01", lob:"Worker's Comp",    status:"Approved",    producer:"Jane Smith",    agencyId:"1", premium:22000 },
-  { id:"aq4",  quoteId:"QMWC-A004-2026", applicant:"Prairie Home Rentals", dba:"PHR",          createdDate:"2026-03-01", effectiveDate:"2026-04-15", lob:"Property",          status:"Incomplete",  producer:"Mike Chen",     agencyId:"1", premium:6800  },
-  { id:"aq5",  quoteId:"QMWC-A005-2026", applicant:"Keystone Transport",                       createdDate:"2026-03-15", effectiveDate:"2026-05-01", lob:"Commercial Auto",  status:"Declined",    producer:"Sarah Johnson", agencyId:"1", premium:9300  },
-  { id:"aq6",  quoteId:"QMWC-B001-2026", applicant:"Great Lakes Freight",  dba:"GLF",          createdDate:"2026-01-20", effectiveDate:"2026-02-15", lob:"Worker's Comp",    status:"Sold/Issued", producer:"Maria Chen",    agencyId:"2", premium:31500 },
-  { id:"aq7",  quoteId:"QMWC-B002-2026", applicant:"Lakeview Contractors",                     createdDate:"2026-03-08", effectiveDate:"2026-04-01", lob:"General Liability", status:"Pending",     producer:"Tom Harris",    agencyId:"2", premium:7200  },
+  { id:"aq1",  quoteId:"QMWC-A001-2026", applicant:"Riverside Auto LLC",   dba:"Riverside",    createdDate:"2026-01-10", effectiveDate:"2026-02-01", lob:"Commercial Auto",   status:"Issued",         producer:"Jane Smith",    agencyId:"1", premium:14200 },
+  { id:"aq2",  quoteId:"QMWC-A002-2026", applicant:"Summit Builders Inc",  dba:"SummitBuild",  createdDate:"2026-02-05", effectiveDate:"2026-03-01", lob:"General Liability", status:"Under Review",   producer:"Sarah Johnson", agencyId:"1", premium:8500  },
+  { id:"aq3",  quoteId:"QMWC-A003-2026", applicant:"NorthStar Logistics",  dba:"NSL",          createdDate:"2026-02-18", effectiveDate:"2026-04-01", lob:"Worker's Comp",     status:"Approved",       producer:"Jane Smith",    agencyId:"1", premium:22000 },
+  { id:"aq4",  quoteId:"QMWC-A004-2026", applicant:"Prairie Home Rentals", dba:"PHR",          createdDate:"2026-03-01", effectiveDate:"2026-04-15", lob:"Property",          status:"Incomplete",     producer:"Mike Chen",     agencyId:"1", premium:6800  },
+  { id:"aq5",  quoteId:"QMWC-A005-2026", applicant:"Keystone Transport",                       createdDate:"2026-03-15", effectiveDate:"2026-05-01", lob:"Commercial Auto",   status:"Declined",       producer:"Sarah Johnson", agencyId:"1", premium:9300  },
+  { id:"aq6",  quoteId:"QMWC-B001-2026", applicant:"Great Lakes Freight",  dba:"GLF",          createdDate:"2026-01-20", effectiveDate:"2026-02-15", lob:"Worker's Comp",     status:"Bound",          producer:"Maria Chen",    agencyId:"2", premium:31500 },
+  { id:"aq7",  quoteId:"QMWC-B002-2026", applicant:"Lakeview Contractors",                     createdDate:"2026-03-08", effectiveDate:"2026-04-01", lob:"General Liability", status:"Requested Info", producer:"Tom Harris",    agencyId:"2", premium:7200  },
 ];
 const mockAgencyPolicies: AgencyPolicy[] = [
-  { id:"ap1", policyNumber:"POL-A-10041", applicant:"Riverside Auto LLC",  dba:"Riverside",   createdDate:"2026-02-01", effectiveDate:"2026-02-01", lob:"Commercial Auto",  status:"Active",           producer:"Jane Smith",    agencyId:"1", premium:14200 },
-  { id:"ap2", policyNumber:"POL-A-10042", applicant:"NorthStar Logistics", dba:"NSL",         createdDate:"2026-04-01", effectiveDate:"2026-04-01", lob:"Worker's Comp",    status:"Active",           producer:"Jane Smith",    agencyId:"1", premium:22000 },
-  { id:"ap3", policyNumber:"POL-A-10039", applicant:"Clearfield Bakery",   dba:"CB Sweets",   createdDate:"2025-06-01", effectiveDate:"2025-06-01", lob:"General Liability", status:"Upcoming Renewal", producer:"Sarah Johnson", agencyId:"1", premium:5500  },
-  { id:"ap4", policyNumber:"POL-A-10022", applicant:"Delta Roofing Co",                       createdDate:"2025-01-15", effectiveDate:"2025-01-15", lob:"Property",          status:"Expired",          producer:"Mike Chen",     agencyId:"1", premium:8100  },
-  { id:"ap5", policyNumber:"POL-B-20011", applicant:"Great Lakes Freight", dba:"GLF",         createdDate:"2026-02-15", effectiveDate:"2026-02-15", lob:"Worker's Comp",    status:"Active",           producer:"Maria Chen",    agencyId:"2", premium:31500 },
+  { id:"ap1", policyNumber:"POL-A-10041", applicant:"Riverside Auto LLC",  dba:"Riverside",   createdDate:"2026-02-01", effectiveDate:"2026-02-01", lob:"Commercial Auto",   status:"Bound",           producer:"Jane Smith",    agencyId:"1", premium:14200 },
+  { id:"ap2", policyNumber:"POL-A-10042", applicant:"NorthStar Logistics", dba:"NSL",         createdDate:"2026-04-01", effectiveDate:"2026-04-01", lob:"Worker's Comp",     status:"Issued",          producer:"Jane Smith",    agencyId:"1", premium:22000 },
+  { id:"ap3", policyNumber:"POL-A-10039", applicant:"Clearfield Bakery",   dba:"CB Sweets",   createdDate:"2025-06-01", effectiveDate:"2025-06-01", lob:"General Liability", status:"Renewal Created", producer:"Sarah Johnson", agencyId:"1", premium:5500  },
+  { id:"ap4", policyNumber:"POL-A-10022", applicant:"Delta Roofing Co",                       createdDate:"2025-01-15", effectiveDate:"2025-01-15", lob:"Property",          status:"File Closed",     producer:"Mike Chen",     agencyId:"1", premium:8100  },
+  { id:"ap5", policyNumber:"POL-B-20011", applicant:"Great Lakes Freight", dba:"GLF",         createdDate:"2026-02-15", effectiveDate:"2026-02-15", lob:"Worker's Comp",     status:"Bound",           producer:"Maria Chen",    agencyId:"2", premium:31500 },
 ];
 
 /* ─── Agency Notes ───────────────────────────────────────────────────────── */
@@ -403,8 +559,22 @@ const ALL_LOBS = [
   "Inland Marine","Lessor's Risk","Non-Profit","Pollution Liability","Special Events",
   "Truckers GL","Vacant Risks","Boats/Marine","Contractors GL",
 ];
-const QUOTE_STATUSES  = ["All Statuses","Sold/Issued","Pending","Approved","Incomplete","Declined"];
-const POLICY_STATUSES = ["All Statuses","Active","Expired","Upcoming Renewal","Cancelled"];
+// Vocabularies mirror the main Quotes / Policies pages so the STATUS pill
+// + filter list read as one system across surfaces.
+const QUOTE_STATUSES  = [
+  "All Statuses",
+  "Incomplete", "Submitted", "Under Review", "Requested Info",
+  "Declined", "File Closed", "Cancelled",
+  "Renewal Pending", "Renewal Created",
+  "Approved", "Bound",
+  "Paid-Bind Incomplete", "Submission Incomplete",
+  "Issued", "Bind Incomplete",
+];
+const POLICY_STATUSES = [
+  "All Statuses",
+  "File Closed", "Cancelled", "Renewal Created",
+  "Bound", "Paid-Bind Incomplete", "Issued",
+];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function sortItems<T>(items: T[], key: string | null, dir: "asc" | "desc"): T[] {
@@ -495,9 +665,50 @@ const mockAgencyUsers: AgencyUser[] = [
 ];
 
 /* ─── Agency Detail View ─────────────────────────────────────────────────── */
-type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes";
+type DetailTab = "overview" | "quotes" | "policies" | "users" | "documents" | "notes" | "accounting";
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency, viewMode = "internal" }: {
+// Shared status pill for the Quotes/Policies tables inside the Agency
+// detail view — same dot + label + soft frame as the main Policies page's
+// STATUS column so both surfaces read as one system.
+// Mirrors the main Quotes / Policies STATUS_DOT palette: teal (complete),
+// razz (in-progress / brand accent), red (terminal negative), gray
+// (neutral/inactive). Covers the full status vocabulary used by
+// mockAgencyQuotes and mockAgencyPolicies.
+const AGENCY_STATUS_DOT: Record<string, string> = {
+  // Policy vocabulary
+  "File Closed":           "#9CA3AF",
+  "Cancelled":             "#EF4444",
+  "Renewal Created":       "#73C9B7",
+  "Bound":                 "#73C9B7",
+  "Paid-Bind Incomplete":  "#A614C3",
+  "Issued":                "#73C9B7",
+  // Quote vocabulary
+  "Incomplete":            "#9CA3AF",
+  "Submitted":             "#A614C3",
+  "Under Review":          "#A614C3",
+  "Requested Info":        "#A614C3",
+  "Declined":              "#EF4444",
+  "Renewal Pending":       "#A614C3",
+  "Approved":              "#73C9B7",
+  "Submission Incomplete": "#9CA3AF",
+  "Bind Incomplete":       "#A614C3",
+};
+const StatusPill = ({ status, isDark }: { status: string; isDark: boolean }) => (
+  <span
+    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-[3px] rounded-md whitespace-nowrap"
+    style={{
+      fontFamily: FONT,
+      background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+      color: isDark ? "#F9FAFB" : "#1F2937",
+      border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
+    }}
+  >
+    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AGENCY_STATUS_DOT[status] || "#9CA3AF" }} />
+    {status}
+  </span>
+);
+
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency, viewMode = "internal", itcRecords, setItcRecords }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -520,6 +731,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // "client"   = the agency's own external user, viewing their single agency. Their edit
   //             power depends on whether they're the agency admin — see `clientIsAdmin`.
   viewMode?: "internal" | "client";
+  // ITC records live at the Agencies-component level so edits persist across
+  // detail-view remounts. Both are optional so the client-mode invocation
+  // (which never renders the Accounting tab anyway) can leave them off.
+  itcRecords?: Record<string, ITCRecord | null>;
+  setItcRecords?: React.Dispatch<React.SetStateAction<Record<string, ITCRecord | null>>>;
 }) {
   // Mock role toggle for the Admin (client) section. In production internal & client are
   // separate deployments and this flag would come from auth; here we let the demo user
@@ -527,6 +743,34 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // edit power like BTIS staff), `false` = non-admin (edit buttons show a "no permission"
   // tooltip on hover instead of opening the edit modal).
   const [clientIsAdmin, setClientIsAdmin] = useState(true);
+  // Accounting tab local state — editing mode and the in-flight draft. The
+  // committed record lives on the parent (itcRecords / setItcRecords) so
+  // changes survive when the user switches agencies.
+  const [itcEditing, setItcEditing] = useState(false);
+  const [itcDraft, setItcDraft] = useState<ITCRecord | null>(null);
+  // Sub-tabs within the Accounting tab — same segmented-control pattern
+  // as the Documents toolbar so users don't have to scroll to switch
+  // between the ITC record and the monthly statements archive.
+  // Sub-tabs across the top of the Accounting tab. Splitting Statements into
+  // Commission vs Account lets users jump straight to the file type they want
+  // without a second-level tab switch inside the Statements card.
+  const [accountingView, setAccountingView] = useState<"comm" | "soa">("comm");
+  // Statements view state — mirrors the Documents toolbar language
+  // (search, filter by type, sort, select mode, per-item preview).
+  const [stmtSearch, setStmtSearch] = useState("");
+  const [stmtSearchOpen, setStmtSearchOpen] = useState(false);
+  const [stmtFilterOpen, setStmtFilterOpen] = useState(false);
+  const [stmtSortOpen, setStmtSortOpen] = useState(false);
+  const [stmtFilterTypes, setStmtFilterTypes] = useState<Set<"comm" | "soa">>(new Set());
+  const [stmtSortDir, setStmtSortDir] = useState<"desc" | "asc">("desc");
+  const [stmtSelectMode, setStmtSelectMode] = useState(false);
+  const [selectedStmts, setSelectedStmts] = useState<Set<string>>(new Set());
+  const [stmtBulkFormat, setStmtBulkFormat] = useState<"pdf" | "xlsx" | "both">("pdf");
+  const [stmtPreview, setStmtPreview] = useState<{ id: string; type: "comm" | "soa"; label: string; issued: string; sizePdf: string; sizeXls: string } | null>(null);
+  const [stmtPreviewFormat, setStmtPreviewFormat] = useState<"pdf" | "xlsx">("pdf");
+  // Row-level Download popover — only one open at a time, keyed by row id.
+  const [stmtDownloadFor, setStmtDownloadFor] = useState<string | null>(null);
+  const [stmtPreviewExpanded, setStmtPreviewExpanded] = useState(false);
   const [detailTab, setDetailTab] = useState<DetailTab>(initialTab ?? "overview");
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
@@ -577,9 +821,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [eLicExp,     setELicExp]     = useState(agency.licenseExp);
   const [eEoNo,       setEEoNo]       = useState(agency.eoPolicyNo);
   const [eEoExp,      setEEoExp]      = useState(agency.eoExp);
-  const [eAgencyBill, setEAgencyBill] = useState(agency.agencyBill);
-  const [eDirectBill, setEDirectBill] = useState(agency.directBill);
-  const [ePremFin,    setEPremFin]    = useState(agency.premiumFin);
   const [eAffil,      setEAffil]      = useState<Set<string>>(new Set(agency.affiliations));
   const [eWC,         setEWC]         = useState<Set<string>>(new Set(agency.workersComp));
   // "Show all / Show less" toggle for the long read-only Affiliations and Workers Comp lists.
@@ -623,14 +864,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   /* ── quotes / policies state ── */
   const [detailSearch,    setDetailSearch]    = useState("");
-  const [lobFilter,       setLobFilter]       = useState("All LOBs");
-  const [statusFilter,    setStatusFilter]    = useState("All Statuses");
+  const [lobFilter,       setLobFilter]       = useState<Set<string>>(new Set());
+  const [statusFilter,    setStatusFilter]    = useState<Set<string>>(new Set());
   const [applicantFilter, setApplicantFilter] = useState<Set<string>>(new Set());
   const [producerFilter,  setProducerFilter]  = useState<Set<string>>(new Set());
   const [lobOpen,         setLobOpen]         = useState(false);
   const [statusOpen,      setStatusOpen]      = useState(false);
   const [applicantOpen,   setApplicantOpen]   = useState(false);
   const [producerOpen,    setProducerOpen]    = useState(false);
+  const [lobSearch,       setLobSearch]       = useState("");
+  const [statusSearch,    setStatusSearch]    = useState("");
   const [applicantSearch, setApplicantSearch] = useState("");
   const [producerSearch,  setProducerSearch]  = useState("");
   const [qpSortKey,       setQpSortKey]       = useState<string|null>(null);
@@ -652,6 +895,85 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   const closeAllDropdowns = () => { setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); };
 
+  // Shared multi-select column-header filter — mirrors the Quotes / Policies
+  // page pattern (Search + Select All + per-option checkbox + Reset Filter).
+  // Used for LOB and Status on both the Quotes and Policies tabs so all four
+  // column filters read as one system.
+  const renderMultiFilter = ({
+    label, options, filter, setFilter, search, setSearch, open, setOpen, searchPlaceholder,
+  }: {
+    label: string;
+    options: readonly string[];
+    filter: Set<string>;
+    setFilter: React.Dispatch<React.SetStateAction<Set<string>>>;
+    search: string;
+    setSearch: (v: string) => void;
+    open: boolean;
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    searchPlaceholder: string;
+  }) => (
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <button onClick={() => { closeAllDropdowns(); setOpen(o => !o); }}
+        className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
+        style={{ fontFamily: FONT, color: filter.size > 0 ? "#A614C3" : c.muted }}>
+        {label}<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={filter.size > 0 ? "#A614C3" : sub}/></svg></span>
+      </button>
+      {/* Full-screen click catcher — closes the popover when anywhere
+          outside is clicked. Sits below the popover z-order. */}
+      {open && <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />}
+      {open && (
+        <div className="absolute top-full mt-1 z-30 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
+          style={{ background: c.cardBg, border: `1px solid ${c.border}`, left: 0 }}>
+          <div className="p-2" style={{ borderBottom: `1px solid ${c.border}` }}>
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+              style={{ background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+              <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder={searchPlaceholder}
+                className="outline-none text-[12px] flex-1 bg-transparent" style={{ fontFamily: FONT, color: c.text }} />
+            </div>
+          </div>
+          <div className="px-3 py-2" style={{ borderBottom: `1px solid ${c.border}` }}>
+            <button className="flex items-center gap-2 text-[12px] w-full text-left" style={{ fontFamily: FONT, color: c.text }}
+              onClick={() => { setFilter(filter.size === options.length ? new Set() : new Set(options)); }}>
+              <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                {filter.size === options.length && options.length > 0 &&
+                  <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </div>
+              Select All
+            </button>
+          </div>
+          <div className="max-h-[180px] overflow-y-auto py-1">
+            {options.filter(o => !search || o.toLowerCase().includes(search.toLowerCase())).map(opt => (
+              <button key={opt} className="flex items-center gap-2 px-3 py-1.5 text-[12px] w-full text-left transition-colors"
+                style={{ fontFamily: FONT, color: c.text }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                onClick={() => { const s = new Set(filter); s.has(opt) ? s.delete(opt) : s.add(opt); setFilter(s); }}>
+                <div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0"
+                  style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>
+                  {filter.has(opt) &&
+                    <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+                {opt}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { setFilter(new Set()); setSearch(""); }}
+            className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors"
+            style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }}
+            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+            <RefreshCw className="w-3.5 h-3.5" />Reset Filter
+          </button>
+        </div>
+      )}
+    </div>
+  );
+  const LOB_OPTIONS = ALL_LOBS.filter(l => l !== "All LOBs");
+  const QUOTE_STATUS_OPTIONS  = QUOTE_STATUSES.filter(s => s !== "All Statuses");
+  const POLICY_STATUS_OPTIONS = POLICY_STATUSES.filter(s => s !== "All Statuses");
+
   const rawQuotes   = mockAgencyQuotes.filter(q => q.agencyId === agency.id);
   const rawPolicies = mockAgencyPolicies.filter(p => p.agencyId === agency.id);
   const uniqueQApplicants = [...new Set(rawQuotes.map(q => q.applicant))];
@@ -662,8 +984,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const agencyQuotes = sortItems(
     rawQuotes
       .filter(q => !detailSearch || q.applicant.toLowerCase().includes(detailSearch.toLowerCase()) || q.quoteId.toLowerCase().includes(detailSearch.toLowerCase()))
-      .filter(q => lobFilter === "All LOBs" || q.lob === lobFilter)
-      .filter(q => statusFilter === "All Statuses" || q.status === statusFilter)
+      .filter(q => lobFilter.size === 0 || lobFilter.has(q.lob))
+      .filter(q => statusFilter.size === 0 || statusFilter.has(q.status))
       .filter(q => applicantFilter.size === 0 || applicantFilter.has(q.applicant))
       .filter(q => producerFilter.size === 0 || producerFilter.has(q.producer)),
     qpSortKey, qpSortDir
@@ -671,8 +993,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const agencyPolicies = sortItems(
     rawPolicies
       .filter(p => !detailSearch || p.applicant.toLowerCase().includes(detailSearch.toLowerCase()) || p.policyNumber.toLowerCase().includes(detailSearch.toLowerCase()))
-      .filter(p => lobFilter === "All LOBs" || p.lob === lobFilter)
-      .filter(p => statusFilter === "All Statuses" || p.status === statusFilter)
+      .filter(p => lobFilter.size === 0 || lobFilter.has(p.lob))
+      .filter(p => statusFilter.size === 0 || statusFilter.has(p.status))
       .filter(p => applicantFilter.size === 0 || applicantFilter.has(p.applicant))
       .filter(p => producerFilter.size === 0 || producerFilter.has(p.producer)),
     qpSortKey, qpSortDir
@@ -1603,8 +1925,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: "none", cursor: "pointer",
+    // Right padding gives text room; chevron sits 12px from the border so it
+    // doesn't hug the stroke.
+    paddingRight: 32,
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
   };
   // External-client mode: only the agency principal can edit Agency Address / Phone
   // Number / Agency Contact. Every other Agency Information field mirrors the Agency
@@ -1689,6 +2014,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     ...(viewMode === "internal"
       ? [["notes", "Notes", <CopyPlus className="w-[15px] h-[15px]" />] as [DetailTab, string, React.ReactElement]]
       : []),
+    // Accounting — surfaces the agency's ITC record + statements. Available
+    // to both internal staff and Admin (agency-facing) users. Sits at the
+    // end because it's a specialized view rather than day-to-day workflow.
+    ["accounting", "Accounting", <Landmark className="w-[15px] h-[15px]" />] as [DetailTab, string, React.ReactElement],
   ];
 
   /* ── helpers ── */
@@ -1715,7 +2044,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }}>
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto" style={{ fontFamily: FONT, overflowX: "hidden" }}>
       {userToast && (
         <div className="fixed top-[68px] right-6 z-50 flex items-center gap-8"
           style={{ background: isDark ? "#1E2240" : "#fff", border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 16px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: 360, maxWidth: 460, fontFamily: FONT }}>
@@ -2540,7 +2869,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           would come from auth (see `clientIsAdmin` in AgencyDetailView); here we simply
           default to admin, so the header renders the h1 alone as it did originally. */}
       <div className="flex flex-col justify-center flex-shrink-0 mb-12"
-        style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
+        style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}` }}>
         <h1 className="text-[22px] font-normal" style={{ ...font, color: c.text }}>{viewMode === "client" ? "Admin" : "Agencies"}</h1>
       </div>
 
@@ -2861,7 +3190,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Overview tab ── */}
         {detailTab === "overview" && !isEditing && (
-          <div className="flex-1 overflow-y-auto pb-6">
+          <div className="pb-6">
           <div className="rounded-2xl p-8 mb-8" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
@@ -2919,19 +3248,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <LabelValue label="NPN"             value={agency.npn || "—"} />
               <LabelValue label="E&O Policy #"    value={agency.eoPolicyNo || "—"} />
               <LabelValue label="Expiration Date" value={agency.eoExp} />
+              {/* Billing-type fields (Agency Bill / Direct Bill / Premium
+                  Finance) intentionally omitted from the agent-facing
+                  view — accounting-only info, not useful to agents. */}
+              {/* Spacer — pushes Affiliations / Direct Appointments / Tags
+                  onto their own row so the trio reads as one group. */}
               <div />
-              <div>
-                <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Agency Bill:</p>
-                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.agencyBill ? "Yes" : "No"}</p>
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Direct Bill:</p>
-                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.directBill ? "Yes" : "No"}</p>
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Premium Finance:</p>
-                <p className="text-[13px]" style={{ ...font, color: c.text }}>{agency.premiumFin ? "Yes" : "No"}</p>
-              </div>
               {(() => {
                 const CAP = 5;
                 const affils = effectiveAffils;
@@ -3008,7 +3330,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         {detailTab === "overview" && isEditing && (
           <>
           {editExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setEditExpanded(false)} />}
-          <div className={editExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "flex-1 overflow-y-auto pb-6"}
+          <div className={editExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "pb-6"}
             style={editExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
           <div className={editExpanded ? "p-6 mb-6" : "rounded-2xl p-6 mb-6"} style={editExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}`, maxWidth: 1590 }}>
             {/* Card header */}
@@ -3363,45 +3685,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   : <DatePicker value={eEoExp} onChange={setEEoExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
               </div>
               <div />
-            </div>
-
-            {/* Agency Bill | Direct Bill | Premium Finance */}
-            <div className="grid grid-cols-3 gap-6 mb-2">
-              {([
-                ["Agency Bill:", eAgencyBill, setEAgencyBill],
-                ["Direct Bill:", eDirectBill, setEDirectBill],
-                ["Premium Finance:", ePremFin, setEPremFin],
-              ] as [string, boolean, (v: boolean) => void][]).map(([lbl, val, set]) => (
-                <div key={lbl}>
-                  <label style={labelStyle}>{lbl}</label>
-                  {clientLocked ? <LockedInput value={val ? "Yes" : "No"} /> : (
-                    <div className="flex gap-3">
-                      {([["Yes", true], ["No", false]] as [string, boolean][]).map(([opt, bool]) => {
-                        const active = val === bool;
-                        return (
-                          <button key={opt} onClick={() => set(bool)}
-                            className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
-                            style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                              border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
-                              background: active ? undefined : c.cardBg,
-                              backgroundImage: active
-                                ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                                : undefined,
-                              backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
-                              backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
-                            }}>
-                            <Radio checked={active} onClick={() => set(bool)} />
-                            {active
-                              ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
-                              : <span style={{ color: c.muted }}>{opt}</span>
-                            }
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
             </div>
 
             {/* Affiliations — checkbox grid, wrapped in LockedGroupOverlay for client mode so
@@ -3788,7 +4071,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <>
                     <button title="Restore" onClick={() => handleRestore(d)}
                       className="p-1.5 rounded transition-colors" style={{ color: c.muted }}
-                      onMouseEnter={e => { e.currentTarget.style.background = "rgba(16,185,129,0.10)"; e.currentTarget.style.color = "#10B981"; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "rgba(115,201,183,0.10)"; e.currentTarget.style.color = "#73C9B7"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
                       <RefreshCw className="w-3.5 h-3.5" />
                     </button>
@@ -3829,7 +4112,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           );
 
           return (
-            <div className="flex flex-1 min-h-0 gap-4 pb-4" onClick={() => { setDocFilterOpen(false); setDocSortOpen(false); setDocUploadOpen(false); setDocByTypeFilterOpen(false); }}>
+            <div className="flex gap-4 pb-4" onClick={() => { setDocFilterOpen(false); setDocSortOpen(false); setDocUploadOpen(false); setDocByTypeFilterOpen(false); }}>
             {/* Left panel */}
             <div className="flex flex-col min-h-0 transition-all"
               style={{ flex: previewDoc && !previewExpanded ? "0 0 38%" : "1 1 100%", minWidth: 0 }}>
@@ -4164,7 +4447,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
               )}
 
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              <div>
 
                 {/* By Type view — grouped by category so each type is visually separated. */}
                 {!showDocArchived && !showDocTrashed && docView === "byType" && (() => {
@@ -4418,7 +4701,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Notes tab ── */}
         {detailTab === "notes" && (
-          <div className="flex flex-1 min-h-0 gap-4 pb-4" onClick={() => { setNoteFilterOpen(false); setNoteSortOpen(false); setNoteNewOpen(false); setNoteMoreOpen(false); }}>
+          <div className="flex gap-4 pb-4" onClick={() => { setNoteFilterOpen(false); setNoteSortOpen(false); setNoteNewOpen(false); setNoteMoreOpen(false); }}>
 
             {/* Left panel */}
             <div className="flex flex-col min-h-0 transition-all"
@@ -4954,8 +5237,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 </>}
                                 {showTrashed && <>
                                   <button onClick={() => { setTrashedIds(prev => { const s = new Set(prev); s.delete(selectedNote.id); return s; }); setSelectedNote(null); setNoteMoreOpen(false); }}
-                                    className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#10B981" }}
-                                    onMouseEnter={e=>(e.currentTarget.style.background="rgba(16,185,129,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                    className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#73C9B7" }}
+                                    onMouseEnter={e=>(e.currentTarget.style.background="rgba(115,201,183,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                                     <RefreshCw className="w-3.5 h-3.5" />Restore note
                                   </button>
                                   <button onClick={() => { setDeleteNoteId(selectedNote.id); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
@@ -5110,8 +5393,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             </>}
                             {showTrashed && <>
                               <button onClick={() => { setTrashedIds(prev => { const s = new Set(prev); s.delete(selectedNote.id); return s; }); setSelectedNote(null); setNoteMoreOpen(false); }}
-                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#10B981" }}
-                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(16,185,129,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+                                className="w-full text-left px-3 py-2 text-[12px] flex items-center gap-2.5" style={{ fontFamily: FONT, color: "#73C9B7" }}
+                                onMouseEnter={e=>(e.currentTarget.style.background="rgba(115,201,183,0.08)")} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
                                 <RefreshCw className="w-3.5 h-3.5" />Restore note
                               </button>
                               <button onClick={() => { setDeleteNoteId(selectedNote.id); setSelectedNote(null); setNoteExpanded(false); setNoteMoreOpen(false); }}
@@ -5201,6 +5484,810 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           </div>
         )}
 
+        {/* ── Accounting tab ── ITC record view + edit. Mirrors the Overview
+             tab's single-big-card layout (LabelValue stacks, outlined muted
+             Edit button, `grid-cols-3 gap-x-12 gap-y-6`) instead of the
+             one-card-per-field grid it used to have — that read as a stat
+             dashboard and clashed with the rest of the detail view. */}
+        {detailTab === "accounting" && (() => {
+          const record = itcRecords?.[agency.code] ?? null;
+          const statusColor = (s: ITCStatus) => s === "Active" ? "#73C9B7"
+            : s === "Suspended" ? "#F59E0B"
+            : s === "Terminated" ? "#EF4444"
+            : "#6366F1";
+
+          const SectionHeader = ({ title, first }: { title: string; first?: boolean }) => (
+            <div className={first ? "mb-4" : "mt-8 pt-6 mb-4"} style={first ? undefined : { borderTop: `1px solid ${c.border}` }}>
+              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ ...font, color: c.muted, letterSpacing: "0.08em" }}>{title}</p>
+            </div>
+          );
+
+          const YesNo = ({ v }: { v: boolean }) => (
+            <span className="text-[13px]" style={{ ...font, color: c.text }}>{v ? "Yes" : "No"}</span>
+          );
+
+          // ── Empty state ──
+          if (!record && !itcEditing) {
+            return (
+              <div className="pb-6">
+                <div className="rounded-2xl p-8 mb-8" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <h3 className="text-[17px] font-bold mb-6" style={{ ...font, color: c.text }}>ITC Record</h3>
+                  <div className="rounded-xl p-10 text-center" style={{ border: `1px dashed ${c.border}` }}>
+                    <AlertCircle className="w-9 h-9 mx-auto mb-3" style={{ color: c.muted }} strokeWidth={1.5} />
+                    <p className="text-[15px] font-bold mb-1.5" style={{ ...font, color: c.text }}>Not registered in ITC</p>
+                    <p className="text-[12.5px] leading-relaxed max-w-[520px] mx-auto" style={{ ...font, color: c.muted }}>
+                      <b>{agency.name}</b> exists in Norbielink but has no ITC producer record yet. New agencies are pushed to ITC via <span style={{ fontFamily: "monospace", fontSize: 12 }}>AddProducer</span> after onboarding completes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // ── Edit mode ──
+          if (itcEditing && itcDraft) {
+            const set = <K extends keyof ITCRecord>(k: K, v: ITCRecord[K]) => setItcDraft(prev => prev ? { ...prev, [k]: v } : prev);
+            // Tokens the StyledSelect needs — c doesn't ship razz, so provide it here.
+            const selectC = {
+              text: c.text, muted: c.muted, border: c.border, cardBg: c.cardBg, hoverBg: c.hoverBg,
+              razz: "#A614C3", razzTintBg: isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)",
+            };
+            // Segmented radio pair — Yes / No pills side by side. Active pill
+            // uses the razz gradient border + tinted bg + inner-dot radio.
+            const YesNoSelect = <K extends keyof ITCRecord>({ k }: { k: K }) => {
+              const v = itcDraft[k] as unknown as boolean;
+              const PillBtn = ({ label, active, onClick }: { label: "Yes" | "No"; active: boolean; onClick: () => void }) => (
+                <button
+                  type="button"
+                  onClick={onClick}
+                  className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
+                  style={{
+                    fontFamily: FONT,
+                    width: 120,
+                    height: 40,
+                    boxSizing: "border-box",
+                    border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
+                    ...(active
+                      ? {
+                          backgroundImage: `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`,
+                          backgroundOrigin: "padding-box, padding-box, border-box",
+                          backgroundClip: "padding-box, padding-box, border-box",
+                        }
+                      : { background: c.cardBg }),
+                    cursor: "pointer",
+                  }}
+                >
+                  <span
+                    role="radio"
+                    aria-checked={active}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 transition-all"
+                    style={{ border: `2px solid ${active ? "#A855F7" : "#D1D5DB"}`, background: "transparent" }}
+                  >
+                    {active && <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#A855F7" }} />}
+                  </span>
+                  {active ? (
+                    <span
+                      style={{
+                        backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ) : (
+                    <span style={{ color: c.muted }}>{label}</span>
+                  )}
+                </button>
+              );
+              return (
+                <div className="flex gap-3">
+                  <PillBtn label="Yes" active={v}  onClick={() => set(k, true  as unknown as ITCRecord[K])} />
+                  <PillBtn label="No"  active={!v} onClick={() => set(k, false as unknown as ITCRecord[K])} />
+                </div>
+              );
+            };
+            return (
+              <div className="pb-6">
+                <div className="rounded-2xl p-6 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>ITC Record</h3>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setItcEditing(false); setItcDraft(null); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                        style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        Cancel
+                      </button>
+                      <button onClick={() => {
+                        if (itcDraft && setItcRecords) setItcRecords(prev => ({ ...prev, [agency.code]: itcDraft }));
+                        setItcEditing(false); setItcDraft(null);
+                        showToast({ title: "Changes saved", description: `ITC Record updated for ${agency.name}.` });
+                      }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                        style={{ ...font, background: btnGrad }}>
+                        Save changes
+                      </button>
+                    </div>
+                  </div>
+
+                  <SectionHeader title="Producer" first />
+                  <div className="grid grid-cols-3 gap-6">
+                    <div><label style={labelStyle}>Producer Code:</label>
+                      <input value={itcDraft.producerCode} onChange={e => set("producerCode", e.target.value)} style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Agent / Broker:</label>
+                      <StyledSelect<AgentBroker>
+                        value={itcDraft.agentOrBroker}
+                        onChange={v => set("agentOrBroker", v)}
+                        options={["Agent","Broker"] as const}
+                        triggerStyle={selectStyle}
+                        c={selectC}
+                        font={font}
+                      /></div>
+                    <div><label style={labelStyle}>Status:</label>
+                      <StyledSelect<ITCStatus>
+                        value={itcDraft.status}
+                        onChange={v => set("status", v)}
+                        options={["Active","Suspended","Terminated","Pending"] as const}
+                        triggerStyle={selectStyle}
+                        c={selectC}
+                        font={font}
+                      /></div>
+                    <div><label style={labelStyle}>Short Name:</label>
+                      <input value={itcDraft.shortName} onChange={e => set("shortName", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-2"><label style={labelStyle}>Name:</label>
+                      <input value={itcDraft.name} onChange={e => set("name", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-3"><label style={labelStyle}>DBA:</label>
+                      <input value={itcDraft.dba} onChange={e => set("dba", e.target.value)} style={inputStyle} /></div>
+                  </div>
+
+                  <SectionHeader title="Contact" />
+                  <div className="grid grid-cols-6 gap-6">
+                    <div className="col-span-6"><label style={labelStyle}>Address:</label>
+                      <input value={itcDraft.address} onChange={e => set("address", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-3"><label style={labelStyle}>City:</label>
+                      <input value={itcDraft.city} onChange={e => set("city", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-1"><label style={labelStyle}>State:</label>
+                      <input value={itcDraft.state} onChange={e => set("state", e.target.value)} maxLength={2} style={inputStyle} /></div>
+                    <div className="col-span-2"><label style={labelStyle}>Zip:</label>
+                      <input value={itcDraft.zip} onChange={e => set("zip", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-2"><label style={labelStyle}>Telephone:</label>
+                      <input value={itcDraft.telephone} onChange={e => set("telephone", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-4"><label style={labelStyle}>Email:</label>
+                      <input value={itcDraft.email} onChange={e => set("email", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-3"><label style={labelStyle}>Accounting Email:</label>
+                      <input value={itcDraft.accountingEmail} onChange={e => set("accountingEmail", e.target.value)} style={inputStyle} /></div>
+                    <div className="col-span-3"><label style={labelStyle}>Statement Email:</label>
+                      <input value={itcDraft.statementEmail} onChange={e => set("statementEmail", e.target.value)} style={inputStyle} /></div>
+                  </div>
+
+                  <SectionHeader title="Appointment & Compliance" />
+                  <div className="grid grid-cols-3 gap-6">
+                    <div><label style={labelStyle}>Appointment Date:</label>
+                      <input value={itcDraft.appointmentDate} onChange={e => set("appointmentDate", e.target.value)} placeholder="MM/DD/YYYY" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>License No:</label>
+                      <input value={itcDraft.licenseNo} onChange={e => set("licenseNo", e.target.value)} style={inputStyle} /></div>
+                    <div><label style={labelStyle}>License Expires:</label>
+                      <input value={itcDraft.licenseExpires} onChange={e => set("licenseExpires", e.target.value)} placeholder="MM/DD/YYYY" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>E&amp;O Policy No:</label>
+                      <input value={itcDraft.eoPolicyNo} onChange={e => set("eoPolicyNo", e.target.value)} style={inputStyle} /></div>
+                    <div><label style={labelStyle}>E&amp;O Expires:</label>
+                      <input value={itcDraft.eoPolicyExpires} onChange={e => set("eoPolicyExpires", e.target.value)} placeholder="MM/DD/YYYY" style={inputStyle} /></div>
+                    <div /> {/* spacer */}
+                    <div><label style={labelStyle}>Tax ID:</label>
+                      <input value={itcDraft.taxId} onChange={e => set("taxId", e.target.value)} style={inputStyle} /></div>
+                    <div><label style={labelStyle}>1099 Type:</label>
+                      <StyledSelect<Tax1099Type>
+                        value={itcDraft.tax1099Type}
+                        onChange={v => set("tax1099Type", v)}
+                        options={["Individual","Corporation","Partnership","LLC"] as const}
+                        triggerStyle={selectStyle}
+                        c={selectC}
+                        font={font}
+                      /></div>
+                    <div><label style={labelStyle}>1099 Name:</label>
+                      <input value={itcDraft.tax1099Name} onChange={e => set("tax1099Name", e.target.value)} style={inputStyle} /></div>
+                  </div>
+
+                  <SectionHeader title="Preferences" />
+                  <div className="grid grid-cols-3 gap-6">
+                    <div><label style={labelStyle}>Email Statements:</label><YesNoSelect k="emailStatements" /></div>
+                    <div><label style={labelStyle}>Direct Deposits:</label><YesNoSelect k="directDeposits" /></div>
+                    <div><label style={labelStyle}>Direct Deposits (Commission Only):</label><YesNoSelect k="directDepositsCommissionOnly" /></div>
+                    <div><label style={labelStyle}>Farmers Agent:</label><YesNoSelect k="farmersAgent" /></div>
+                    <div><label style={labelStyle}>Smart Choice Agent:</label><YesNoSelect k="smartChoiceAgent" /></div>
+                    <div><label style={labelStyle}>PIIB Agent:</label><YesNoSelect k="piibAgent" /></div>
+                  </div>
+
+                  <SectionHeader title="Consolidated Billing" />
+                  <div className="grid grid-cols-3 gap-6 items-start">
+                    <div><label style={labelStyle}>Use Consolidated Billing ID:</label><YesNoSelect k="useConsolidatedBillingId" /></div>
+                    <div><label style={labelStyle}>Consolidated Billing ID:</label>
+                      <input value={itcDraft.consolidatedBillingId} onChange={e => set("consolidatedBillingId", e.target.value)} style={{ ...inputStyle, height: 40, boxSizing: "border-box", display: "block" }} /></div>
+                    <div><label style={labelStyle}>Is Consolidated Billing Producer:</label><YesNoSelect k="isConsolidatedBillingProducer" /></div>
+                  </div>
+
+                  <SectionHeader title="Affiliation" />
+                  <div className="grid grid-cols-3 gap-6 items-start">
+                    <div><label style={labelStyle}>Is Affiliated With:</label><YesNoSelect k="isAffiliatedWith" /></div>
+                    <div><label style={labelStyle}>Affiliated With ID:</label>
+                      <input value={itcDraft.affiliatedWithId} onChange={e => set("affiliatedWithId", e.target.value)} style={{ ...inputStyle, height: 40, boxSizing: "border-box", display: "block" }} /></div>
+                    <div><label style={labelStyle}>Is Affiliation Main:</label><YesNoSelect k="isAffiliationMain" /></div>
+                    <div className="col-span-3"><label style={labelStyle}>Sub-Producer Name:</label>
+                      <input value={itcDraft.subProducerName} onChange={e => set("subProducerName", e.target.value)} style={inputStyle} /></div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // ── View mode ──
+          if (record) {
+            const statusBadge = (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[12px] font-semibold"
+                style={{ background: `${statusColor(record.status)}1A`, color: statusColor(record.status) }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusColor(record.status) }} />
+                {record.status}
+              </span>
+            );
+            const fullAddr = [record.address, [record.city, record.state].filter(Boolean).join(", "), record.zip].filter(Boolean).join(" · ");
+            return (
+              <div className="pb-6">
+                {/* Sub-tab toolbar — same segmented-control language as
+                    the Documents tab. Lets users jump directly to
+                    Statements without scrolling past the ITC Record. */}
+                <div
+                  className="flex items-center gap-0.5 pb-3 mb-5"
+                  style={{ borderBottom: `1px solid ${c.border}` }}
+                >
+                  {([
+                    { key: "comm"   as const, label: "Commission Statement" },
+                    { key: "soa"    as const, label: "Statement of Account" },
+                  ]).map(t => {
+                    const active = accountingView === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setAccountingView(t.key)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap"
+                        style={{
+                          fontFamily: FONT,
+                          background: active ? (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6") : "transparent",
+                          color: active ? c.text : c.muted,
+                        }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+
+                {/* ── Statements card — 12-month rolling archive.
+                    Phase 1 scope: two statements per month (commission +
+                    statement of account), each in PDF and Excel. Source is
+                    the ITC WIN J-drive path. Older records live with
+                    the accounting team. */}
+                {(accountingView === "comm" || accountingView === "soa") && (() => {
+                  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                  const anchor = { y: 2026, m: 10 }; // Nov 2026
+                  type Stmt = { id: string; type: "comm" | "soa"; label: string; year: number; monthIdx: number; issued: string; sizePdf: string; sizeXls: string };
+                  const all: Stmt[] = [];
+                  for (let i = 0; i < 12; i++) {
+                    let m = anchor.m - i;
+                    let y = anchor.y;
+                    while (m < 0) { m += 12; y -= 1; }
+                    const monthLabel = `${MONTHS[m]} ${y}`;
+                    const lastDay = new Date(y, m + 1, 0).getDate();
+                    all.push({
+                      id: `comm-${y}-${m}`, type: "comm",
+                      label: `Commission Statement — ${monthLabel}`,
+                      year: y, monthIdx: m,
+                      issued: `${MONTHS[m]} 14, ${y}`,
+                      sizePdf: `${180 + ((i * 37) % 90)} KB`,
+                      sizeXls: `${52 + ((i * 13) % 40)} KB`,
+                    });
+                    all.push({
+                      id: `soa-${y}-${m}`, type: "soa",
+                      label: `Statement of Account — ${monthLabel}`,
+                      year: y, monthIdx: m,
+                      issued: `${MONTHS[m]} ${lastDay}, ${y}`,
+                      sizePdf: `${210 + ((i * 41) % 110)} KB`,
+                      sizeXls: `${64 + ((i * 17) % 48)} KB`,
+                    });
+                  }
+
+                  const TYPE_LABEL: Record<"comm" | "soa", string> = { comm: "Commission Statement", soa: "Statement of Account" };
+                  const q = stmtSearch.trim().toLowerCase();
+                  const filtered = all.filter(s =>
+                    (stmtFilterTypes.size === 0 || stmtFilterTypes.has(s.type)) &&
+                    (!q || s.label.toLowerCase().includes(q) || s.issued.toLowerCase().includes(q))
+                  );
+                  filtered.sort((a, b) => {
+                    const ka = a.year * 12 + a.monthIdx;
+                    const kb = b.year * 12 + b.monthIdx;
+                    return stmtSortDir === "desc" ? kb - ka : ka - kb;
+                  });
+                  const groupComm = filtered.filter(s => s.type === "comm");
+                  const groupSoa  = filtered.filter(s => s.type === "soa");
+                  const toggleSel = (id: string) => setSelectedStmts(prev => {
+                    const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s;
+                  });
+                  const toggleFilterType = (t: "comm" | "soa") => setStmtFilterTypes(prev => {
+                    const s = new Set(prev); s.has(t) ? s.delete(t) : s.add(t); return s;
+                  });
+                  const clearSel = () => setSelectedStmts(new Set());
+                  const closeDropdowns = () => { setStmtFilterOpen(false); setStmtSortOpen(false); setStmtDownloadFor(null); };
+                  // Refs to each folder card so the cadence chips can smooth-scroll to them.
+                  const groupRefs: Record<"comm" | "soa", HTMLDivElement | null> = { comm: null, soa: null };
+                  const jumpTo = (type: "comm" | "soa") => {
+                    groupRefs[type]?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  };
+
+                  const StmtRow = ({ s, isLast }: { s: Stmt; isLast: boolean }) => {
+                    const selected = selectedStmts.has(s.id);
+                    const isPreview = stmtPreview?.id === s.id;
+                    return (
+                      <div
+                        className="flex items-center gap-3 px-5 py-2 transition-colors cursor-pointer group"
+                        style={{ borderBottom: isLast ? "none" : `1px solid ${c.border}`, background: isPreview ? (isDark ? "rgba(168,85,247,0.10)" : "rgba(168,85,247,0.06)") : "transparent" }}
+                        onClick={() => {
+                          if (stmtSelectMode) toggleSel(s.id);
+                          else setStmtPreview({ id: s.id, type: s.type, label: s.label, issued: s.issued, sizePdf: s.sizePdf, sizeXls: s.sizeXls });
+                        }}
+                        onMouseEnter={e => { if (!isPreview) e.currentTarget.style.background = c.hoverBg; }}
+                        onMouseLeave={e => { if (!isPreview) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {stmtSelectMode && (
+                          <span
+                            className="flex items-center justify-center flex-shrink-0 rounded"
+                            style={{ width: 16, height: 16, background: selected ? "linear-gradient(88.54deg,#5C2ED4 0.1%,#A614C3 63.88%)" : c.cardBg, border: selected ? "none" : `1.5px solid ${c.borderStrong}` }}
+                          >
+                            {selected && (
+                              <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                <path d="M1 3.5L3.5 6L8 1" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] leading-tight" style={{ ...font, color: c.text }}>{MONTHS[s.monthIdx]} {s.year}</div>
+                          <div className="text-[11px] mt-0.5" style={{ ...font, color: c.muted }}>Issued {s.issued}</div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                          <button title="Preview" onClick={() => setStmtPreview({ id: s.id, type: s.type, label: s.label, issued: s.issued, sizePdf: s.sizePdf, sizeXls: s.sizeXls })}
+                            className="p-1.5 rounded-md transition-colors"
+                            style={{ color: isPreview ? "#A614C3" : c.muted, background: isPreview ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent" }}
+                            onMouseEnter={e => { if (!isPreview) { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                            onMouseLeave={e => { if (!isPreview) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="relative">
+                            <button title="Download" onClick={() => setStmtDownloadFor(p => p === s.id ? null : s.id)}
+                              className="p-1.5 rounded-md transition-colors"
+                              style={{ color: stmtDownloadFor === s.id ? "#A614C3" : c.muted, background: stmtDownloadFor === s.id ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent" }}
+                              onMouseEnter={e => { if (stmtDownloadFor !== s.id) { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; } }}
+                              onMouseLeave={e => { if (stmtDownloadFor !== s.id) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; } }}>
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            {stmtDownloadFor === s.id && (
+                              <div className="absolute right-0 top-full mt-1 z-30 rounded-lg overflow-hidden"
+                                style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10)", minWidth: 140 }}>
+                                {([
+                                  { fmt: "pdf" as const,  label: "PDF",   size: s.sizePdf },
+                                  { fmt: "xlsx" as const, label: "Excel", size: s.sizeXls },
+                                ]).map(opt => (
+                                  <button key={opt.fmt}
+                                    onClick={() => {
+                                      showToast({ title: `Downloading ${s.label}`, description: `${opt.label} · ${opt.size}` });
+                                      setStmtDownloadFor(null);
+                                    }}
+                                    className="w-full flex items-center justify-between gap-4 px-3 py-2 text-[12px] transition-colors"
+                                    style={{ fontFamily: FONT, color: c.text }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                    <span className="flex items-center gap-2">
+                                      <Download className="w-3 h-3" style={{ color: "#A614C3" }} />
+                                      {opt.label}
+                                    </span>
+                                    <span className="text-[11px]" style={{ color: c.muted }}>{opt.size}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  const renderGroup = (type: "comm" | "soa", rows: Stmt[]) => {
+                    if (rows.length === 0) return null;
+                    return (
+                      <div key={type}
+                        ref={el => { groupRefs[type] = el; }}
+                        className="rounded-xl overflow-hidden mb-3"
+                        style={{ background: c.cardBg, border: `1px solid ${c.border}`, scrollMarginTop: 12 }}>
+                        <div className="flex items-center gap-2 px-5 py-2" style={{ borderBottom: `1px solid ${c.border}`, background: c.hoverBg }}>
+                          <FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                          <span className="text-[12px] font-semibold" style={{ ...font, color: c.text }}>{TYPE_LABEL[type]}s</span>
+                          <span className="text-[11px]" style={{ ...font, color: c.muted }}>{rows.length}</span>
+                        </div>
+                        {rows.map((r, i) => <StmtRow key={r.id} s={r} isLast={i === rows.length - 1} />)}
+                      </div>
+                    );
+                  };
+
+                  const previewSideOpen = !!stmtPreview;
+                  // Latest posting date across the archive — surfaces "when the newest file dropped".
+                  const latest = filtered.length ? filtered[0] : all[0];
+                  const latestPosted = latest ? `${MONTHS[latest.monthIdx]} ${latest.type === "comm" ? 14 : new Date(latest.year, latest.monthIdx + 1, 0).getDate()}, ${latest.year}` : "";
+                  return (
+                    <div className="rounded-2xl p-8 mb-8" style={{ background: c.cardBg, border: `1px solid ${c.border}` }} onClick={closeDropdowns}>
+                      {/* Header — title on the left, last-posted pill + toolbar
+                          on the right, vertically centered on the same line. */}
+                      <div className="flex items-center justify-between gap-4 mb-4">
+                        <h3 className="text-[17px] font-bold leading-tight" style={{ ...font, color: c.text }}>
+                          {accountingView === "soa" ? "Statement of Account" : "Commission Statement"}
+                        </h3>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(115,201,183,0.15)" }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#73C9B7" }} />
+                            <span className="text-[11.5px] font-semibold" style={{ ...font, color: isDark ? "#73C9B7" : "#0F7A63" }}>
+                              Last posted {latestPosted}
+                            </span>
+                          </div>
+                          <div className="w-px h-5" style={{ background: c.border }} />
+                          <div className="flex items-center gap-1">
+                          {/* Sort */}
+                          <div className="relative" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => { setStmtSortOpen(p => !p); setStmtFilterOpen(false); }}
+                              className="p-1.5 rounded-md transition-all" style={{ color: c.muted }}>
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2V4zm2 3.5h8V9H4V7.5zm2 3.5h4v1.5H6V11z"/></svg>
+                            </button>
+                            {stmtSortOpen && (
+                              <div className="absolute right-0 top-8 z-30 w-40 rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide px-3 pt-2 pb-1.5" style={{ fontFamily: FONT, color: c.muted }}>Sort by Month</p>
+                                {([["desc","Newest first"],["asc","Oldest first"]] as const).map(([d, label]) => (
+                                  <button key={d} onClick={() => { setStmtSortDir(d); setStmtSortOpen(false); }}
+                                    className="w-full text-left px-3 py-2 text-[12px] flex items-center justify-between"
+                                    style={{ fontFamily: FONT, color: stmtSortDir === d ? "#A614C3" : c.text, background: stmtSortDir === d ? "rgba(168,85,247,0.08)" : "transparent" }}>
+                                    <span>{label}</span>{stmtSortDir === d && <svg width="10" height="8" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {/* Search */}
+                          <div className="flex items-center transition-all overflow-hidden" style={{ width: stmtSearchOpen ? 180 : 28 }}>
+                            <button onClick={e => { e.stopPropagation(); setStmtSearchOpen(p => !p); if (stmtSearchOpen) setStmtSearch(""); }}
+                              className="p-1.5 rounded-md flex-shrink-0" style={{ color: stmtSearch ? "#A855F7" : c.muted }}>
+                              <Search className="w-3.5 h-3.5" />
+                            </button>
+                            {stmtSearchOpen && (
+                              <input autoFocus value={stmtSearch} onChange={e => setStmtSearch(e.target.value)}
+                                onClick={e => e.stopPropagation()} placeholder="Search month or type…"
+                                className="outline-none text-[12px] flex-1 min-w-0"
+                                style={{ fontFamily: FONT, color: c.text, background: "transparent", borderBottom: `1px solid ${c.border}` }} />
+                            )}
+                          </div>
+                          {/* Select toggle */}
+                          <button title={stmtSelectMode ? "Exit selection" : "Select statements"}
+                            onClick={e => { e.stopPropagation(); setStmtSelectMode(p => { if (p) clearSel(); return !p; }); }}
+                            className="p-1.5 rounded-md transition-all"
+                            style={{ color: stmtSelectMode ? "#A855F7" : c.muted, background: stmtSelectMode ? "rgba(168,85,247,0.10)" : "transparent" }}>
+                            <CheckSquare className="w-3.5 h-3.5" />
+                          </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cadence callout — full-width secondary row under the header. */}
+                      <div
+                        className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-lg"
+                        style={{
+                          fontFamily: FONT,
+                          fontSize: 12.5,
+                          color: c.text,
+                          background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB",
+                          border: `1px solid ${c.border}`,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isDark ? "#A855F7" : "#A614C3", marginTop: 2 }} />
+                        <span>
+                          {(() => {
+                            // Brighter razz in dark mode so the emphasized dates
+                            // stay legible against the dark navy background.
+                            const razzGrad = isDark
+                              ? "linear-gradient(90deg, #C084FC 0%, #E879F9 65%)"
+                              : "linear-gradient(90deg, #5C2ED4 0%, #A614C3 65%)";
+                            const gradB: React.CSSProperties = { backgroundImage: razzGrad, backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700 };
+                            return accountingView === "soa"
+                              ? <>12-month rolling archive — new statements post on the <b style={gradB}>first day</b> of each month.</>
+                              : <>12-month rolling archive — new statements post around the <b style={gradB}>12th–15th</b> of each month.</>;
+                          })()}
+                        </span>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="mb-3" style={{ height: 1, background: c.border }} />
+
+                      {/* Bulk-select action bar — neutral surface, subtle razz accent-bar on
+                          the left. Format pills are outlined-only when active; Download reads
+                          as a real disabled state instead of a ghosted gradient. */}
+                      {stmtSelectMode && (() => {
+                        const hasSel = selectedStmts.size > 0;
+                        const allChecked = filtered.length > 0 && filtered.every(s => selectedStmts.has(s.id));
+                        return (
+                        <div className="flex items-center justify-between gap-4 pl-4 pr-3 py-2 mb-3 rounded-lg"
+                          style={{
+                            background: isDark ? "rgba(255,255,255,0.03)" : "#FAFAFB",
+                            border: `1px solid ${c.border}`,
+                            borderLeft: "3px solid #A614C3",
+                          }}>
+                          <div className="flex items-center gap-3 text-[12px] min-w-0" style={{ ...font, color: c.text }}>
+                            <span className="font-semibold" style={{ color: hasSel ? c.text : c.muted }}>
+                              {hasSel ? `${selectedStmts.size} selected` : "0 selected"}
+                            </span>
+                            <button onClick={() => setSelectedStmts(allChecked ? new Set() : new Set(filtered.map(s => s.id)))}
+                              className="text-[11px] font-medium transition-opacity"
+                              style={{ fontFamily: FONT, color: "#A614C3" }}
+                              onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
+                              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+                              {allChecked ? "Clear" : "Select all"}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            {/* Format — outlined pill group, active state uses razz text + tint, no gradient */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10.5px] uppercase tracking-wider" style={{ fontFamily: FONT, color: c.muted, letterSpacing: "0.06em" }}>Format</span>
+                              <div className="flex items-center rounded-md overflow-hidden" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                                {(["pdf","xlsx","both"] as const).map(f => {
+                                  const active = stmtBulkFormat === f;
+                                  return (
+                                    <button key={f} onClick={() => setStmtBulkFormat(f)}
+                                      className="px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                                      style={{
+                                        fontFamily: FONT,
+                                        color: active ? "#A614C3" : c.muted,
+                                        background: active ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent",
+                                      }}
+                                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = c.text; }}
+                                      onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
+                                      {f === "pdf" ? "PDF" : f === "xlsx" ? "Excel" : "Both"}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="w-px h-5" style={{ background: c.border }} />
+                            <button onClick={() => { clearSel(); setStmtSelectMode(false); }}
+                              className="px-2 py-1 rounded-md text-[11px] font-medium transition-colors"
+                              style={{ fontFamily: FONT, color: c.muted, background: "transparent" }}
+                              onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                              Cancel
+                            </button>
+                            <button
+                              disabled={!hasSel}
+                              onClick={() => {
+                                if (!hasSel) return;
+                                const names = all.filter(s => selectedStmts.has(s.id)).map(s => s.label);
+                                const fmt = stmtBulkFormat === "both" ? "PDF + Excel" : stmtBulkFormat === "pdf" ? "PDF" : "Excel";
+                                showToast({
+                                  title: `Downloading ${names.length} ${names.length === 1 ? "statement" : "statements"} (${fmt})`,
+                                  description: names.length <= 3 ? names.join(", ") : `${names.slice(0,2).join(", ")} and ${names.length - 2} more`,
+                                });
+                                clearSel(); setStmtSelectMode(false);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11.5px] font-semibold transition-all"
+                              style={hasSel ? {
+                                background: btnGrad,
+                                color: "#FFFFFF",
+                                fontFamily: FONT,
+                                cursor: "pointer",
+                              } : {
+                                background: c.cardBg,
+                                color: c.muted,
+                                fontFamily: FONT,
+                                border: `1px solid ${c.border}`,
+                                cursor: "not-allowed",
+                              }}
+                              onMouseEnter={e => { if (hasSel) e.currentTarget.style.filter = "brightness(1.10)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}>
+                              <Download className="w-3 h-3" />
+                              Download{hasSel ? ` ${selectedStmts.size}` : ""}
+                            </button>
+                          </div>
+                        </div>
+                        );
+                      })()}
+
+                      {/* Body — list + optional preview side panel */}
+                      <div className="flex gap-4">
+                        <div style={{ flex: previewSideOpen ? "0 0 62%" : "1 1 100%", minWidth: 0 }}>
+                          {((accountingView === "soa" ? "soa" : "comm") === "comm" ? groupComm : groupSoa).length === 0 ? (
+                            <div className="rounded-xl overflow-hidden px-5 py-10 text-center text-[12px]"
+                              style={{ ...font, color: c.muted, background: c.cardBg, border: `1px solid ${c.border}` }}>
+                              No statements match your search.
+                            </div>
+                          ) : (
+                            renderGroup((accountingView === "soa" ? "soa" : "comm"), (accountingView === "soa" ? "soa" : "comm") === "comm" ? groupComm : groupSoa)
+                          )}
+                        </div>
+                        {previewSideOpen && stmtPreview && (
+                          <div className="rounded-2xl overflow-hidden flex flex-col" style={{ flex: "1 1 38%", minWidth: 0, background: c.cardBg, border: `1px solid ${c.border}` }}
+                            onClick={e => e.stopPropagation()}>
+                            {/* Top bar — breadcrumb + action icons, matches the Documents preview */}
+                            <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+                              style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                                <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Statements</span>
+                                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                                <span className="text-[11px] font-medium truncate" style={{ fontFamily: FONT, color: c.text }}>{TYPE_LABEL[stmtPreview.type]}s</span>
+                              </div>
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                <button title={`Download ${stmtPreviewFormat === "pdf" ? "PDF" : "Excel"}`}
+                                  onClick={() => {
+                                    const label = stmtPreviewFormat === "pdf" ? "PDF" : "Excel";
+                                    const size = stmtPreviewFormat === "pdf" ? stmtPreview.sizePdf : stmtPreview.sizeXls;
+                                    showToast({ title: `Downloading ${stmtPreview.label}`, description: `${label} · ${size}` });
+                                  }}
+                                  className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button title="Open in side drawer" onClick={() => setStmtPreviewExpanded(true)}
+                                  className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                  <Maximize2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button title="Close" onClick={() => setStmtPreview(null)}
+                                  className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            {/* Meta strip — issued date on the left, PDF/Excel view toggle on the right */}
+                            <div className="flex items-center gap-4 px-5 py-3 flex-shrink-0 text-[12px] flex-wrap"
+                              style={{ ...font, color: c.muted, borderBottom: `1px solid ${c.border}` }}>
+                              <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Issued {stmtPreview.issued}</span>
+                              <div className="ml-auto flex items-center rounded-md overflow-hidden" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                                {(["pdf","xlsx"] as const).map(f => {
+                                  const active = stmtPreviewFormat === f;
+                                  return (
+                                    <button key={f} type="button" onClick={() => setStmtPreviewFormat(f)}
+                                      className="px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                                      style={{ fontFamily: FONT, color: active ? "#A614C3" : c.muted, background: active ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent" }}
+                                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = c.text; }}
+                                      onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
+                                      {f === "pdf" ? "PDF" : "Excel"}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            {/* File placeholder — icon/extension follow the format toggle */}
+                            <div className="flex-1 min-h-0 overflow-auto p-6" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+                              <div className="mx-auto rounded shadow-sm flex flex-col items-center justify-center"
+                                style={{ background: "#FFFFFF", border: `1px solid ${c.border}`, aspectRatio: "8.5 / 11", maxWidth: 520, minHeight: 360, fontFamily: FONT }}>
+                                <FileText className="w-16 h-16 mb-3" style={{ color: "#D1D5DB" }} />
+                                <div className="text-[13px] font-semibold mb-1" style={{ color: "#374151" }}>{stmtPreview.label}.{stmtPreviewFormat === "pdf" ? "pdf" : "xlsx"}</div>
+                                <div className="text-[11px]" style={{ color: "#9CA3AF" }}>{stmtPreviewFormat === "pdf" ? "PDF" : "Excel"} preview not available in demo</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-lg"
+                        style={{
+                          fontFamily: FONT,
+                          fontSize: 12,
+                          color: c.text,
+                          background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB",
+                          border: `1px solid ${c.border}`,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3", marginTop: 2 }} />
+                        <span>
+                          Need older statements? The accounting team keeps a full history —
+                          reach out to <a href="mailto:Accounting@btisinc.com" className="font-semibold" style={{ color: "#A614C3" }}>Accounting@btisinc.com</a> with the agency code and the month you need.
+                        </span>
+                      </div>
+
+                      {/* Expanded side drawer — mirrors the Documents expanded preview */}
+                      {stmtPreviewExpanded && stmtPreview && (
+                        <div className="fixed inset-y-0 right-0 z-50 flex" style={{ width: "58vw" }}>
+                          <div className="flex-1 cursor-pointer"
+                            onClick={() => setStmtPreviewExpanded(false)}
+                            style={{ background: "rgba(0,0,0,0.25)" }} />
+                          <div className="flex flex-col h-full shadow-2xl"
+                            style={{ width: "100%", background: c.cardBg, borderLeft: `1px solid ${c.border}` }}>
+                            <div className="flex items-center justify-between px-6 py-3 flex-shrink-0"
+                              style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                                <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Statements</span>
+                                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                                <span className="text-[12px] font-semibold truncate max-w-[420px]" style={{ fontFamily: FONT, color: c.text }}>{TYPE_LABEL[stmtPreview.type]}s</span>
+                              </div>
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                <button title={`Download ${stmtPreviewFormat === "pdf" ? "PDF" : "Excel"}`}
+                                  onClick={() => {
+                                    const label = stmtPreviewFormat === "pdf" ? "PDF" : "Excel";
+                                    const size = stmtPreviewFormat === "pdf" ? stmtPreview.sizePdf : stmtPreview.sizeXls;
+                                    showToast({ title: `Downloading ${stmtPreview.label}`, description: `${label} · ${size}` });
+                                  }}
+                                  className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button title="Collapse" onClick={() => setStmtPreviewExpanded(false)}
+                                  className="p-1.5 rounded-md transition-colors">
+                                  <Minimize2 className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />
+                                </button>
+                                <button title="Close" onClick={() => { setStmtPreviewExpanded(false); setStmtPreview(null); }}
+                                  className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 px-6 py-3 flex-shrink-0 text-[12px] flex-wrap"
+                              style={{ ...font, color: c.muted, borderBottom: `1px solid ${c.border}` }}>
+                              <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Issued {stmtPreview.issued}</span>
+                              <div className="ml-auto flex items-center rounded-md overflow-hidden" style={{ border: `1px solid ${c.border}`, background: c.cardBg }}>
+                                {(["pdf","xlsx"] as const).map(f => {
+                                  const active = stmtPreviewFormat === f;
+                                  return (
+                                    <button key={f} type="button" onClick={() => setStmtPreviewFormat(f)}
+                                      className="px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                                      style={{ fontFamily: FONT, color: active ? "#A614C3" : c.muted, background: active ? (isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)") : "transparent" }}
+                                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = c.text; }}
+                                      onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
+                                      {f === "pdf" ? "PDF" : "Excel"}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-h-0 overflow-auto p-8" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+                              <div className="mx-auto rounded shadow-sm flex flex-col items-center justify-center"
+                                style={{ background: "#FFFFFF", border: `1px solid ${c.border}`, aspectRatio: "8.5 / 11", maxWidth: 620, minHeight: 600, fontFamily: FONT }}>
+                                <FileText className="w-20 h-20 mb-4" style={{ color: "#D1D5DB" }} />
+                                <div className="text-[14px] font-semibold mb-1" style={{ color: "#374151" }}>{stmtPreview.label}.{stmtPreviewFormat === "pdf" ? "pdf" : "xlsx"}</div>
+                                <div className="text-[12px]" style={{ color: "#9CA3AF" }}>{stmtPreviewFormat === "pdf" ? "PDF" : "Excel"} preview not available in demo</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          }
+
+          return null;
+        })()}
+
         {/* ── Policies tab ── */}
         {detailTab === "policies" && (() => {
           const isSold = bookRolled.has(agency.id);
@@ -5243,14 +6330,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter("All LOBs"); setStatusFilter("All Statuses"); setApplicantFilter(new Set()); setProducerFilter(new Set()); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
+                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter(new Set()); setStatusFilter(new Set()); setApplicantFilter(new Set()); setProducerFilter(new Set()); setLobSearch(""); setStatusSearch(""); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
                   className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
                 <div className="relative" onClick={e=>e.stopPropagation()}><button title="View columns" onClick={()=>setQpViewOpen(o=>!o)} className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3", background: qpViewOpen ? c.hoverBg : "transparent" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background = qpViewOpen ? c.hoverBg : "transparent")}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg></button>{qpViewOpen && (<div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}><div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold" style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>Show Columns</div><div className="py-1.5 max-h-[280px] overflow-y-auto">{QP_COLUMNS.map(col => { const visible = !qpHiddenCols.has(col.key); return (<label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors" onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")} onClick={() => setQpHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}><div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>{visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span></label>); })}</div><button onClick={() => setQpHiddenCols(new Set())} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}><RefreshCw className="w-3.5 h-3.5" />Show All</button></div>)}</div>
                 <button title="Export" className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
-            <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
+            <div className="rounded-xl flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+              <div className="grid px-5 py-3 gap-4 rounded-t-xl" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
                 {!qpHiddenCols.has("created") && (
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
@@ -5309,43 +6396,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </button>
                 )}
                 {/* LOB */}
-                {!qpHiddenCols.has("lob") && (
-                <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
-                    LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
-                  </button>
-                  {lobOpen&&(<>
-                    <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
-                      {ALL_LOBS.map(lob=>(
-                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
-                          <span>{lob}</span>
-                          {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </button>
-                      ))}
-                    </div>
-                  </>)}
-                </div>
-                )}
+                {!qpHiddenCols.has("lob") && renderMultiFilter({
+                  label: "LOB", options: LOB_OPTIONS, filter: lobFilter, setFilter: setLobFilter,
+                  search: lobSearch, setSearch: setLobSearch, open: lobOpen, setOpen: setLobOpen,
+                  searchPlaceholder: "Search LOB",
+                })}
                 {/* Status */}
-                {!qpHiddenCols.has("status") && (
-                <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
-                    Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
-                  </button>
-                  {statusOpen&&(<>
-                    <div className="fixed inset-0 z-10" onClick={()=>setStatusOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
-                      {POLICY_STATUSES.map(status=>(
-                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:statusFilter===status?"#A614C3":c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
-                          <span>{status}</span>
-                          {statusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </button>
-                      ))}
-                    </div>
-                  </>)}
-                </div>
-                )}
+                {!qpHiddenCols.has("status") && renderMultiFilter({
+                  label: "Status", options: POLICY_STATUS_OPTIONS, filter: statusFilter, setFilter: setStatusFilter,
+                  search: statusSearch, setSearch: setStatusSearch, open: statusOpen, setOpen: setStatusOpen,
+                  searchPlaceholder: "Search Status",
+                })}
                 {/* Producer */}
                 {!qpHiddenCols.has("producer") && (
                 <div className="relative">
@@ -5395,7 +6456,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.dba||"—"}</div>}
                       {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{new Date(p.effectiveDate).toLocaleDateString()}</div>}
                       {!qpHiddenCols.has("lob")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.lob}</div>}
-                      {!qpHiddenCols.has("status")       && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.status}</div>}
+                      {!qpHiddenCols.has("status")       && <div><StatusPill status={p.status} isDark={isDark} /></div>}
                       {!qpHiddenCols.has("producer")     && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{p.producer}</div>}
                     </div>
                   );
@@ -5428,14 +6489,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color:c.muted }} />
               </div>
               <div className="flex items-center gap-1 ml-1" style={{ borderLeft:`1px solid ${c.border}`, paddingLeft:10 }}>
-                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter("All LOBs"); setStatusFilter("All Statuses"); setApplicantFilter(new Set()); setProducerFilter(new Set()); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
+                <button title="Reset filters" onClick={() => { setDetailSearch(""); setLobFilter(new Set()); setStatusFilter(new Set()); setApplicantFilter(new Set()); setProducerFilter(new Set()); setLobSearch(""); setStatusSearch(""); setApplicantSearch(""); setProducerSearch(""); setLobOpen(false); setStatusOpen(false); setApplicantOpen(false); setProducerOpen(false); setQpSortKey(null); setQpSortDir("asc"); }}
                   className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><RefreshCw className="w-4 h-4"/></button>
                 <div className="relative" onClick={e=>e.stopPropagation()}><button title="View columns" onClick={()=>setQpViewOpen(o=>!o)} className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3", background: qpViewOpen ? c.hoverBg : "transparent" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background = qpViewOpen ? c.hoverBg : "transparent")}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="2" y="2" rx="1"/><rect width="5" height="5" x="9.5" y="2" rx="1"/><rect width="5" height="5" x="17" y="2" rx="1"/><rect width="5" height="5" x="2" y="9.5" rx="1"/><rect width="5" height="5" x="9.5" y="9.5" rx="1"/><rect width="5" height="5" x="17" y="9.5" rx="1"/><rect width="5" height="5" x="2" y="17" rx="1"/><rect width="5" height="5" x="9.5" y="17" rx="1"/><rect width="5" height="5" x="17" y="17" rx="1"/></svg></button>{qpViewOpen && (<div className="absolute right-0 top-full mt-1 z-30 w-[220px] rounded-xl shadow-xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}><div className="px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold" style={{ fontFamily: FONT, color: c.muted, borderBottom: `1px solid ${c.border}`, letterSpacing: "0.06em" }}>Show Columns</div><div className="py-1.5 max-h-[280px] overflow-y-auto">{QP_COLUMNS.map(col => { const visible = !qpHiddenCols.has(col.key); return (<label key={col.key} className="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-colors" onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")} onClick={() => setQpHiddenCols(prev => { const s = new Set(prev); s.has(col.key) ? s.delete(col.key) : s.add(col.key); return s; })}><div className="flex items-center justify-center w-4 h-4 rounded flex-shrink-0" style={{ border: `1.5px solid ${c.borderStrong}`, background: c.cardBg }}>{visible && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div><span className="text-[12px]" style={{ fontFamily: FONT, color: c.text }}>{col.label}</span></label>); })}</div><button onClick={() => setQpHiddenCols(new Set())} className="w-full flex items-center justify-center gap-2 py-3 text-[12px] font-semibold transition-colors" style={{ fontFamily: FONT, color: "#A614C3", borderTop: `1px solid ${c.border}` }} onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}><RefreshCw className="w-3.5 h-3.5" />Show All</button></div>)}</div>
                 <button title="Export" className="p-2 rounded-lg transition-colors" style={{ color:"#A614C3" }} onMouseEnter={e=>(e.currentTarget.style.background=c.hoverBg)} onMouseLeave={e=>(e.currentTarget.style.background="transparent")}><Download className="w-4 h-4"/></button>
               </div>
             </div>
-            <div className="rounded-xl overflow-hidden flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
-              <div className="grid px-5 py-3 gap-4" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
+            <div className="rounded-xl flex flex-col flex-1 min-h-0" style={{ background:c.cardBg, border:`1px solid ${c.border}` }}>
+              <div className="grid px-5 py-3 gap-4 rounded-t-xl" style={{ gridTemplateColumns:qpGridTemplate, borderBottom:`1px solid ${c.border}`, background:mutedBg }}>
                 {/* Created */}
                 {!qpHiddenCols.has("created") && (
                 <button onClick={()=>{if(qpSortKey==="createdDate")setQpSortDir(d=>d==="asc"?"desc":"asc");else{setQpSortKey("createdDate");setQpSortDir("asc");}}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none text-left" style={{fontFamily:FONT,color:c.muted}}>
@@ -5494,43 +6555,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </button>
                 )}
                 {/* LOB */}
-                {!qpHiddenCols.has("lob") && (
-                <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setLobOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:lobFilter!=="All LOBs"?"#A614C3":c.muted}}>
-                    LOB<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={lobFilter!=="All LOBs"?"#A614C3":sub}/></svg></span>
-                  </button>
-                  {lobOpen&&(<>
-                    <div className="fixed inset-0 z-10" onClick={()=>setLobOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[200px] max-h-[280px] overflow-y-auto" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
-                      {ALL_LOBS.map(lob=>(
-                        <button key={lob} onClick={()=>{setLobFilter(lob);setLobOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:lobFilter===lob?"#A614C3":c.text,fontWeight:lobFilter===lob?600:400,background:lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=lobFilter===lob?"rgba(168,85,247,0.08)":"transparent"}>
-                          <span>{lob}</span>
-                          {lobFilter===lob && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </button>
-                      ))}
-                    </div>
-                  </>)}
-                </div>
-                )}
+                {!qpHiddenCols.has("lob") && renderMultiFilter({
+                  label: "LOB", options: LOB_OPTIONS, filter: lobFilter, setFilter: setLobFilter,
+                  search: lobSearch, setSearch: setLobSearch, open: lobOpen, setOpen: setLobOpen,
+                  searchPlaceholder: "Search LOB",
+                })}
                 {/* Status */}
-                {!qpHiddenCols.has("status") && (
-                <div className="relative">
-                  <button onClick={()=>{closeAllDropdowns();setStatusOpen(o=>!o);}} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none" style={{fontFamily:FONT,color:statusFilter!=="All Statuses"?"#A614C3":c.muted}}>
-                    Status<span className="inline-flex ml-1"><svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M3.5 5L0.5 0H6.5L3.5 5Z" fill={statusFilter!=="All Statuses"?"#A614C3":sub}/></svg></span>
-                  </button>
-                  {statusOpen&&(<>
-                    <div className="fixed inset-0 z-10" onClick={()=>setStatusOpen(false)}/>
-                    <div className="absolute left-0 top-full mt-1 z-20 rounded-xl shadow-lg overflow-hidden min-w-[170px]" style={{background:c.cardBg,border:`1px solid ${c.border}`}}>
-                      {QUOTE_STATUSES.map(status=>(
-                        <button key={status} onClick={()=>{setStatusFilter(status);setStatusOpen(false);}} className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center justify-between gap-2" style={{fontFamily:FONT,color:statusFilter===status?"#A614C3":c.text,fontWeight:statusFilter===status?600:400,background:statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}} onMouseEnter={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.12)":c.hoverBg} onMouseLeave={e=>e.currentTarget.style.background=statusFilter===status?"rgba(168,85,247,0.08)":"transparent"}>
-                          <span>{status}</span>
-                          {statusFilter===status && <svg width="11" height="9" viewBox="0 0 9 7" fill="none" className="flex-shrink-0"><path d="M1 3.5L3.5 6L8 1" stroke="#A614C3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </button>
-                      ))}
-                    </div>
-                  </>)}
-                </div>
-                )}
+                {!qpHiddenCols.has("status") && renderMultiFilter({
+                  label: "Status", options: QUOTE_STATUS_OPTIONS, filter: statusFilter, setFilter: setStatusFilter,
+                  search: statusSearch, setSearch: setStatusSearch, open: statusOpen, setOpen: setStatusOpen,
+                  searchPlaceholder: "Search Status",
+                })}
                 {/* Producer */}
                 {!qpHiddenCols.has("producer") && (
                 <div className="relative">
@@ -5580,7 +6615,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       {!qpHiddenCols.has("dba")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.dba||"—"}</div>}
                       {!qpHiddenCols.has("effective")    && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.effectiveDate?new Date(q.effectiveDate).toLocaleDateString():"—"}</div>}
                       {!qpHiddenCols.has("lob")          && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.lob}</div>}
-                      {!qpHiddenCols.has("status")       && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.status}</div>}
+                      {!qpHiddenCols.has("status")       && <div><StatusPill status={q.status} isDark={isDark} /></div>}
                       {!qpHiddenCols.has("producer")     && <div className="text-[12px]" style={{ fontFamily:FONT, color:c.text }}>{q.producer}</div>}
                     </div>
                   );
@@ -5592,7 +6627,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
         {/* ── Users tab ── */}
         {detailTab === "users" && (
-          <div className="flex flex-col flex-1 min-h-0" onClick={() => { setUserMenuId(null); setUserMenuPos(null); setJobTitleOpen(false); }}>
+          <div className="flex flex-col" onClick={() => { setUserMenuId(null); setUserMenuPos(null); setJobTitleOpen(false); }}>
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-stretch overflow-hidden transition-all"
@@ -5878,8 +6913,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                         const fg = showInactive ? c.muted : (isDark ? "#4ECDC4" : "#73C9B7");
                         return (
                           <div className="flex items-center justify-center">
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                              style={{ fontFamily:FONT, background: bg, color: fg, letterSpacing: "0.04em" }}>
+                            <span className="inline-flex items-center px-3 py-[3px] rounded-full text-[11px] font-semibold w-fit"
+                              style={{ fontFamily:FONT, background: bg, color: fg }}>
                               {showInactive ? "Inactive" : "Active"}
                             </span>
                           </div>
@@ -5929,7 +6964,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                                 disabled={isUnlockDisabled}
                                 title={isUnlockDisabled ? "Account is currently active — nothing to unlock." : undefined}
                                 style={{ fontFamily:FONT,
-                                  color: isUnlockDisabled ? c.muted : action==="Remove"?"#EF4444":action==="Reactivate"?"#10B981":c.text,
+                                  color: isUnlockDisabled ? c.muted : action==="Remove"?"#EF4444":action==="Reactivate"?"#73C9B7":c.text,
                                   cursor: isUnlockDisabled ? "not-allowed" : "pointer",
                                   opacity: isUnlockDisabled ? 0.55 : 1 }}
                                 onMouseEnter={e=>{ if (!isUnlockDisabled) e.currentTarget.style.background=c.hoverBg; }}
@@ -7541,9 +8576,6 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
   const [licenseExp, setLicenseExp]   = useState(initialDraft?.licenseExp ?? "03/24/2026");
   const [eoPolicyNo, setEoPolicyNo]   = useState(initialDraft?.eoPolicyNo ?? "");
   const [eoExp, setEoExp]             = useState(initialDraft?.eoExp ?? "03/24/2026");
-  const [agencyBill, setAgencyBill]   = useState(initialDraft?.agencyBill ?? true);
-  const [directBill, setDirectBill]   = useState(initialDraft?.directBill ?? true);
-  const [premiumFin, setPremiumFin]   = useState(initialDraft?.premiumFin ?? true);
   const [affiliations, setAffiliations] = useState<Set<string>>(new Set(initialDraft?.affiliations ?? ["AAA/ACG (AC364)"]));
   const [workersComp, setWorkersComp]   = useState<Set<string>>(new Set(initialDraft?.workersComp ?? ["AIG"]));
   const [badges, setBadges]             = useState<Set<string>>(new Set(initialDraft?.badges ?? []));
@@ -7688,7 +8720,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
     status, apptDate, contact, email,
     bizType, taxId, website, phone, tollFree,
     npn, licenseNo, licenseExp, eoPolicyNo, eoExp,
-    agencyBill, directBill, premiumFin,
+    agencyBill: true, directBill: true, premiumFin: true,
     affiliations: Array.from(affiliations), workersComp: Array.from(workersComp),
     badges: Array.from(badges),
   });
@@ -7706,8 +8738,11 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: "none", cursor: "pointer",
+    // Right padding gives text room; chevron sits 12px from the border so it
+    // doesn't hug the stroke.
+    paddingRight: 32,
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
   };
 
   const Radio = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
@@ -8146,43 +9181,6 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             <div />
           </div>
 
-          {/* Agency Bill | Direct Bill | Premium Finance */}
-          <div className="grid grid-cols-3 gap-6 mb-2">
-            {([
-              ["Agency Bill:", agencyBill, setAgencyBill],
-              ["Direct Bill:", directBill, setDirectBill],
-              ["Premium Finance:", premiumFin, setPremiumFin],
-            ] as [string, boolean, (v:boolean)=>void][]).map(([label, val, set]) => (
-              <div key={label}>
-                <label style={labelStyle}>{label}</label>
-                <div className="flex gap-3">
-                  {([["Yes", true],["No", false]] as [string, boolean][]).map(([opt, bool]) => {
-                    const active = val === bool;
-                    return (
-                      <button key={opt} onClick={() => set(bool)}
-                        className="flex items-center gap-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap justify-center transition-all"
-                        style={{ ...font, width: 120, height: 40, boxSizing: "border-box",
-                          border: active ? "1.65px solid transparent" : `1.65px solid ${c.border}`,
-                          backgroundColor: active ? undefined : c.cardBg,
-                          backgroundImage: active
-                            ? `linear-gradient(88.54deg, rgba(92,46,212,0.06) 0.1%, rgba(166,20,195,0.06) 63.88%), linear-gradient(${c.cardBg}, ${c.cardBg}), linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)`
-                            : undefined,
-                          backgroundOrigin: active ? "padding-box, padding-box, border-box" : undefined,
-                          backgroundClip: active ? "padding-box, padding-box, border-box" : undefined,
-                        }}>
-                        <Radio checked={active} onClick={() => set(bool)} />
-                        {active
-                          ? <span style={isDark ? { color: "#FFFFFF" } : { backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{opt}</span>
-                          : <span style={{ color: c.muted }}>{opt}</span>
-                        }
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* Affiliations */}
           <SectionHeader title="Affiliations" />
           <div className="grid grid-cols-4 gap-x-6 gap-y-3">
@@ -8392,6 +9390,9 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
   const [tab, setTab]                 = useState<TabKey>("agencies");
   const [selectedAgency, setSelectedAgency] = useState<AgencyDetail | null>(null);
   const [selectedAgencyTab, setSelectedAgencyTab] = useState<DetailTab | undefined>(undefined);
+  // ITC records lifted here so edits from the Accounting tab persist across
+  // detail-view navigation within this Agencies module instance.
+  const [itcRecords, setItcRecords] = useState<Record<string, ITCRecord | null>>(INITIAL_ITC_RECORDS);
   const [stars, setStars]             = useState<Set<string>>(
     new Set(mockAgencies.filter(a => a.isStarred).map(a => a.id))
   );
@@ -9021,6 +10022,8 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
         bookRolled={bookRolled}
         setBookRolled={setBookRolled}
         allAgencies={allAgencies}
+        itcRecords={itcRecords}
+        setItcRecords={setItcRecords}
       />
     );
   }
@@ -9031,6 +10034,8 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
         agency={selectedAgency}
         isDark={isDark}
         initialTab={selectedAgencyTab}
+        itcRecords={itcRecords}
+        setItcRecords={setItcRecords}
         onBack={() => { setSelectedAgency(null); setSelectedAgencyTab(undefined); }}
         c={c}
         btnGrad={btnGrad}
@@ -10570,7 +11575,7 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
                       {!usersHiddenCols.has("status") && (() => {
                         const showInactive = isInactive || statusInactiveUserIds.has(u.id);
                         const bg = showInactive ? (isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6") : "rgba(115,201,183,0.15)";
-                        const fg = showInactive ? c.muted : "#10B981";
+                        const fg = showInactive ? c.muted : "#73C9B7";
                         return (
                           <td className="py-3 pr-6 text-center">
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded inline-block"
