@@ -207,7 +207,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
             <div className={view === "results" ? "px-6 py-4" : "px-8 py-8"}>
               {view !== "results" && (
                 <>
-                  <div className="text-[15px] font-semibold mb-1" style={{ color: c.text }}>Find a policy to endorse</div>
+                  <div className="text-[15px] font-semibold mb-1" style={{ color: c.text }}>Find A Policy To Endorse</div>
                   <div className="text-[13px] mb-6" style={{ color: c.muted }}>Search by policy number, submission ID, or insured name.</div>
                 </>
               )}
