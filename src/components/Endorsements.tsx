@@ -6,7 +6,7 @@ import EndorsementIntake from "./EndorsementIntake";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
-type SearchBy = "Select" | "Policy Number" | "DBA" | "Applicant Name" | "Bond Number";
+type SearchBy = "Policy Number" | "DBA" | "Applicant Name" | "Bond Number";
 type View = "search" | "results" | "form" | "success";
 
 // Mock results table returned after a "find a policy" search. Static list so
@@ -54,7 +54,7 @@ const SEARCH_RESULTS: SearchResult[] = [
   { submissionId: "QMWC0548023-E1",  policyNumber: "CWC01592013",    applicant: "Bluewater Marine Contractors",           lob: "Worker's Comp",  dba: "Bluewater Marine",                  status: "Submission Incomplete", effective: "04/09/2025" },
 ];
 
-const SEARCH_OPTIONS: SearchBy[] = ["Select", "Policy Number", "DBA", "Applicant Name", "Bond Number"];
+const SEARCH_OPTIONS: SearchBy[] = ["Policy Number", "DBA", "Applicant Name", "Bond Number"];
 
 export default function Endorsements({ isDark }: { isDark: boolean }) {
   const [view, setView] = useState<View>("search");
@@ -208,7 +208,7 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
               {view !== "results" && (
                 <>
                   <div className="text-[15px] font-semibold mb-1" style={{ color: c.text }}>Find A Policy To Endorse</div>
-                  <div className="text-[13px] mb-6" style={{ color: c.muted }}>Search by policy number, submission ID, or insured name.</div>
+                  <div className="text-[13px] mb-6" style={{ color: c.muted }}>Search by policy number, DBA, applicant name, or bond number.</div>
                 </>
               )}
 
@@ -271,9 +271,9 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
           {/* How it works */}
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             {[
-              { icon: Search,        title: "1. Find your policy",   body: "Search by policy number, submission ID, or insured name — we'll pull it up instantly." },
+              { icon: Search,        title: "1. Find your policy",   body: "Search by policy number, DBA, applicant name, or bond number — we'll pull it up instantly." },
               { icon: ClipboardList, title: "2. Tell us what changed", body: "Pick from the catalog — class codes, officers, locations, cancellations — and fill in just the fields that apply." },
-              { icon: Send,          title: "3. Review & submit",     body: "Preview your request, send it to the carrier, and download a PDF confirmation for your records." },
+              { icon: Send,          title: "3. Review & submit",     body: "Preview your request, send it to our team for review, and download a PDF confirmation for your records." },
             ].map(step => {
               const Icon = step.icon;
               return (
