@@ -121,10 +121,14 @@ export default function Endorsements({ isDark }: { isDark: boolean }) {
     setView("form");
   };
 
-  // "View Existing" — stub for the design mock: close the modal and stay on
-  // the results table until we wire real historical endorsements.
+  // "View Existing" — open the same intake surface the user would see after
+  // filling out a New Request. For the design mock we just reuse the intake
+  // (empty) so click-through works; wired against a real backend this would
+  // hydrate the fields with the previously-submitted values for review.
   const handleChooseExisting = () => {
+    if (pendingResult) setIntakePolicy(pendingResult);
     setChooseOpen(false);
+    setView("form");
   };
 
   const handleSubmit = () => setView("success");
