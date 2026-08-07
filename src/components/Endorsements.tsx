@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, ChevronDown, X, Send, ClipboardList, Clock, CheckCircle2, Check } from "lucide-react";
-import EndorsementBoard from "./EndorsementBoard";
+import EndorsementIntake from "./EndorsementIntake";
 
 const FONT = "var(--font-montserrat), Montserrat, sans-serif";
 
@@ -56,11 +56,8 @@ const SEARCH_RESULTS: SearchResult[] = [
 
 const SEARCH_OPTIONS: SearchBy[] = ["Select", "Policy Number", "DBA", "Applicant Name", "Bond Number"];
 
-export default function Endorsements({ isDark, layout = "3col", skipSearch = false }: { isDark: boolean; layout?: "3col" | "2col"; skipSearch?: boolean }) {
-  // When `skipSearch` is on, land directly on the intake with the first
-  // sample policy pre-selected. Used by the Design Option variants so
-  // clicking the sidebar link jumps straight to the intake.
-  const [view, setView] = useState<View>(skipSearch ? "form" : "search");
+export default function Endorsements({ isDark }: { isDark: boolean }) {
+  const [view, setView] = useState<View>("search");
 
   const [searchBy, setSearchBy] = useState<SearchBy>("Policy Number");
   const [searchByOpen, setSearchByOpen] = useState(false);
@@ -74,7 +71,7 @@ export default function Endorsements({ isDark, layout = "3col", skipSearch = fal
   // The row the intake is currently anchored to. Snapshotted at New Request
   // time so re-opening the chooser without navigating doesn't retarget the
   // in-flight intake.
-  const [intakePolicy, setIntakePolicy] = useState<SearchResult | null>(skipSearch ? SEARCH_RESULTS[0] : null);
+  const [intakePolicy, setIntakePolicy] = useState<SearchResult | null>(null);
 
   // Pagination — matches the Policies table footer (10 / 20 / 50 per page).
   const [page, setPage] = useState(1);
@@ -161,17 +158,27 @@ export default function Endorsements({ isDark, layout = "3col", skipSearch = fal
 
   return (
     <div className="flex flex-col flex-1 min-h-0" style={{ fontFamily: FONT }} onClick={closeAll}>
-      {/* Section title — hidden in form view so the intake's own top bar
-          reads as the page header without redundancy. */}
-      {view !== "form" && (
-        <div className="flex flex-col justify-center flex-shrink-0 mb-12"
-          style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
-          <h1 className="text-[22px] font-normal" style={{ fontFamily: FONT, color: c.text }}>Endorsements</h1>
-        </div>
-      )}
+      {/* Section title */}
+      <div className="flex flex-col justify-center flex-shrink-0 mb-12"
+        style={{ height: 71, borderBottom: `0.87px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginLeft: -48, marginRight: -48, paddingLeft: 28, paddingRight: 28 }}>
+        <h1 className="text-[22px] font-normal" style={{ fontFamily: FONT, color: c.text }}>Endorsements</h1>
+      </div>
 
       {view === "form" && intakePolicy && (
-        <EndorsementBoard isDark={isDark} onBack={handleBack} />
+        <EndorsementIntake
+          selectedPolicy={{
+            policyNumber: intakePolicy.policyNumber,
+            applicant:    intakePolicy.applicant,
+            submissionId: intakePolicy.submissionId,
+            effective:    intakePolicy.effective,
+            lob:          intakePolicy.lob,
+            dba:          intakePolicy.dba,
+            status:       intakePolicy.status,
+          }}
+          onBack={handleBack}
+          onSubmit={handleSubmit}
+          isDark={isDark}
+        />
       )}
 
       {view !== "form" && (
@@ -314,7 +321,7 @@ export default function Endorsements({ isDark, layout = "3col", skipSearch = fal
             ].map((r, i, arr) => {
               const statusColor = r.status === "Processing"
                 ? { color: "#B45309", bg: isDark ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.12)" }
-                : { color: "#0F7A63", bg: isDark ? "rgba(115,201,183,0.15)" : "rgba(115,201,183,0.12)" };
+                : { color: "#047857", bg: isDark ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.12)" };
               return (
                 <div key={r.id} className="grid px-6 py-3.5 items-center gap-4 transition-colors"
                   style={{ gridTemplateColumns: "1.2fr 1.6fr 1.4fr 1fr 1fr", borderBottom: i !== arr.length - 1 ? `1px solid ${c.border}` : "none" }}
