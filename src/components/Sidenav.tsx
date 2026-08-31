@@ -318,8 +318,14 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
       {/* Divider */}
       <div className="mx-4 mb-2 relative z-10" style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }} />
 
-      {/* Nav Items */}
-      <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto relative z-10" style={{ scrollbarWidth: "none" }}>
+      {/* Nav Items + Bottom Section share ONE scroll container so an
+          expanded submenu can push the tail past viewport without
+          clipping Chat with Norbie / Dark Mode / Legacy View — they
+          scroll along with the nav. `mt-auto` on the bottom block keeps
+          it pinned to the visible bottom whenever the nav is short
+          enough to fit. */}
+      <div className="flex-1 flex flex-col overflow-y-auto relative z-10" style={{ scrollbarWidth: "none" }}>
+      <nav className="px-2 space-y-0.5">
         {navItems.map((item) => {
           const hasKids = !!item.children?.length;
           const isExpanded = expandedNav === item.label;
@@ -369,8 +375,10 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
         })}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="px-3 pb-4 pt-2 space-y-2 relative z-10">
+      {/* Bottom Section — `mt-auto` pins to the visible bottom whenever
+          the nav fits; when a submenu expands past viewport, the whole
+          block scrolls along with the nav inside the shared container. */}
+      <div className="px-3 pb-4 pt-2 space-y-2 mt-auto">
 
         {/* Chat with Norbie — always has border + subtle bg */}
         <button
@@ -434,6 +442,7 @@ export default function Sidenav({ isDark = false, onToggleDark, activeItem = "Ma
           <span style={{ fontSize: "13px", fontWeight: 400, color: isDark ? "#F9FAFB" : "#6B7280" }}>Legacy View</span>
         </button>
 
+      </div>
       </div>
 
       {/* Profile picture modal */}
