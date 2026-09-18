@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Search, Plus, Star, MapPin, Users, ChevronDown, ChevronUp,
-  ChevronsUpDown, Building2, ChevronLeft, ChevronRight, X,
+  ChevronsUpDown, Building2, ChevronLeft, ChevronRight, ArrowRight, X,
   Calendar, RefreshCw, FileText, Edit2, Network, User,
   FileText as QuoteIcon, Shield,
   StickyNote, LayoutGrid, Trash2, Archive, Pin, List, Table2, FolderOpen, FileCheck,
@@ -222,7 +222,7 @@ interface Agency {
   lastLogin: string;
 }
 
-type FilterStatus = "All" | "Starred" | "Appointed" | "Unappointed";
+type FilterStatus = "All" | "Starred" | "Appointed" | "Unappointed" | "NeedsAction";
 type SortKey = "name" | "code" | "location" | "totalUsers" | "lastLogin" | "status" | null;
 type SortDir = "asc" | "desc";
 type TabKey = "agencies" | "users" | "affiliations";
@@ -353,8 +353,11 @@ interface ITCRecord {
 const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
   ACME01: {
     producerCode: "AC192", agentOrBroker: "Agent", shortName: "AC192", name: "ACME INSURANCE AGENCY", dba: "", status: "Active",
-    address: "1111 6th Ave", city: "Des Moines", state: "IA", zip: "50314",
-    telephone: "5152221000", email: "jason@acmeins.com", accountingEmail: "d.kim@acmeins.com", statementEmail: "d.kim@acmeins.com",
+    // Deliberate demo mismatch: agency Overview has 1111 6th Ave / 515-222-1000,
+    // ITC still has the older Cherry Ave + a stale phone — surfaces as
+    // "2 pending updates" on the ITC Record for the super admin to review.
+    address: "980 Cherry Ave", city: "Des Moines", state: "IA", zip: "50314",
+    telephone: "5152220999", email: "jason@acmeins.com", accountingEmail: "d.kim@acmeins.com", statementEmail: "d.kim@acmeins.com",
     appointmentDate: "03/24/2026", licenseNo: "LC-88210", licenseExpires: "03/24/2028",
     eoPolicyNo: "EO-4421", eoPolicyExpires: "03/24/2027", taxId: "121222334455", tax1099Type: "LLC", tax1099Name: "Acme Insurance Agency LLC",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
@@ -473,7 +476,7 @@ interface AgencyDetail extends Agency {
 }
 
 const mockDetails: Record<string, Partial<AgencyDetail>> = {
-  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             npn: "17482910", licenseNo: "LC-88210", licenseExp: "03/24/2026", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badges: ["Strategic Partner", "VIP"] },
+  "1": { website: "www.acmeins.com",      street: "1111 6th Ave",   zip: "50314", apptDate: "03/24/2026", contact: "Jason Smith",      contactPhone: "650-768-0850", contactEmail: "jason@acmeins.com",     bizType: "LLC",            taxId: "121222334455", phone: "515-222-1000", tollFree: "",             npn: "17482910", licenseNo: "LC-88210", licenseExp: "12/24/2027", eoPolicyNo: "EO-4421", eoExp: "03/24/2026", agencyBill: true,  directBill: true,  premiumFin: true,  agencyType: "Retail",     affiliations: ["AAA/ACG (AC364)", "Acrisure"], workersComp: ["AIG", "AmTrust"], badges: ["Strategic Partner", "VIP"] },
   "2": { website: "www.summitsol.com",    street: "200 N Michigan",  zip: "60601", apptDate: "01/15/2025", contact: "Maria Chen",       contactPhone: "312-555-0190", contactEmail: "m.chen@summitsol.com",  bizType: "Corporation",    taxId: "930011223",   phone: "312-555-0100", tollFree: "800-555-0100", npn: "20911345", licenseNo: "LC-22110", licenseExp: "01/15/2027", eoPolicyNo: "EO-1120", eoExp: "01/15/2027", agencyBill: true,  directBill: false, premiumFin: true,  agencyType: "Wholesale",  affiliations: ["Acrisure", "Acceptance"], workersComp: ["CNA"], badges: ["DreamTeam"] },
   "3": { website: "",                     street: "",                zip: "",      apptDate: "06/01/2024", contact: "Tom Lawson",       contactPhone: "",             contactEmail: "",                      bizType: "Sole Proprietor",taxId: "456789012",   phone: "",             tollFree: "",             npn: "",         licenseNo: "LC-77001", licenseExp: "06/01/2026", eoPolicyNo: "EO-7701", eoExp: "06/01/2026", agencyBill: false, directBill: true,  premiumFin: false, agencyType: "Retail",     affiliations: ["Farmers", "ISU"], workersComp: ["GUARD", "Zenith"], badges: [] },
 };
@@ -506,6 +509,32 @@ function getDetail(a: Agency): AgencyDetail {
     workersComp:   d.workersComp   ?? ["AIG"],
     badges:        d.badges        ?? [],
   };
+}
+
+// Shared with the agency-list badge: how many Norbielink agency-info fields
+// differ from what's currently frozen in the ITC producer record. Same
+// normalization the ITC Record view uses so pure formatting differences
+// (phone digits, name casing) don't count as diffs.
+function countPendingItcUpdates(a: AgencyDetail, record: ITCRecord | null): number {
+  if (!record) return 0;
+  const norm = (label: string, v: string) => {
+    const s = (v ?? "").trim();
+    if (label === "Telephone") return s.replace(/\D/g, "");
+    if (label === "Name" || label === "DBA") return s.toLowerCase();
+    return s;
+  };
+  const map: Array<[keyof ITCRecord, string, string]> = [
+    ["name",           "Name",            a.name],
+    ["address",        "Address",         a.street],
+    ["city",           "City",            a.city],
+    ["state",          "State",           a.state],
+    ["zip",            "Zip",             a.zip],
+    ["telephone",      "Telephone",       a.phone],
+    ["email",          "Email",           a.contactEmail],
+    ["licenseNo",      "License No",      a.licenseNo],
+    ["licenseExpires", "License Expires", a.licenseExp],
+  ];
+  return map.reduce((n, [k, label, av]) => n + (norm(label, av) !== norm(label, String(record[k] ?? "")) ? 1 : 0), 0);
 }
 
 /* ─── Agency Quotes & Policies ──────────────────────────────────────────── */
@@ -708,7 +737,7 @@ const StatusPill = ({ status, isDark }: { status: string; isDark: boolean }) => 
   </span>
 );
 
-function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency, viewMode = "internal", itcRecords, setItcRecords }: {
+function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleStar, inactiveUserIds, setInactiveUserIds, statusInactiveUserIds, setStatusInactiveUserIds, removedUserIds, setRemovedUserIds, bookRolled, setBookRolled, allAgencies, initialTab, onNavigateToAgency, viewMode = "internal", itcRecords, setItcRecords, isSuperAdmin = true }: {
   agency: AgencyDetail;
   isDark: boolean;
   onBack: () => void;
@@ -736,6 +765,11 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // (which never renders the Accounting tab anyway) can leave them off.
   itcRecords?: Record<string, ITCRecord | null>;
   setItcRecords?: React.Dispatch<React.SetStateAction<Record<string, ITCRecord | null>>>;
+  // BTIS super-admin gate for the ITC Record surface. Only super admins can
+  // Edit the record — regular internal users see the read-only card without
+  // the Edit button. Defaults to true so demo/mock use is unaffected until
+  // real auth wires it up.
+  isSuperAdmin?: boolean;
 }) {
   // Mock role toggle for the Admin (client) section. In production internal & client are
   // separate deployments and this flag would come from auth; here we let the demo user
@@ -748,13 +782,92 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // changes survive when the user switches agencies.
   const [itcEditing, setItcEditing] = useState(false);
   const [itcDraft, setItcDraft] = useState<ITCRecord | null>(null);
+  // Review-changes modal (Super-Admin two-step commit). Amit's rule: no
+  // silent push to ITC — admin sees a diff of only the changed fields
+  // before Update ITC actually writes.
+  const [itcReviewing, setItcReviewing] = useState(false);
+  // Side-panel expansion for the ITC edit form. Same UX as the Overview
+  // edit expand — a long form is easier to eyeball when it fills the
+  // right 70vw with the read-only card still visible on the left.
+  const [itcEditExpanded, setItcEditExpanded] = useState(false);
+  // Modal that lists fields the agency has edited on Overview (or an
+  // external agent edited on their side) that aren't yet pushed to ITC.
+  // Super admin approves each Push to ITC in the same review-first
+  // pattern as the Review Changes modal.
+  const [pendingItcOpen, setPendingItcOpen] = useState(false);
+  // Per-field editable overrides for the pending-updates modal. Lets the
+  // super admin tweak the incoming value inline instead of having to
+  // bounce out to the full ITC edit form. Keyed by ITCRecord field name,
+  // cleared whenever the modal closes so a fresh diff loads next time.
+  const [pendingOverrides, setPendingOverrides] = useState<Record<string, string>>({});
+  // Field-level validation for the Overview Edit form. Save Changes
+  // runs runEditValidation() first, sets fieldErrors, and blocks the
+  // save + scrolls to the first invalid input if anything fails.
+  // Errors clear per-field as the user types.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const editErr = (k: string) => fieldErrors[k];
+  const editErrStyle = (k: string): React.CSSProperties => editErr(k)
+    ? { borderColor: "#DC2626", boxShadow: "0 0 0 1px rgba(220,38,38,0.15)" }
+    : {};
+  const clearEditErr = (k: string) => {
+    setFieldErrors(prev => {
+      if (!(k in prev)) return prev;
+      const next = { ...prev }; delete next[k]; return next;
+    });
+  };
+  const EditErrLine = ({ k }: { k: string }) => {
+    const msg = editErr(k);
+    if (!msg) return null;
+    return (
+      <div className="flex items-center gap-1.5 mt-1 text-[11px]" style={{ ...font, color: "#DC2626" }}>
+        <AlertCircle className="w-3 h-3 flex-shrink-0" strokeWidth={2.25} />
+        {msg}
+      </div>
+    );
+  };
+  const editValidEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+  const editValidPhone = (s: string) => s.replace(/\D/g, "").length === 10;
+  const editValidZip   = (s: string) => /^\d{5}(-\d{4})?$/.test(s.trim());
+  const runEditValidation = (): Record<string, string> => {
+    const errs: Record<string, string> = {};
+    if (!eName.trim())    errs.name    = "Agency Name is required.";
+    if (!eStreet.trim())  errs.street  = "Street address is required.";
+    if (!eCity.trim())    errs.city    = "City is required.";
+    if (!eState.trim())   errs.state   = "State is required.";
+    if (!eZip.trim())     errs.zip     = "Zip is required.";
+    else if (!editValidZip(eZip)) errs.zip = "Zip must be 5 digits (12345 or 12345-6789).";
+    if (!eSameAddr) {
+      if (!eMStreet.trim()) errs.mStreet = "Mailing street is required.";
+      if (!eMCity.trim())   errs.mCity   = "Mailing city is required.";
+      if (!eMState.trim())  errs.mState  = "Mailing state is required.";
+      if (!eMZip.trim())    errs.mZip    = "Mailing zip is required.";
+      else if (!editValidZip(eMZip)) errs.mZip = "Mailing zip must be 5 digits (12345 or 12345-6789).";
+    }
+    if (!eContact.trim()) errs.contact = "Agency Contact is required.";
+    if (!eEmail.trim())   errs.email   = "Email is required.";
+    else if (!editValidEmail(eEmail)) errs.email = "Enter a valid email address.";
+    if (!ePhone.trim())   errs.phone   = "Phone Number is required.";
+    else if (!editValidPhone(ePhone)) errs.phone = "Phone must be 10 digits (US format).";
+    if (eTollFree.trim() && !editValidPhone(eTollFree)) errs.tollFree = "Toll Free must be 10 digits.";
+    if (!eLicNo.trim())   errs.licNo   = "License Number is required.";
+    if (!eLicExp.trim())  errs.licExp  = "License Expiration is required.";
+    return errs;
+  };
+  // Reject-with-reason flow inside the Pending Updates modal. When the
+  // super admin clicks Reject on a row, that row transforms into a
+  // reason-capture card. Sending the rejection reverts the field to
+  // the ITC value AND surfaces a mock email confirmation naming the
+  // editor + reason so Accounting has a paper trail.
+  const [rejectingKey, setRejectingKey] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>("");
+  const closePendingItc = () => { setPendingItcOpen(false); setPendingOverrides({}); setRejectingKey(null); setRejectReason(""); };
   // Sub-tabs within the Accounting tab — same segmented-control pattern
   // as the Documents toolbar so users don't have to scroll to switch
   // between the ITC record and the monthly statements archive.
   // Sub-tabs across the top of the Accounting tab. Splitting Statements into
   // Commission vs Account lets users jump straight to the file type they want
   // without a second-level tab switch inside the Statements card.
-  const [accountingView, setAccountingView] = useState<"comm" | "soa">("comm");
+  const [accountingView, setAccountingView] = useState<"record" | "comm" | "soa">(viewMode === "internal" ? "record" : "comm");
   // Statements view state — mirrors the Documents toolbar language
   // (search, filter by type, sort, select mode, per-item preview).
   const [stmtSearch, setStmtSearch] = useState("");
@@ -774,6 +887,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [detailTab, setDetailTab] = useState<DetailTab>(initialTab ?? "overview");
   const [isEditing, setIsEditing]           = useState(false);
   const [editExpanded, setEditExpanded]     = useState(false);
+  // Read-only "view expanded" side panel for the Agency Information card
+  // on the Overview tab. Header's maximize icon toggles this — matches the
+  // edit-mode expand pattern but without any edit affordance.
+  const [overviewExpanded, setOverviewExpanded] = useState(false);
   const [contactCardEditing, setContactCardEditing] = useState(false);
   const [contactMode, setContactMode] = useState<"edit"|"reassign"|"new">("edit");
   const [reassignSelection, setReassignSelection] = useState<string>("");
@@ -843,6 +960,76 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [wcOverride,    setWcOverride]    = useState<string[] | null>(null);
   const effectiveAffils = affilOverride ?? agency.affiliations ?? [];
   const effectiveWC     = wcOverride    ?? agency.workersComp ?? [];
+  // Persisted overrides for the ITC-diffed core fields. Save Changes writes
+  // the current edit-form values in here so the Accounting → ITC Record view
+  // sees the drift as pending updates the super admin can push. Keeps the
+  // parent `agency` object unmodified — this is just the UI's local memory
+  // of "what the agency should look like now."
+  type AgencyFieldOverride = Partial<Pick<AgencyDetail, "name" | "street" | "city" | "state" | "zip" | "phone" | "contactEmail" | "licenseNo" | "licenseExp">>;
+  // Concurrency model = last-write-wins by design. Save Changes always
+  // overwrites the whole override object (see the Save handler below);
+  // if two people submit against the same agency, the later Save wins
+  // and the earlier pending diff is lost silently. The Edit form shows
+  // a razz-tint "pending edits on file" banner to warn the second user
+  // before they save (see the isEditing block).
+  const [agencyFieldOverride, setAgencyFieldOverride] = useState<AgencyFieldOverride>({});
+  const effectiveAgency: AgencyDetail = { ...agency, ...agencyFieldOverride };
+  const hasPendingOverride = Object.keys(agencyFieldOverride).length > 0;
+  // Map from ITC-record field key → agencyFieldOverride key. Used by
+  // the Reject action in the Pending Updates modal to revert a single
+  // field back to its ITC value without touching the other pending
+  // changes in the batch.
+  const OVERRIDE_KEY_FOR_ITC: Record<string, keyof AgencyFieldOverride> = {
+    name: "name",
+    address: "street",
+    city: "city",
+    state: "state",
+    zip: "zip",
+    telephone: "phone",
+    email: "contactEmail",
+    licenseNo: "licenseNo",
+    licenseExpires: "licenseExp",
+  };
+  // Inline editing in the Pending Updates modal is available on every
+  // field, including the doc-gated ones (Name / Address / City / State /
+  // Zip / License #). The whole point of inline is that the super admin
+  // is reviewing against the uploaded W-9 or License copy in the side
+  // panel — if the submitter typed a typo, super admin corrects it here
+  // to match the source doc, then Push to ITC.
+  // Small "Pending" pill shown next to any field that has an
+  // unpushed override, mirroring the Appointed / DreamTeam badge
+  // language so a returning editor can spot at a glance which
+  // fields will move on the next ITC push.
+  const pendingTag = (keys: (keyof AgencyFieldOverride)[]) => {
+    const isPending = keys.some(k => agencyFieldOverride[k] !== undefined);
+    if (!isPending) return null;
+    return (
+      <span
+        className="inline-flex items-center justify-center align-middle ml-2"
+        title="Edited — not yet pushed to ITC"
+        style={{
+          background: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.08) 63.88%)",
+          borderRadius: 9999,
+          padding: "2px 8px",
+        }}
+      >
+        <span
+          style={{
+            backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontSize: 10,
+            fontWeight: 600,
+            lineHeight: "14px",
+            letterSpacing: "0.02em",
+          }}
+        >
+          Pending
+        </span>
+      </span>
+    );
+  };
   const [eStatusOpen, setEStatusOpen] = useState(false);
   const [eBizTypeOpen, setEBizTypeOpen] = useState(false);
   const [eReason, setEReason] = useState("");
@@ -2046,8 +2233,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-y-auto" style={{ fontFamily: FONT, overflowX: "hidden" }}>
       {userToast && (
-        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-8"
+        <div className="fixed top-[68px] right-6 z-50 flex items-center gap-3"
           style={{ background: isDark ? "#1E2240" : "#fff", border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 16px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: 360, maxWidth: 460, fontFamily: FONT }}>
+          <span className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 26, height: 26, borderRadius: 9999, background: isDark ? "rgba(168,85,247,0.22)" : "rgba(166,20,195,0.10)" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? "#D946EF" : "#A614C3"} strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold truncate" style={{ color: c.text }}>{userToast.title}</div>
             {userToast.description && (
@@ -2691,8 +2884,25 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               if (docUpdateModal.w9)      required.push({ key: "w9",      label: "New W-9",          hint: "Name · Entity · Address · TIN" });
               if (docUpdateModal.license) required.push({ key: "license", label: "New License copy", hint: "License number changed" });
               const allUploaded = required.every(r => docModalUploads[r.key]);
+              const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
               const onPickFile = (key: "w9" | "license", file: File | null | undefined) => {
                 if (!file) return;
+                // W-9 restricted to PDF (Accounting requirement); catches
+                // the drag-and-drop case where the input `accept` attribute
+                // is not enforced by the browser.
+                if (key === "w9") {
+                  const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+                  if (!isPdf) {
+                    showToast({ title: "PDF required", description: `W-9 must be a PDF. "${file.name}" was not attached.` }, 5000);
+                    return;
+                  }
+                }
+                // Size cap matches the label under the drop zone (10MB).
+                if (file.size > MAX_UPLOAD_BYTES) {
+                  const mb = (file.size / (1024 * 1024)).toFixed(1);
+                  showToast({ title: "File too large", description: `"${file.name}" is ${mb}MB. Max 10MB.` }, 5000);
+                  return;
+                }
                 setDocModalUploads(p => ({ ...p, [key]: file.name }));
               };
               return (
@@ -2728,11 +2938,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                               onDragOver={e => { e.preventDefault(); setDocModalDragOver(r.key); }}
                               onDragLeave={() => setDocModalDragOver(null)}
                               onDrop={e => { e.preventDefault(); setDocModalDragOver(null); onPickFile(r.key, e.dataTransfer.files?.[0]); }}>
-                              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                              {/* W-9 must be a PDF (Accounting requirement — searchable
+                                  taxpayer data, digital signatures). License copies
+                                  still allow images since scans are common. */}
+                              <input type="file" className="hidden"
+                                accept={r.key === "w9" ? ".pdf,application/pdf" : ".pdf,.jpg,.jpeg,.png"}
                                 onChange={e => onPickFile(r.key, e.target.files?.[0])} />
                               <Paperclip className="w-5 h-5 mb-1.5" style={{ color: "#A614C3" }} />
                               <span className="text-[12px] font-medium" style={{ color: c.text }}>Drag &amp; Drop or Click to Browse</span>
-                              <span className="text-[11px] mt-0.5" style={{ color: c.muted }}>PDF, JPG, PNG · Max 10MB</span>
+                              <span className="text-[11px] mt-0.5" style={{ color: c.muted }}>{r.key === "w9" ? "PDF only · Max 10MB" : "PDF, JPG, PNG · Max 10MB"}</span>
                             </label>
                           )}
                         </div>
@@ -2774,11 +2988,20 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                             description: "We'll review your edits and update the agency record shortly.",
                           }, 5000);
                         } else {
-                          showToast({ title: "Changes saved", description: "Updated documents uploaded successfully." });
+                          // Internal staff upload — same messaging as the no-doc
+                          // internal save path so the workflow reads consistently.
+                          showToast({
+                            title: "Sent to Accounting for review",
+                            description: "They'll review and push to ITC.",
+                          }, 5000);
                         }
                         setBadgesOverride(Array.from(eBadges));
                         setAffilOverride(Array.from(eAffil));
                         setWcOverride(Array.from(eWC));
+                        setAgencyFieldOverride({
+                          name: eName, street: eStreet, city: eCity, state: eState, zip: eZip,
+                          phone: ePhone, contactEmail: eEmail, licenseNo: eLicNo, licenseExp: eLicExp,
+                        });
                         setIsEditing(false);
                         setDocUpdateModal(null);
                         setDocModalUploads({});
@@ -3184,6 +3407,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             const activeTextColor  = isDark ? "#fff"     : "#A614C3";
             const activeIconColor  = "#A614C3";
             const activeUnderline  = "linear-gradient(90deg,#5C2ED4 0%,#A614C3 65%)";
+            // Accounting tab surfaces a pending-updates dot when the
+            // agency's ITC record is behind the Norbielink agency info,
+            // so the super admin knows there's something to review before
+            // opening the tab. Internal + super-admin gated.
+            const pendingItc = key === "accounting" && viewMode === "internal" && isSuperAdmin
+              ? countPendingItcUpdates(effectiveAgency, itcRecords?.[agency.code] ?? null)
+              : 0;
             return (
               <button key={key} onClick={() => { setDetailTab(key); }}
                 className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-normal relative transition-colors"
@@ -3192,11 +3422,22 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 onMouseLeave={e => { if (!active) e.currentTarget.style.color = c.muted; }}>
                 <span style={{ color: active ? activeIconColor : undefined }}>{icon}</span>
                 {label}
+                {pendingItc > 0 && (
+                  <span
+                    title="Pending updates to push to ITC"
+                    aria-label="Pending updates"
+                    className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+                    style={{ width: 16, height: 16, background: "rgba(166, 20, 195, 0.12)" }}
+                  >
+                    <Bell className="w-3 h-3" style={{ color: "#A614C3" }} strokeWidth={2.25} />
+                  </span>
+                )}
                 {active && <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: activeUnderline }} />}
               </button>
             );
           })}
         </div>
+
 
         {/* ── Overview tab ── */}
         {detailTab === "overview" && !isEditing && (
@@ -3205,7 +3446,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>Agency Information</h3>
               {currentUserIsAdmin && (
-                <button onClick={() => setIsEditing(true)}
+                <button
+                  onClick={() => setIsEditing(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
                   style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.muted }}
                   onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
@@ -3353,7 +3595,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                   {editExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
-                <button onClick={() => { setIsEditing(false); setEditExpanded(false); }}
+                <button onClick={() => { setIsEditing(false); setEditExpanded(false); setFieldErrors({}); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
                   style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
                   onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
@@ -3363,13 +3605,56 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
             </div>
 
+            {/* Concurrent-edit warning. If someone (internal or external)
+                already saved unpushed edits since ITC was last synced,
+                surface that state so the current editor knows a Save
+                will overwrite the earlier diff (last-write-wins).
+                Uses the same visual language as the Accounting-tab
+                Pending Updates alert so it reads as one family. The
+                "check the ITC Record tab" hint is only shown to viewers
+                who can actually see that tab (internal + super admin);
+                other viewers get the truncated form without the pointer. */}
+            {hasPendingOverride && (
+              <div className="rounded-xl p-4 mb-6 flex items-start gap-3"
+                style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="alert-razz-conflict" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+                      <stop offset="0%" stopColor="#5C2ED4" />
+                      <stop offset="100%" stopColor="#A614C3" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="12" cy="12" r="10" stroke="url(#alert-razz-conflict)" />
+                  <line x1="12" x2="12" y1="8" y2="12" stroke="url(#alert-razz-conflict)" />
+                  <line x1="12" x2="12.01" y1="16" y2="16" stroke="url(#alert-razz-conflict)" />
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-semibold" style={{
+                    ...font,
+                    backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}>
+                    Unpushed edits on file
+                  </div>
+                  <div className="text-[12px] mt-0.5" style={{ ...font, color: c.muted }}>
+                    This agency was already edited and is waiting for Accounting to review. Saving now will overwrite any conflicting field — last save wins.{viewMode === "internal" && isSuperAdmin ? " Check the Accounting → ITC Record tab if you want to see what’s pending first." : ""}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Row 1: Name | Code | Type */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
-                <label style={labelStyle}>Agency Name:</label>
+                <label style={labelStyle}>Agency Name:{pendingTag(["name"])}</label>
                 {clientLocked
                   ? <LockedInput value={eName} />
-                  : <input value={eName} onChange={e => setEName(e.target.value)} style={inputStyle} />}
+                  : <div data-edit-error={editErr("name") ? "true" : undefined}>
+                      <input value={eName} onChange={e => { setEName(e.target.value); clearEditErr("name"); }} style={{ ...inputStyle, ...editErrStyle("name") }} />
+                      <EditErrLine k="name" />
+                    </div>}
               </div>
               <div>
                 <label style={labelStyle}>Agency Code:</label>
@@ -3424,37 +3709,73 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </div>
 
             {/* Agency Address */}
+            {(() => {
+              // StyledSelect palette — matches the popover language used in
+              // ITC editing so Country / State pickers here look identical
+              // to the ones on the Accounting → ITC Record surface.
+              const selectC = {
+                text: c.text, muted: c.muted, border: c.border, cardBg: c.cardBg, hoverBg: c.hoverBg,
+                razz: "#A614C3", razzTintBg: isDark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.08)",
+              };
+              const COUNTRIES = ["United States of America", "Canada", "Mexico"] as const;
+              const STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"] as const;
+              type Country = typeof COUNTRIES[number];
+              type StateCode = typeof STATES[number];
+              return (
+            <>
             <div className="mb-4">
-              <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:</label>
+              <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:{pendingTag(["street", "city", "state", "zip"])}</label>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
-                  <select value={eCountry} onChange={e => setECountry(e.target.value)} style={selectStyle}>
-                    <option>United States of America</option><option>Canada</option><option>Mexico</option>
-                  </select>
-                  <AddressAutocomplete
-                    value={eStreet}
-                    onChange={setEStreet}
-                    onSelect={a => {
-                      setEStreet(a.street);
-                      if (a.city) setECity(a.city);
-                      if (a.state) setEState(a.state);
-                      if (a.zip) setEZip(a.zip);
-                      if (a.country) setECountry(a.country);
-                    }}
-                    placeholder="Street address"
-                    containerStyle={{ width: "100%" }}
-                    inputStyle={{ ...inputStyle, width: "100%" }}
-                    dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                  <StyledSelect<Country>
+                    value={(COUNTRIES as readonly string[]).includes(eCountry) ? (eCountry as Country) : "United States of America"}
+                    onChange={v => setECountry(v)}
+                    options={COUNTRIES}
+                    triggerStyle={selectStyle}
+                    c={selectC}
+                    font={font}
                   />
+                  <div data-edit-error={editErr("street") ? "true" : undefined}>
+                    <AddressAutocomplete
+                      value={eStreet}
+                      onChange={v => { setEStreet(v); clearEditErr("street"); }}
+                      onSelect={a => {
+                        setEStreet(a.street); clearEditErr("street");
+                        if (a.city) { setECity(a.city); clearEditErr("city"); }
+                        if (a.state) { setEState(a.state); clearEditErr("state"); }
+                        if (a.zip) { setEZip(a.zip); clearEditErr("zip"); }
+                        if (a.country) setECountry(a.country);
+                      }}
+                      placeholder="Street address"
+                      containerStyle={{ width: "100%" }}
+                      inputStyle={{ ...inputStyle, width: "100%", ...editErrStyle("street") }}
+                      dropdownBg={c.cardBg} dropdownText={c.text} dropdownBorder={c.border}
+                    />
+                    <EditErrLine k="street" />
+                  </div>
                   <div />
                 </div>
                 <div className="grid grid-cols-3 gap-6">
-                  <input value={eCity} onChange={e => setECity(e.target.value)} placeholder="City" style={inputStyle} />
+                  <div data-edit-error={editErr("city") ? "true" : undefined}>
+                    <input value={eCity} onChange={e => { setECity(e.target.value); clearEditErr("city"); }} placeholder="City" style={{ ...inputStyle, ...editErrStyle("city") }} />
+                    <EditErrLine k="city" />
+                  </div>
                   <div className="flex gap-4">
-                    <select value={eState} onChange={e => setEState(e.target.value)} style={{ ...selectStyle, flex: 1 }}>
-                      {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
-                    </select>
-                    <input value={eZip} onChange={e => setEZip(e.target.value)} placeholder="ZIP" style={{ ...inputStyle, flex: 1 }} />
+                    <div style={{ flex: 1 }} data-edit-error={editErr("state") ? "true" : undefined}>
+                      <StyledSelect<StateCode>
+                        value={(STATES as readonly string[]).includes(eState) ? (eState as StateCode) : "IA"}
+                        onChange={v => { setEState(v); clearEditErr("state"); }}
+                        options={STATES}
+                        triggerStyle={{ ...selectStyle, width: "100%", ...editErrStyle("state") }}
+                        c={selectC}
+                        font={font}
+                      />
+                      <EditErrLine k="state" />
+                    </div>
+                    <div style={{ flex: 1 }} data-edit-error={editErr("zip") ? "true" : undefined}>
+                      <input value={eZip} onChange={e => { setEZip(e.target.value); clearEditErr("zip"); }} placeholder="ZIP" style={{ ...inputStyle, ...editErrStyle("zip") }} />
+                      <EditErrLine k="zip" />
+                    </div>
                   </div>
                   <div />
                 </div>
@@ -3470,10 +3791,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
-                  <select value={eSameAddr ? eCountry : eMCountry} onChange={e => setEMCountry(e.target.value)}
-                    style={{ ...selectStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
-                    <option>United States of America</option><option>Canada</option><option>Mexico</option>
-                  </select>
+                  <div style={{ opacity: eSameAddr ? 0.5 : 1, pointerEvents: eSameAddr ? "none" : "auto" }}>
+                    <StyledSelect<Country>
+                      value={(COUNTRIES as readonly string[]).includes(eSameAddr ? eCountry : eMCountry) ? ((eSameAddr ? eCountry : eMCountry) as Country) : "United States of America"}
+                      onChange={v => setEMCountry(v)}
+                      options={COUNTRIES}
+                      triggerStyle={selectStyle}
+                      c={selectC}
+                      font={font}
+                    />
+                  </div>
                   <AddressAutocomplete
                     value={eSameAddr ? eStreet : eMStreet}
                     onChange={setEMStreet}
@@ -3496,10 +3823,16 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   <input value={eSameAddr ? eCity : eMCity} onChange={e => setEMCity(e.target.value)}
                     placeholder="City" style={{ ...inputStyle, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
                   <div className="flex gap-4">
-                    <select value={eSameAddr ? eState : eMState} onChange={e => setEMState(e.target.value)}
-                      style={{ ...selectStyle, flex: 1, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr}>
-                      {["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"].map(s => <option key={s}>{s}</option>)}
-                    </select>
+                    <div style={{ flex: 1, opacity: eSameAddr ? 0.5 : 1, pointerEvents: eSameAddr ? "none" : "auto" }}>
+                      <StyledSelect<StateCode>
+                        value={(STATES as readonly string[]).includes(eSameAddr ? eState : eMState) ? ((eSameAddr ? eState : eMState) as StateCode) : "IA"}
+                        onChange={v => setEMState(v)}
+                        options={STATES}
+                        triggerStyle={{ ...selectStyle, width: "100%" }}
+                        c={selectC}
+                        font={font}
+                      />
+                    </div>
                     <input value={eSameAddr ? eZip : eMZip} onChange={e => setEMZip(e.target.value)}
                       placeholder="ZIP" style={{ ...inputStyle, flex: 1, opacity: eSameAddr ? 0.5 : 1 }} disabled={eSameAddr} />
                   </div>
@@ -3507,6 +3840,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
               </div>
             </div>
+            </>
+              );
+            })()}
 
             {/* Status | Appt Date */}
             <div className="grid grid-cols-3 gap-6 mb-6">
@@ -3586,13 +3922,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
             {/* Agency Contact | Email */}
             <div className="grid grid-cols-3 gap-6 mb-6">
-              <div>
+              <div data-edit-error={editErr("contact") ? "true" : undefined}>
                 <label style={labelStyle}>Agency Contact:</label>
-                <input value={eContact} onChange={e => setEContact(e.target.value)} style={inputStyle} />
+                <input value={eContact} onChange={e => { setEContact(e.target.value); clearEditErr("contact"); }} style={{ ...inputStyle, ...editErrStyle("contact") }} />
+                <EditErrLine k="contact" />
               </div>
-              <div>
-                <label style={labelStyle}>Email Address:</label>
-                <input value={eEmail} onChange={e => setEEmail(e.target.value)} style={inputStyle} type="email" />
+              <div data-edit-error={editErr("email") ? "true" : undefined}>
+                <label style={labelStyle}>Email Address:{pendingTag(["contactEmail"])}</label>
+                <input value={eEmail} onChange={e => { setEEmail(e.target.value); clearEditErr("email"); }} style={{ ...inputStyle, ...editErrStyle("email") }} type="email" />
+                <EditErrLine k="email" />
               </div>
             </div>
 
@@ -3645,32 +3983,42 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
             {/* Phone | Toll Free */}
             <div className="grid grid-cols-3 gap-6 mb-6">
-              <div>
-                <label style={labelStyle}>Phone Number:</label>
-                <input value={ePhone} onChange={e => setEPhone(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />
+              <div data-edit-error={editErr("phone") ? "true" : undefined}>
+                <label style={labelStyle}>Phone Number:{pendingTag(["phone"])}</label>
+                <input value={ePhone} onChange={e => { setEPhone(formatPhone(e.target.value)); clearEditErr("phone"); }} placeholder="(000) 000-0000" style={{ ...inputStyle, ...editErrStyle("phone") }} inputMode="tel" />
+                <EditErrLine k="phone" />
               </div>
-              <div>
+              <div data-edit-error={editErr("tollFree") ? "true" : undefined}>
                 <label style={labelStyle}>Toll Free Number:</label>
                 {clientLocked
                   ? <LockedInput value={eTollFree || "—"} />
-                  : <input value={eTollFree} onChange={e => setETollFree(formatPhone(e.target.value))} placeholder="(000) 000-0000" style={inputStyle} inputMode="tel" />}
+                  : (<>
+                      <input value={eTollFree} onChange={e => { setETollFree(formatPhone(e.target.value)); clearEditErr("tollFree"); }} placeholder="(000) 000-0000" style={{ ...inputStyle, ...editErrStyle("tollFree") }} inputMode="tel" />
+                      <EditErrLine k="tollFree" />
+                    </>)}
               </div>
               <div />
             </div>
 
             {/* License */}
             <div className="grid grid-cols-3 gap-6 mb-6">
-              <div>
-                <label style={labelStyle}>License Number:</label>
+              <div data-edit-error={editErr("licNo") ? "true" : undefined}>
+                <label style={labelStyle}>License Number:{pendingTag(["licenseNo"])}</label>
                 {clientLocked
                   ? <LockedInput value={eLicNo || "—"} />
-                  : <input value={eLicNo} onChange={e => setELicNo(e.target.value)} style={inputStyle} />}
+                  : (<>
+                      <input value={eLicNo} onChange={e => { setELicNo(e.target.value); clearEditErr("licNo"); }} style={{ ...inputStyle, ...editErrStyle("licNo") }} />
+                      <EditErrLine k="licNo" />
+                    </>)}
               </div>
-              <div>
-                <label style={labelStyle}>Expiration Date:</label>
+              <div data-edit-error={editErr("licExp") ? "true" : undefined}>
+                <label style={labelStyle}>Expiration Date:{pendingTag(["licenseExp"])}</label>
                 {clientLocked
                   ? <LockedInput value={eLicExp || "—"} />
-                  : <DatePicker value={eLicExp} onChange={setELicExp} inputStyle={inputStyle} c={c} btnGrad={btnGrad} font={font} />}
+                  : (<>
+                      <DatePicker value={eLicExp} onChange={v => { setELicExp(v); clearEditErr("licExp"); }} inputStyle={{ ...inputStyle, ...editErrStyle("licExp") }} c={c} btnGrad={btnGrad} font={font} />
+                      <EditErrLine k="licExp" />
+                    </>)}
               </div>
               <div>
                 <label style={labelStyle}>NPN:</label>
@@ -3766,7 +4114,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
             {/* Footer buttons — inside the card so they share width and don't float independently */}
             <div className="flex items-center justify-between" style={{ marginTop: 36, paddingTop: 28, paddingBottom: 8, borderTop: `1px solid ${c.border}` }}>
-              <button onClick={() => setIsEditing(false)}
+              <button onClick={() => { setIsEditing(false); setFieldErrors({}); }}
                 className="px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
                 style={{ ...font, border: `1px solid ${c.borderStrong}`, color: c.text, background: "transparent" }}
                 onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
@@ -3774,17 +4122,42 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 Cancel
               </button>
               <button onClick={() => {
-                  // Doc-refresh gate runs for both internal staff AND external
-                  // (client / Admin) principals. Client-locked fields (Name /
-                  // Type / Address) can't be changed from the Admin view, so
-                  // in practice only Tax ID and License # trigger it there.
-                  // The uploaded W-9 / License lands in agencyDocs as w9 /
-                  // license (soft-hidden) either way.
+                  const errs = runEditValidation();
+                  if (Object.keys(errs).length > 0) {
+                    setFieldErrors(errs);
+                    // Scroll the first error into view + focus so the
+                    // user doesn't have to hunt for what's wrong.
+                    setTimeout(() => {
+                      const el = document.querySelector<HTMLElement>('[data-edit-error="true"]');
+                      if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        (el.querySelector("input, textarea, select, button") as HTMLElement | null)?.focus?.();
+                      }
+                    }, 0);
+                    return;
+                  }
+                  setFieldErrors({});
+                  // Doc-refresh gate. Per Shannon (Accounting), final call:
+                  // any address change requires a fresh W-9 — physical,
+                  // mailing, or both. Simpler than the earlier
+                  // "effective mailing only" rule, and matches what she
+                  // asked for: "to make it easier, we should just require
+                  // a W-9 on all address changes."
+                  const physChanged = (
+                    eStreet !== agency.street
+                    || eCity !== agency.city
+                    || eState !== agency.state
+                    || eZip !== agency.zip
+                  );
+                  const mailingChanged = !eSameAddr && (
+                    eMStreet !== "" || eMCity !== "" || eMState !== "" || eMZip !== ""
+                  );
+                  const addressChanged = physChanged || mailingChanged;
                   const w9Changed = (
                     eName !== agency.name
                     || eType !== agency.agencyType
-                    || eStreet !== agency.street || eCity !== agency.city || eState !== agency.state || eZip !== agency.zip
                     || eTaxId !== agency.taxId
+                    || addressChanged
                   );
                   const licChanged = eLicNo !== agency.licenseNo;
                   if (w9Changed || licChanged) {
@@ -3795,6 +4168,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   setBadgesOverride(Array.from(eBadges));
                   setAffilOverride(Array.from(eAffil));
                   setWcOverride(Array.from(eWC));
+                  // Persist ITC-diffed field edits so the Accounting → ITC
+                  // Record view sees them as pending updates the super admin
+                  // can review and push.
+                  setAgencyFieldOverride({
+                    name: eName, street: eStreet, city: eCity, state: eState, zip: eZip,
+                    phone: ePhone, contactEmail: eEmail, licenseNo: eLicNo, licenseExp: eLicExp,
+                  });
                   setIsEditing(false);
                   if (clientLocked) {
                     // Principal (external admin) submitted their editable-tier changes.
@@ -3804,6 +4184,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     showToast({
                       title: "Changes submitted for review",
                       description: "We'll review your edits and update the agency record shortly.",
+                    }, 5000);
+                  } else {
+                    // Internal staff editing agency info — remind them that even
+                    // internal edits still need Accounting to sign off before they
+                    // push to ITC. Toast names the team explicitly for internal
+                    // workflow transparency.
+                    showToast({
+                      title: "Sent to Accounting for review",
+                      description: "They'll review and push to ITC.",
                     }, 5000);
                   }
                 }}
@@ -3833,19 +4222,14 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             : showDocArchived
               ? archivedDocs
               : agencyDocs.filter(d => !d.trashed && !d.archived);
-          // Soft-hidden categories — kept in the type + CAT_LABEL + mock data per the
-          // product decision to retain the underlying schema, but hidden from the
-          // INTERNAL staff view of agency docs (Lisa's rule). In the client view, the
-          // agency is looking at their own portal and should see their own W-9 / Other
-          // docs, so the hide list only applies when viewMode === "internal".
-          const HIDDEN_AGENCY_DOC_CATEGORIES = viewMode === "internal"
-            ? new Set<AgencyDocCategory>(["w9", "other"])
-            : new Set<AgencyDocCategory>();
-          // Category list for pickers (Filter, By Type filter, Upload modal) and the By Type
-          // section ORDER. Mirrors the hide rule above so the client view exposes W-9 / Other.
-          const DOC_CATEGORY_LIST: AgencyDocCategory[] = viewMode === "internal"
-            ? ["bor","license","agreement","eo"]
-            : ["bor","w9","license","agreement","eo","other"];
+          // Shared category set across internal + client views so both surfaces
+          // expose the same 6 categories (Broker of Record / W-9 / License /
+          // Agreements / E&O Certificate / Other). The earlier internal-only
+          // hide of W-9 + Other has been retired.
+          const HIDDEN_AGENCY_DOC_CATEGORIES = new Set<AgencyDocCategory>();
+          // Category list for pickers (Filter, By Type filter, Upload modal) and
+          // the By Type section ORDER.
+          const DOC_CATEGORY_LIST: AgencyDocCategory[] = ["bor","w9","license","agreement","eo","other"];
           const visibleDocs = baseDocs
             .filter(d => !HIDDEN_AGENCY_DOC_CATEGORIES.has(d.category))
             .filter(d => docFilterCats.size === 0 || docFilterCats.has(d.category))
@@ -4296,7 +4680,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   )}
                   {docUploadModalOpen && (() => {
                     const closeModal = () => { setDocUploadModalOpen(false); setDocUploadModalFile(null); setDocUploadModalCat(""); setDocUploadModalCatOpen(false); setDocUploadModalDrag(false); };
-                    const onPick = (f?: File | null) => { if (f) setDocUploadModalFile(f.name); };
+                    const onPick = (f?: File | null) => {
+                      if (!f) return;
+                      if (f.size > 10 * 1024 * 1024) {
+                        const mb = (f.size / (1024 * 1024)).toFixed(1);
+                        showToast({ title: "File too large", description: `"${f.name}" is ${mb}MB. Max 10MB.` }, 5000);
+                        return;
+                      }
+                      setDocUploadModalFile(f.name);
+                    };
                     const canUpload = !!docUploadModalFile && !!docUploadModalCat;
                     return (
                       <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
@@ -5501,7 +5893,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
           const statusColor = (s: ITCStatus) => s === "Active" ? "#73C9B7"
             : s === "Suspended" ? "#F59E0B"
             : s === "Terminated" ? "#EF4444"
-            : "#6366F1";
+            : "#A614C3";
 
           const SectionHeader = ({ title, first }: { title: string; first?: boolean }) => (
             <div className={first ? "mb-4" : "mt-8 pt-6 mb-4"} style={first ? undefined : { borderTop: `1px solid ${c.border}` }}>
@@ -5513,8 +5905,10 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             <span className="text-[13px]" style={{ ...font, color: c.text }}>{v ? "Yes" : "No"}</span>
           );
 
-          // ── Empty state ──
-          if (!record && !itcEditing) {
+          // ── Empty state ── (BTIS-internal only; client view skips
+          // straight to the statements sub-tabs since ITC record surface
+          // is gated to super-admin BTIS users per spec.)
+          if (viewMode === "internal" && !record && !itcEditing) {
             return (
               <div className="pb-6">
                 <div className="rounded-2xl p-8 mb-8" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -5531,8 +5925,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             );
           }
 
-          // ── Edit mode ──
-          if (itcEditing && itcDraft) {
+          // ── Edit mode ── (BTIS-internal only)
+          if (viewMode === "internal" && itcEditing && itcDraft) {
             const set = <K extends keyof ITCRecord>(k: K, v: ITCRecord[K]) => setItcDraft(prev => prev ? { ...prev, [k]: v } : prev);
             // Tokens the StyledSelect needs — c doesn't ship razz, so provide it here.
             const selectC = {
@@ -5595,27 +5989,73 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                 </div>
               );
             };
+            // Diff pristine record vs current draft — used by the Review
+            // modal. Only fields whose display value differs are listed;
+            // booleans are Yes/No so the diff reads naturally to the admin.
+            const FIELD_LABELS: [keyof ITCRecord, string][] = [
+              ["producerCode", "Producer Code"],
+              ["agentOrBroker", "Agent / Broker"],
+              ["status", "Status"],
+              ["shortName", "Short Name"],
+              ["name", "Name"],
+              ["dba", "DBA"],
+              ["address", "Address"],
+              ["city", "City"],
+              ["state", "State"],
+              ["zip", "Zip"],
+              ["telephone", "Telephone"],
+              ["email", "Email"],
+              ["accountingEmail", "Accounting Email"],
+              ["statementEmail", "Statement Email"],
+              ["appointmentDate", "Appointment Date"],
+              ["licenseNo", "License No"],
+              ["licenseExpires", "License Expires"],
+              ["eoPolicyNo", "E&O Policy No"],
+              ["eoPolicyExpires", "E&O Expires"],
+              ["taxId", "Tax ID"],
+              ["tax1099Type", "1099 Type"],
+              ["tax1099Name", "1099 Name"],
+              ["emailStatements", "Email Statements"],
+              ["directDeposits", "Direct Deposits"],
+              ["directDepositsCommissionOnly", "Direct Deposits (Commission Only)"],
+              ["farmersAgent", "Farmers Agent"],
+              ["smartChoiceAgent", "Smart Choice Agent"],
+              ["piibAgent", "PIIB Agent"],
+              ["useConsolidatedBillingId", "Use Consolidated Billing ID"],
+              ["consolidatedBillingId", "Consolidated Billing ID"],
+              ["isConsolidatedBillingProducer", "Is Consolidated Billing Producer"],
+              ["isAffiliatedWith", "Is Affiliated With"],
+              ["affiliatedWithId", "Affiliated With ID"],
+              ["isAffiliationMain", "Is Affiliation Main"],
+              ["subProducerName", "Sub-Producer Name"],
+            ];
+            const fmt = (v: string | boolean) => typeof v === "boolean" ? (v ? "Yes" : "No") : (v || "—");
+            const diff = record
+              ? FIELD_LABELS
+                  .filter(([k]) => (record[k] as unknown) !== (itcDraft[k] as unknown))
+                  .map(([k, label]) => ({ key: k, label, before: fmt(record[k] as string | boolean), after: fmt(itcDraft[k] as string | boolean) }))
+              : [];
             return (
-              <div className="pb-6">
-                <div className="rounded-2xl p-6 mb-6" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <>
+              {itcEditExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setItcEditExpanded(false)} />}
+              <div className={itcEditExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : "pb-6"}
+                style={itcEditExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
+                <div className={itcEditExpanded ? "p-6 mb-6" : "rounded-2xl p-6 mb-6"} style={itcEditExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}` }}>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>ITC Record</h3>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => { setItcEditing(false); setItcDraft(null); }}
+                      <button onClick={() => setItcEditExpanded(p => !p)} title={itcEditExpanded ? "Collapse" : "Expand"}
+                        className="p-1.5 rounded-md transition-colors" style={{ color: itcEditExpanded ? "#A855F7" : c.muted }}
+                        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        {itcEditExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                      </button>
+                      <button onClick={() => { setItcEditing(false); setItcDraft(null); setItcEditExpanded(false); }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
                         style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
                         onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        Cancel
-                      </button>
-                      <button onClick={() => {
-                        if (itcDraft && setItcRecords) setItcRecords(prev => ({ ...prev, [agency.code]: itcDraft }));
-                        setItcEditing(false); setItcDraft(null);
-                        showToast({ title: "Changes saved", description: `ITC Record updated for ${agency.name}.` });
-                      }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors"
-                        style={{ ...font, background: btnGrad }}>
-                        Save changes
+                        <Pencil className="w-3.5 h-3.5" />Cancel Edit
                       </button>
                     </div>
                   </div>
@@ -5644,24 +6084,38 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                       /></div>
                     <div><label style={labelStyle}>Short Name:</label>
                       <input value={itcDraft.shortName} onChange={e => set("shortName", e.target.value)} style={inputStyle} /></div>
-                    <div className="col-span-2"><label style={labelStyle}>Name:</label>
+                    <div><label style={labelStyle}>Name:</label>
                       <input value={itcDraft.name} onChange={e => set("name", e.target.value)} style={inputStyle} /></div>
-                    <div className="col-span-3"><label style={labelStyle}>DBA:</label>
+                    <div><label style={labelStyle}>DBA:</label>
                       <input value={itcDraft.dba} onChange={e => set("dba", e.target.value)} style={inputStyle} /></div>
                   </div>
 
                   <SectionHeader title="Contact" />
                   <div className="grid grid-cols-6 gap-6">
-                    <div className="col-span-6"><label style={labelStyle}>Address:</label>
+                    <div className="col-span-3"><label style={labelStyle}>Address:</label>
                       <input value={itcDraft.address} onChange={e => set("address", e.target.value)} style={inputStyle} /></div>
-                    <div className="col-span-3"><label style={labelStyle}>City:</label>
+                    <div className="col-span-3" />{/* spacer so Address stays half-width like the Overview edit */}
+                    <div className="col-span-2"><label style={labelStyle}>City:</label>
                       <input value={itcDraft.city} onChange={e => set("city", e.target.value)} style={inputStyle} /></div>
-                    <div className="col-span-1"><label style={labelStyle}>State:</label>
+                    <div className="col-span-2"><label style={labelStyle}>State:</label>
                       <input value={itcDraft.state} onChange={e => set("state", e.target.value)} maxLength={2} style={inputStyle} /></div>
                     <div className="col-span-2"><label style={labelStyle}>Zip:</label>
                       <input value={itcDraft.zip} onChange={e => set("zip", e.target.value)} style={inputStyle} /></div>
                     <div className="col-span-2"><label style={labelStyle}>Telephone:</label>
-                      <input value={itcDraft.telephone} onChange={e => set("telephone", e.target.value)} style={inputStyle} /></div>
+                      <input
+                        value={itcDraft.telephone}
+                        onChange={e => {
+                          const d = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          const formatted = d.length > 6 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`
+                            : d.length > 3 ? `${d.slice(0,3)}-${d.slice(3)}`
+                            : d;
+                          set("telephone", formatted);
+                        }}
+                        inputMode="numeric"
+                        maxLength={12}
+                        placeholder="xxx-xxx-xxxx"
+                        style={inputStyle}
+                      /></div>
                     <div className="col-span-4"><label style={labelStyle}>Email:</label>
                       <input value={itcDraft.email} onChange={e => set("email", e.target.value)} style={inputStyle} /></div>
                     <div className="col-span-3"><label style={labelStyle}>Accounting Email:</label>
@@ -5722,24 +6176,139 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <div><label style={labelStyle}>Affiliated With ID:</label>
                       <input value={itcDraft.affiliatedWithId} onChange={e => set("affiliatedWithId", e.target.value)} style={{ ...inputStyle, height: 40, boxSizing: "border-box", display: "block" }} /></div>
                     <div><label style={labelStyle}>Is Affiliation Main:</label><YesNoSelect k="isAffiliationMain" /></div>
-                    <div className="col-span-3"><label style={labelStyle}>Sub-Producer Name:</label>
+                    <div><label style={labelStyle}>Sub-Producer Name:</label>
                       <input value={itcDraft.subProducerName} onChange={e => set("subProducerName", e.target.value)} style={inputStyle} /></div>
                   </div>
+
+                  {/* Mirror the header action pair at the bottom so the
+                      admin doesn't have to scroll back up to submit after
+                      editing the tail of a long form. */}
+                  <div className="flex items-center justify-between gap-2 mt-8 pt-6" style={{ borderTop: `1px solid ${c.border}` }}>
+                    <button onClick={() => { setItcEditing(false); setItcDraft(null); setItcEditExpanded(false); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                      style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
+                      onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <Pencil className="w-3.5 h-3.5" />Cancel Edit
+                    </button>
+                    <button onClick={() => setItcReviewing(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                      style={{ ...font, background: btnGrad }}>
+                      Review Changes &amp; Update
+                    </button>
+                  </div>
                 </div>
+
+                {/* ── Review Changes modal ──
+                    Fires on Review Changes button. Lists only fields that
+                    differ from the pristine ITC record so the super admin
+                    can eyeball the exact payload that Update ITC will push
+                    (no "spot the yellow highlight in 40 fields" like the
+                    legacy WIN screen). */}
+                {itcReviewing && (
+                  <>
+                    <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setItcReviewing(false)} />
+                    <div className="fixed left-1/2 top-1/2 z-50 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+                      style={{ transform: "translate(-50%, -50%)", background: c.cardBg, border: `1px solid ${c.border}`, width: "min(560px, 92vw)", maxHeight: "82vh" }}>
+                      <div className="p-6 pb-4">
+                        <h3 className="text-[17px] font-bold mb-1" style={{ ...font, color: c.text }}>Review ITC Changes</h3>
+                        <p className="text-[12.5px]" style={{ ...font, color: c.muted }}>
+                          {diff.length === 0
+                            ? "No changes yet — go back and edit a field first."
+                            : `${diff.length} ${diff.length === 1 ? "change" : "changes"} will be updated in ITC.`}
+                        </p>
+                      </div>
+                      <div className="overflow-y-auto px-6" style={{ flex: "1 1 auto" }}>
+                        {diff.map(d => (
+                          <div key={d.key as string} className="py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                            <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>{d.label}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wider mb-1" style={{ ...font, color: c.muted, letterSpacing: "0.06em" }}>Current ITC value</p>
+                                <p className="text-[13px]" style={{ ...font, color: c.muted, textDecoration: "line-through" }}>{d.before}</p>
+                              </div>
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wider mb-1" style={{ ...font, color: c.muted, letterSpacing: "0.06em" }}>New value</p>
+                                <p className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>{d.after}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-6 pt-4 flex items-center justify-between gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                        <button onClick={() => setItcReviewing(false)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors"
+                          style={{ ...font, border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "#E5E7EB"}`, color: c.text }}
+                          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                          Back to Edit
+                        </button>
+                        <button
+                          disabled={diff.length === 0}
+                          onClick={() => {
+                            if (itcDraft && setItcRecords) setItcRecords(prev => ({ ...prev, [agency.code]: itcDraft }));
+                            setItcReviewing(false);
+                            setItcEditing(false);
+                            setItcDraft(null);
+                            showToast({ title: "ITC updated", description: `${diff.length} ${diff.length === 1 ? "change" : "changes"} pushed to ITC for ${agency.name}.` });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                          style={{ ...font, background: btnGrad, opacity: diff.length === 0 ? 0.5 : 1, cursor: diff.length === 0 ? "not-allowed" : "pointer" }}>
+                          Update ITC
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
+              </>
             );
           }
 
-          // ── View mode ──
-          if (record) {
-            const statusBadge = (
+          // ── View mode ── (clients also enter here — even when the
+          // agency has no ITC record — so they can reach the Commission
+          // Statement / Statement of Account sub-tabs. The ITC Record
+          // card render itself is gated to internal below.)
+          if (record || viewMode === "client") {
+            const statusBadge = record ? (
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[12px] font-semibold"
                 style={{ background: `${statusColor(record.status)}1A`, color: statusColor(record.status) }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusColor(record.status) }} />
                 {record.status}
               </span>
-            );
-            const fullAddr = [record.address, [record.city, record.state].filter(Boolean).join(", "), record.zip].filter(Boolean).join(" · ");
+            ) : null;
+            const fullAddr = record
+              ? [record.address, [record.city, record.state].filter(Boolean).join(", "), record.zip].filter(Boolean).join(" · ")
+              : "";
+            // Pending updates = fields that were edited on the Overview
+            // tab (or on the external agent side) but haven't been pushed
+            // to ITC yet. Compares agency detail (source of truth for
+            // Norbielink) against the frozen ITC record, with light
+            // normalization so pure formatting differences (phone digits,
+            // Name casing) don't false-positive.
+            const norm = (label: string, v: string) => {
+              const s = (v ?? "").trim();
+              if (label === "Telephone") return s.replace(/\D/g, "");
+              if (label === "Name" || label === "DBA") return s.toLowerCase();
+              return s;
+            };
+            const ITC_AGENCY_MAP: Array<{ key: keyof ITCRecord; label: string; agencyValue: string }> = record ? [
+              { key: "name",           label: "Name",            agencyValue: effectiveAgency.name },
+              { key: "address",        label: "Address",         agencyValue: effectiveAgency.street },
+              { key: "city",           label: "City",            agencyValue: effectiveAgency.city },
+              { key: "state",          label: "State",           agencyValue: effectiveAgency.state },
+              { key: "zip",            label: "Zip",             agencyValue: effectiveAgency.zip },
+              { key: "telephone",      label: "Telephone",       agencyValue: effectiveAgency.phone },
+              { key: "email",          label: "Email",           agencyValue: effectiveAgency.contactEmail },
+              { key: "licenseNo",      label: "License No",      agencyValue: effectiveAgency.licenseNo },
+              { key: "licenseExpires", label: "License Expires", agencyValue: effectiveAgency.licenseExp },
+            ] : [];
+            const pendingUpdates = record
+              ? ITC_AGENCY_MAP
+                  .map(m => ({ ...m, itcValue: String(record[m.key] ?? "") }))
+                  .filter(m => norm(m.label, m.agencyValue) !== norm(m.label, m.itcValue))
+              : [];
+            const pendingKeys = new Set(pendingUpdates.map(p => p.key as string));
             return (
               <div className="pb-6">
                 {/* Sub-tab toolbar — same segmented-control language as
@@ -5750,6 +6319,9 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   style={{ borderBottom: `1px solid ${c.border}` }}
                 >
                   {([
+                    ...(viewMode === "internal"
+                      ? [{ key: "record" as const, label: "ITC Record" }]
+                      : []),
                     { key: "comm"   as const, label: "Commission Statement" },
                     { key: "soa"    as const, label: "Statement of Account" },
                   ]).map(t => {
@@ -5773,6 +6345,442 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   })}
                 </div>
 
+
+                {/* Pending-updates alert — surfaces Overview / external-agent
+                    edits that haven't been synced to ITC yet, so the super
+                    admin knows the frozen ITC record is now stale and can
+                    review/push in one action. */}
+                {viewMode === "internal" && isSuperAdmin && record && accountingView === "record" && pendingUpdates.length > 0 && (
+                  <div className="rounded-xl p-4 mb-6 flex items-start gap-3"
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="alert-razz-pending" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+                          <stop offset="0%" stopColor="#5C2ED4" />
+                          <stop offset="100%" stopColor="#A614C3" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="12" cy="12" r="10" stroke="url(#alert-razz-pending)" />
+                      <line x1="12" x2="12" y1="8" y2="12" stroke="url(#alert-razz-pending)" />
+                      <line x1="12" x2="12.01" y1="16" y2="16" stroke="url(#alert-razz-pending)" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-semibold" style={{
+                        ...font,
+                        backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}>
+                        Pending updates from recent edits
+                      </div>
+                      <div className="text-[12px] mt-0.5" style={{ ...font, color: c.muted }}>
+                        The agency info was edited — the ITC record is now behind. Review the changes and push to ITC.
+                      </div>
+                    </div>
+                    <button onClick={() => setPendingItcOpen(true)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all whitespace-nowrap"
+                      style={{ ...font, background: btnGrad }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.10)")}
+                      onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                      Review Updates
+                    </button>
+                  </div>
+                )}
+                {viewMode === "internal" && record && accountingView === "record" && (
+                <>
+                {overviewExpanded && <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setOverviewExpanded(false)} />}
+                <div className={overviewExpanded ? "fixed inset-y-0 right-0 z-50 flex flex-col shadow-2xl overflow-y-auto" : ""}
+                  style={overviewExpanded ? { width: "70vw", background: c.cardBg, borderLeft: `1px solid ${c.border}` } : undefined}>
+                <div className={overviewExpanded ? "p-8 mb-8" : "rounded-2xl p-8 mb-8"}
+                  style={overviewExpanded ? { background: c.cardBg } : { background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-[17px] font-bold" style={{ ...font, color: c.text }}>ITC Record</h3>
+                    <button onClick={() => setOverviewExpanded(p => !p)} title={overviewExpanded ? "Collapse" : "Expand"}
+                      className="p-1.5 rounded-md transition-colors" style={{ color: overviewExpanded ? "#A855F7" : c.muted }}
+                      onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      {overviewExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  <SectionHeader title="Producer" first />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <LabelValue label="Producer Code" value={record.producerCode} />
+                    <LabelValue label="Agent / Broker" value={record.agentOrBroker} />
+                    <div>
+                      <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Status:</p>
+                      {statusBadge}
+                    </div>
+                    <LabelValue label="Short Name" value={record.shortName || "—"} />
+                    <div className="col-span-2">
+                      <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Name:</p>
+                      <p className="text-[13px]" style={{ ...font, color: c.muted }}>{record.name}</p>
+                    </div>
+                    <div className="col-span-3">
+                      <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>DBA:</p>
+                      <p className="text-[13px]" style={{ ...font, color: c.muted }}>{record.dba || "—"}</p>
+                    </div>
+                  </div>
+
+                  <SectionHeader title="Contact" />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <div className="col-span-3">
+                      <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Address:</p>
+                      <p className="text-[13px]" style={{ ...font, color: c.muted }}>{fullAddr || "—"}</p>
+                    </div>
+                    <LabelValue label="Telephone" value={(() => {
+                      const d = (record.telephone || "").replace(/\D/g, "");
+                      return d.length === 10 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : (record.telephone || "—");
+                    })()} />
+                    <div className="col-span-2">
+                      <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Email:</p>
+                      <p className="text-[13px]" style={{ ...font, color: c.muted }}>{record.email || "—"}</p>
+                    </div>
+                    <LabelValue label="Accounting Email" value={record.accountingEmail || "—"} />
+                    <LabelValue label="Statement Email" value={record.statementEmail || "—"} />
+                  </div>
+
+                  <SectionHeader title="Appointment & Compliance" />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <LabelValue label="Appointment Date" value={record.appointmentDate} />
+                    <LabelValue label="License No" value={record.licenseNo || "—"} />
+                    <LabelValue label="License Expires" value={record.licenseExpires || "—"} />
+                    <LabelValue label="E&O Policy No" value={record.eoPolicyNo || "—"} />
+                    <LabelValue label="E&O Expires" value={record.eoPolicyExpires || "—"} />
+                    <div /> {/* spacer */}
+                    <LabelValue label="Tax ID" value={record.taxId || "—"} />
+                    <LabelValue label="1099 Type" value={record.tax1099Type} />
+                    <LabelValue label="1099 Name" value={record.tax1099Name || "—"} />
+                  </div>
+
+                  <SectionHeader title="Preferences" />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <LabelValue label="Email Statements"                    value={<YesNo v={record.emailStatements} />} />
+                    <LabelValue label="Direct Deposits"                     value={<YesNo v={record.directDeposits} />} />
+                    <LabelValue label="Direct Deposits (Commission Only)"   value={<YesNo v={record.directDepositsCommissionOnly} />} />
+                    <LabelValue label="Farmers Agent"                       value={<YesNo v={record.farmersAgent} />} />
+                    <LabelValue label="Smart Choice Agent"                  value={<YesNo v={record.smartChoiceAgent} />} />
+                    <LabelValue label="PIIB Agent"                          value={<YesNo v={record.piibAgent} />} />
+                  </div>
+
+                  <SectionHeader title="Consolidated Billing" />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <LabelValue label="Use Consolidated Billing ID"        value={<YesNo v={record.useConsolidatedBillingId} />} />
+                    <LabelValue label="Consolidated Billing ID"            value={record.consolidatedBillingId || "—"} />
+                    <LabelValue label="Is Consolidated Billing Producer"   value={<YesNo v={record.isConsolidatedBillingProducer} />} />
+                  </div>
+
+                  <SectionHeader title="Affiliation" />
+                  <div className="grid grid-cols-3 gap-x-12 gap-y-6">
+                    <LabelValue label="Is Affiliated With"      value={<YesNo v={record.isAffiliatedWith} />} />
+                    <LabelValue label="Affiliated With ID"      value={record.affiliatedWithId || "—"} />
+                    <LabelValue label="Is Affiliation Main"     value={<YesNo v={record.isAffiliationMain} />} />
+                    <div className="col-span-3">
+                      <p className="text-[13px] font-semibold mb-1" style={{ ...font, color: c.text }}>Sub-Producer Name:</p>
+                      <p className="text-[13px]" style={{ ...font, color: c.muted }}>{record.subProducerName || "—"}</p>
+                    </div>
+                  </div>
+                </div>
+                </div>
+                </>
+                )}
+
+                {/* ── Pending ITC Updates modal ──
+                    Same review-first pattern as Review Changes, but the
+                    diff direction is inverted: Current ITC on the left,
+                    New value (from the Overview edit) on the right. Push
+                    to ITC applies the agency values field-by-field. */}
+                {pendingItcOpen && record && (
+                  <>
+                    <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={closePendingItc} />
+                    {/* When the supporting-doc preview slides in on the right,
+                        park the pending-updates modal on the left half so the
+                        reviewer can compare field-for-field without flipping
+                        between overlays. Center otherwise. */}
+                    <div className="fixed top-1/2 z-50 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-200"
+                      style={{
+                        // Compare-mode: center within the LEFT half of the
+                        // viewport (preview panel occupies the right 50vw).
+                        // Center of the whole viewport otherwise.
+                        left: previewDoc ? "25vw" : "50%",
+                        transform: "translate(-50%, -50%)",
+                        background: c.cardBg,
+                        border: `1px solid ${c.border}`,
+                        width: previewDoc ? "min(460px, 46vw)" : "min(560px, 92vw)",
+                        maxHeight: "82vh",
+                      }}>
+                      <div className="p-6 pb-4 flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3 className="text-[17px] font-bold mb-1" style={{ ...font, color: c.text }}>Pending Updates from Agency Info</h3>
+                          <p className="text-[12.5px]" style={{ ...font, color: c.muted }}>
+                            Fields out of sync with ITC. Review and push.
+                          </p>
+                        </div>
+                        <button
+                          onClick={closePendingItc}
+                          title="Close — I'll review this later"
+                          aria-label="Close"
+                          className="flex-shrink-0 p-1.5 rounded-md transition-colors"
+                          style={{ color: c.muted }}
+                          onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto px-6" style={{ flex: "1 1 auto" }}>
+                        {(() => {
+                          // Fields sharing a supporting doc (W-9 or License)
+                          // get merged into one bucket so the doc card only
+                          // renders once per group — no more four "Supporting
+                          // W-9" strips for Address/City/State/Zip.
+                          const docFor = (k: string): AgencyDocCategory | null =>
+                            k === "licenseNo" || k === "licenseExpires" ? "license"
+                            : (k === "name" || k === "address" || k === "city" || k === "state" || k === "zip" || k === "taxId") ? "w9"
+                            : null;
+                          type Bucket = { cat: AgencyDocCategory | null; items: typeof pendingUpdates };
+                          const buckets: Bucket[] = [];
+                          for (const p of pendingUpdates) {
+                            const cat = docFor(p.key as string);
+                            const last = buckets[buckets.length - 1];
+                            if (last && last.cat === cat) last.items.push(p);
+                            else buckets.push({ cat, items: [p] });
+                          }
+                          return buckets.map((bucket, bIdx) => {
+                            const supportingDoc = bucket.cat
+                              ? agencyDocs.find(d => d.category === bucket.cat && !d.archived && !d.trashed) ?? null
+                              : null;
+                            return (
+                              <div key={bIdx} className="py-4" style={{ borderTop: `1px solid ${c.border}` }}>
+                                {bucket.items.map((p, iIdx) => {
+                                  const k = p.key as string;
+                                  const editedValue = pendingOverrides[k] ?? p.agencyValue;
+                                  const overrideKey = OVERRIDE_KEY_FOR_ITC[k];
+                                  const isRejecting = rejectingKey === k;
+                                  if (isRejecting) {
+                                    return (
+                                      <div key={k}
+                                        className="rounded-lg p-3"
+                                        style={{ background: isDark ? "rgba(220,38,38,0.10)" : "rgba(220,38,38,0.05)", border: `1px solid ${isDark ? "rgba(248,113,113,0.35)" : "rgba(220,38,38,0.28)"}`, marginTop: iIdx === 0 ? 0 : 16 }}>
+                                        <div className="flex items-center justify-between mb-2">
+                                          <p className="text-[12px] font-semibold" style={{ ...font, color: isDark ? "#FCA5A5" : "#B91C1C" }}>
+                                            Reject this change
+                                          </p>
+                                          <button onClick={() => { setRejectingKey(null); setRejectReason(""); }}
+                                            title="Cancel"
+                                            className="p-1 rounded transition-colors"
+                                            style={{ color: c.muted }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                        <p className="text-[11px] mb-2" style={{ ...font, color: c.muted }}>
+                                          {p.label}: <span style={{ textDecoration: "line-through" }}>{p.agencyValue}</span> → reverts to <span className="font-semibold" style={{ color: c.text }}>{p.itcValue || "—"}</span>. The agency contact (<span className="font-semibold" style={{ color: c.text }}>{effectiveAgency.contactEmail || "—"}</span>) will be notified and the reason logged for audit.
+                                        </p>
+                                        <textarea
+                                          value={rejectReason}
+                                          onChange={e => setRejectReason(e.target.value)}
+                                          placeholder="Reason for rejection (e.g. address doesn't match uploaded W-9)…"
+                                          rows={2}
+                                          className="w-full text-[12px] outline-none resize-none"
+                                          style={{ ...font, color: c.text, background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 6, padding: "6px 8px" }}
+                                        />
+                                        <div className="flex justify-end gap-2 mt-2">
+                                          <button onClick={() => { setRejectingKey(null); setRejectReason(""); }}
+                                            className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors"
+                                            style={{ ...font, color: c.text, border: `1px solid ${c.borderStrong}`, background: "transparent" }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                            Cancel
+                                          </button>
+                                          <button
+                                            disabled={!rejectReason.trim()}
+                                            onClick={() => {
+                                              const reason = rejectReason.trim();
+                                              if (!reason) return;
+                                              if (overrideKey) {
+                                                setAgencyFieldOverride(prev => {
+                                                  const next = { ...prev };
+                                                  delete next[overrideKey];
+                                                  return next;
+                                                });
+                                              }
+                                              setPendingOverrides(prev => {
+                                                const next = { ...prev };
+                                                delete next[k];
+                                                return next;
+                                              });
+                                              setRejectingKey(null);
+                                              setRejectReason("");
+                                              showToast({
+                                                title: "Change rejected",
+                                                description: "The agency contact has been notified.",
+                                              });
+                                            }}
+                                            className="px-3 py-1.5 rounded-md text-[11px] font-semibold text-white transition-all"
+                                            style={{ ...font, background: "#DC2626", opacity: rejectReason.trim() ? 1 : 0.5, cursor: rejectReason.trim() ? "pointer" : "not-allowed" }}
+                                            onMouseEnter={e => { if (rejectReason.trim()) e.currentTarget.style.filter = "brightness(1.10)"; }}
+                                            onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
+                                            Reject change
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <div key={k} style={{ marginTop: iIdx === 0 ? 0 : 16 }}>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>{p.label}</p>
+                                        {overrideKey && (
+                                          <button
+                                            title={`Reject — revert ${p.label} to the ITC value and notify the agency`}
+                                            onClick={() => { setRejectingKey(k); setRejectReason(""); }}
+                                            className="flex items-center gap-1 text-[11px] font-medium transition-colors px-2 py-1 rounded-md"
+                                            style={{ ...font, color: c.muted }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = "#DC2626"; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}
+                                          >
+                                            <X className="w-3 h-3" />Reject
+                                          </button>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-[10px] uppercase tracking-wider mb-1" style={{ ...font, color: c.muted, letterSpacing: "0.06em" }}>Current</p>
+                                          <p className="text-[13px] truncate" style={{ ...font, color: c.muted, textDecoration: "line-through" }}>{p.itcValue || "—"}</p>
+                                        </div>
+                                        <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 mt-4" style={{ color: c.muted }} />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-[10px] uppercase tracking-wider mb-1" style={{ ...font, color: c.muted, letterSpacing: "0.06em" }}>New</p>
+                                          <input
+                                            value={editedValue}
+                                            onChange={e => setPendingOverrides(prev => ({ ...prev, [k]: e.target.value }))}
+                                            className="w-full text-[13px] font-semibold"
+                                            style={{ ...font, color: c.text, background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 6, padding: "5px 8px", outline: "none" }}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {supportingDoc && (
+                                  <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg"
+                                    style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#F9FAFB", border: `1px solid ${c.border}` }}>
+                                    <Paperclip className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#A614C3" }} />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-[11px] font-medium truncate" style={{ ...font, color: c.text }}>{supportingDoc.name}</div>
+                                      <div className="text-[10px]" style={{ ...font, color: c.muted }}>
+                                        Supporting {bucket.cat === "license" ? "License copy" : "W-9"} for {bucket.items.length === 1 ? bucket.items[0].label : `${bucket.items.length} fields`}
+                                      </div>
+                                    </div>
+                                    <button title="Preview"
+                                      onClick={() => setPreviewDoc({ id: supportingDoc.id, category: supportingDoc.category, name: supportingDoc.name, date: supportingDoc.date, archived: supportingDoc.archived, trashed: supportingDoc.trashed })}
+                                      className="p-1.5 rounded transition-colors flex-shrink-0"
+                                      style={{ color: c.muted }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button title="Download"
+                                      onClick={() => showToast({ title: `Downloading ${supportingDoc.name}`, description: `${bucket.cat === "license" ? "License copy" : "W-9"} · ${supportingDoc.date}` })}
+                                      className="p-1.5 rounded transition-colors flex-shrink-0"
+                                      style={{ color: c.muted }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                                      <Download className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                      <div className="p-6 pt-4 flex items-center justify-end gap-2" style={{ borderTop: `1px solid ${c.border}` }}>
+                        <button
+                          onClick={() => {
+                            if (setItcRecords) setItcRecords(prev => {
+                              const cur = prev[agency.code];
+                              if (!cur) return prev;
+                              const next = { ...cur };
+                              pendingUpdates.forEach(p => {
+                                const k = p.key as string;
+                                (next as unknown as Record<string, string>)[k] = pendingOverrides[k] ?? p.agencyValue;
+                              });
+                              return { ...prev, [agency.code]: next };
+                            });
+                            const count = pendingUpdates.length;
+                            closePendingItc();
+                            showToast({ title: "ITC updated", description: `${count} ${count === 1 ? "change" : "changes"} pushed to ITC for ${effectiveAgency.name}.` });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                          style={{ ...font, background: btnGrad }}>
+                          Push to ITC
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Side-drawer preview for pending-updates supporting docs.
+                    The Documents-tab preview slots don't render here, so this
+                    dedicated overlay lets the reviewer inspect the W-9 or
+                    License copy without leaving the Accounting tab. Placeholder
+                    body mirrors the Documents-tab preview so styling stays
+                    consistent across surfaces. */}
+                {previewDoc && (() => {
+                  const CAT_LABEL: Record<AgencyDocCategory, string> = { bor: "Broker of Record", w9: "W-9", license: "License", agreement: "Agreements", other: "Other", eo: "E&O Certificate" };
+                  return (
+                    <div className="fixed inset-y-0 right-0 z-[60] flex" style={{ width: "50vw", minWidth: 480 }}>
+                      {/* Skip the dim overlay when the pending-updates modal
+                          is also open — it sits on the left half by design,
+                          and dimming it would defeat the side-by-side compare. */}
+                      {!pendingItcOpen && (
+                        <div className="flex-1 cursor-pointer" onClick={() => setPreviewDoc(null)} style={{ background: "rgba(0,0,0,0.25)" }} />
+                      )}
+                      <div className="flex flex-col h-full shadow-2xl" style={{ width: "100%", background: c.cardBg, borderLeft: `1px solid ${c.border}` }}>
+                        <div className="flex items-center justify-between px-6 py-3 flex-shrink-0"
+                          style={{ borderBottom: `1px solid ${c.border}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(249,250,251,0.80)" }}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.muted }} />
+                            <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>Supporting doc</span>
+                            <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                            <span className="text-[11px] flex-shrink-0" style={{ fontFamily: FONT, color: c.muted }}>{CAT_LABEL[previewDoc.category]}</span>
+                            <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: c.muted }} />
+                            <span className="text-[12px] font-semibold truncate max-w-[420px]" style={{ fontFamily: FONT, color: c.text }}>{previewDoc.name}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                            <button title="Download"
+                              onClick={() => showToast({ title: `Downloading ${previewDoc.name}`, description: `${CAT_LABEL[previewDoc.category]} · ${previewDoc.date}` })}
+                              className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                              onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button title="Close" onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-md transition-colors" style={{ color: c.muted }}
+                              onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 px-6 py-3 flex-shrink-0 text-[12px]" style={{ ...font, color: c.muted, borderBottom: `1px solid ${c.border}` }}>
+                          <span className="flex items-center gap-1.5"><FolderOpen className="w-3.5 h-3.5" style={{ color: "#A855F7" }} />{CAT_LABEL[previewDoc.category]}</span>
+                          <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{previewDoc.date}</span>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-auto p-6" style={{ background: isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB" }}>
+                          <div className="mx-auto rounded shadow-sm flex flex-col items-center justify-center"
+                            style={{ background: "#FFFFFF", border: `1px solid ${c.border}`, aspectRatio: "8.5 / 11", maxWidth: 560, minHeight: 560, fontFamily: FONT }}>
+                            <FileText className="w-16 h-16 mb-3" style={{ color: "#D1D5DB" }} />
+                            <div className="text-[13px] font-semibold mb-1" style={{ color: "#374151" }}>{previewDoc.name}</div>
+                            <div className="text-[11px]" style={{ color: "#9CA3AF" }}>Preview not available in demo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* ── Statements card — 12-month rolling archive.
                     Phase 1 scope: two statements per month (commission +
@@ -9545,6 +10553,7 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
     if (filterStatus === "Starred")     return a.isStarred;
     if (filterStatus === "Appointed")   return a.status === "Appointed";
     if (filterStatus === "Unappointed") return a.status === "Unappointed";
+    if (filterStatus === "NeedsAction") return countPendingItcUpdates(getDetail(a), itcRecords[a.code] ?? null) > 0;
     return true;
   }).filter(a => {
     if (locationFilter.size === 0) return true;
@@ -10634,14 +11643,31 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
               { key: "Appointed",   label: "Appointed",          value: appointedAffiliations,   hint: "Members appointed today" },
               { key: "Unappointed", label: "Unappointed",        value: unappointedAffiliations, hint: "Members not yet appointed" },
             ]
-          : [
-              { key: "All",         label: "Total Agencies", value: totalCount,       hint: "All in book" },
-              { key: "New",         label: "New",            value: newCount,         hint: "Onboarded in last 12 months" },
-              { key: "Appointed",   label: "Appointed",      value: appointedCount,   hint: "Currently appointed" },
-              { key: "Unappointed", label: "Unappointed",    value: unappointedCount, hint: "Not yet appointed" },
-            ];
+          : (() => {
+              // Base 4 stat cards, plus a razz-tinted "Needs Action" card
+              // that appears only when at least one agency has pending
+              // ITC updates (internal + super-admin only). Grid grows to
+              // 5 columns for that state so the new card fits inline.
+              const base: { key: FilterStatus | "New" | "Active" | "Inactive" | "Admins"; label: string; value: number; hint: string }[] = [
+                { key: "All",         label: "Total Agencies", value: totalCount,       hint: "All in book" },
+                { key: "New",         label: "New",            value: newCount,         hint: "Onboarded in last 12 months" },
+                { key: "Appointed",   label: "Appointed",      value: appointedCount,   hint: "Currently appointed" },
+                { key: "Unappointed", label: "Unappointed",    value: unappointedCount, hint: "Not yet appointed" },
+              ];
+              if (!clientMode) {
+                const needsActionCount = allAgencies.reduce(
+                  (n, a) => n + (countPendingItcUpdates(getDetail(a), itcRecords[a.code] ?? null) > 0 ? 1 : 0),
+                  0,
+                );
+                // Slot right after Total Agencies so the action-required
+                // signal is the first thing next to the top-line total.
+                base.splice(1, 0, { key: "NeedsAction", label: "Needs Action", value: needsActionCount, hint: "Pending ITC updates" });
+              }
+              return base;
+            })();
+        const cardCount = cards.length;
         return (
-          <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
+          <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: `repeat(${cardCount}, minmax(0, 1fr))` }}>
             {cards.map(card => {
               // All three tabs are clickable now. `activeKey` reads whichever
               // per-tab state is holding the current selection, and the click
@@ -10656,6 +11682,13 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
               // "All" acts as a neutral "reset" — clickable, but never shows
               // the active gradient border regardless of which tab.
               const active = clickable && card.key !== "All" && activeKey === card.key;
+              // Needs Action stays visible even when idle — filled razz
+              // tint when there's work, outlined-only (border stroke, no
+              // fill) with a small stroke-only pill in the top-right when
+              // everything is synced.
+              const isNeedsAction = card.key === "NeedsAction";
+              const needsActionEmpty = isNeedsAction && card.value === 0;
+              const needsActionFilled = isNeedsAction && card.value > 0;
               return (
                 <button
                   key={card.label}
@@ -10677,6 +11710,17 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
                     boxShadow: "none",
                     cursor: "pointer",
                     fontFamily: FONT,
+                  } : isNeedsAction ? {
+                    // Non-active state matches the other cards: plain
+                    // neutral card + standard border stroke. Attention
+                    // comes from the small razz dot in the top-right
+                    // (populated) or an outlined "0" bubble (empty).
+                    background: c.cardBg,
+                    border: `1px solid ${c.border}`,
+                    boxShadow: "none",
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                    position: "relative",
                   } : {
                     background: c.cardBg,
                     border: `1px solid ${c.border}`,
@@ -10695,9 +11739,25 @@ export default function Agencies({ isDark, clientMode = false }: { isDark: boole
                     <div className="text-[13px] font-semibold" style={{ color: c.text }}>{card.label}</div>
                     <div className="text-[11px] mt-0.5 truncate" style={{ color: c.muted }}>{card.hint}</div>
                   </div>
-                  <span className="text-[24px] font-bold leading-none flex-shrink-0" style={{ color: c.text }}>
-                    {card.value}
-                  </span>
+                  {needsActionFilled && !active && (
+                    <span
+                      aria-hidden
+                      className="absolute rounded-full"
+                      style={{ top: -4, right: -4, width: 10, height: 10, background: "#A614C3", border: `2px solid ${c.cardBg}`, boxSizing: "content-box" }}
+                    />
+                  )}
+                  {needsActionEmpty ? (
+                    <span
+                      className="absolute inline-flex items-center justify-center text-[10.5px] font-bold rounded-full"
+                      style={{ top: -9, right: -9, minWidth: 18, height: 18, padding: "0 6px", background: c.cardBg, border: "1px solid rgba(166,20,195,0.55)", color: "#A614C3" }}
+                    >
+                      0
+                    </span>
+                  ) : (
+                    <span className="text-[24px] font-bold leading-none flex-shrink-0" style={{ color: isNeedsAction ? "#A614C3" : c.text }}>
+                      {card.value}
+                    </span>
+                  )}
                 </button>
               );
             })}
