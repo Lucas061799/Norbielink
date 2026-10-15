@@ -324,10 +324,6 @@ interface ITCRecord {
   appointmentDate: string;   // MM/DD/YYYY
   licenseNo: string;
   licenseExpires: string;
-  // Shannon's note: our NPN column maps onto the ITC "License Number"
-  // field at push time — the backend translation happens there. We keep
-  // it under its own key here so the Pending Updates diff reads cleanly.
-  npn: string;
   eoPolicyNo: string;
   eoPolicyExpires: string;
   taxId: string;
@@ -363,7 +359,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "980 Cherry Ave", city: "Des Moines", state: "IA", zip: "50314",
     telephone: "5152220999", email: "jason@acmeins.com", accountingEmail: "d.kim@acmeins.com", statementEmail: "d.kim@acmeins.com",
     appointmentDate: "03/24/2026", licenseNo: "LC-88210", licenseExpires: "03/24/2028",
-    npn: "", eoPolicyNo: "EO-4421", eoPolicyExpires: "03/24/2027", taxId: "121222334455", tax1099Type: "LLC", tax1099Name: "Acme Insurance Agency LLC",
+    eoPolicyNo: "EO-4421", eoPolicyExpires: "03/24/2027", taxId: "121222334455", tax1099Type: "LLC", tax1099Name: "Acme Insurance Agency LLC",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: true, piibAgent: false,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -374,7 +370,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "200 N Michigan", city: "Chicago", state: "IL", zip: "60601",
     telephone: "3125550100", email: "m.chen@summitsol.com", accountingEmail: "billing@summitsol.com", statementEmail: "billing@summitsol.com",
     appointmentDate: "01/12/2024", licenseNo: "LC-22110", licenseExpires: "01/15/2027",
-    npn: "", eoPolicyNo: "EO-1120", eoPolicyExpires: "01/15/2027", taxId: "930011223", tax1099Type: "Corporation", tax1099Name: "Summit Solutions Inc",
+    eoPolicyNo: "EO-1120", eoPolicyExpires: "01/15/2027", taxId: "930011223", tax1099Type: "Corporation", tax1099Name: "Summit Solutions Inc",
     emailStatements: true, directDeposits: false, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: true,
@@ -386,7 +382,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "820 Lakefront Blvd", city: "Denver", state: "CO", zip: "80203",
     telephone: "3035551010", email: "o.bennett@lakefrontcov.com", accountingEmail: "", statementEmail: "",
     appointmentDate: "08/02/2023", licenseNo: "LC-11245", licenseExpires: "08/02/2027",
-    npn: "", eoPolicyNo: "EO-9911", eoPolicyExpires: "08/02/2026", taxId: "845123765", tax1099Type: "Corporation", tax1099Name: "Lakefront Coverage",
+    eoPolicyNo: "EO-9911", eoPolicyExpires: "08/02/2026", taxId: "845123765", tax1099Type: "Corporation", tax1099Name: "Lakefront Coverage",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: true,
     farmersAgent: false, smartChoiceAgent: false, piibAgent: true,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -397,7 +393,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "445 Ridgeway Dr", city: "Des Moines", state: "IA", zip: "50310",
     telephone: "5155552020", email: "n.avery@ridgelineins.com", accountingEmail: "n.avery@ridgelineins.com", statementEmail: "n.avery@ridgelineins.com",
     appointmentDate: "11/15/2022", licenseNo: "LC-33902", licenseExpires: "11/15/2026",
-    npn: "", eoPolicyNo: "EO-2210", eoPolicyExpires: "11/15/2025", taxId: "223456781", tax1099Type: "Individual", tax1099Name: "Nicole Avery",
+    eoPolicyNo: "EO-2210", eoPolicyExpires: "11/15/2025", taxId: "223456781", tax1099Type: "Individual", tax1099Name: "Nicole Avery",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
     farmersAgent: true, smartChoiceAgent: false, piibAgent: false,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -409,7 +405,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "77 Main St", city: "Wichita", state: "KS", zip: "67202",
     telephone: "3165550707", email: "contact@midlandins.com", accountingEmail: "", statementEmail: "",
     appointmentDate: "04/01/2026", licenseNo: "LC-77801", licenseExpires: "04/01/2028",
-    npn: "", eoPolicyNo: "EO-4408", eoPolicyExpires: "04/01/2027", taxId: "556789012", tax1099Type: "LLC", tax1099Name: "Midland Insurance Partners LLC",
+    eoPolicyNo: "EO-4408", eoPolicyExpires: "04/01/2027", taxId: "556789012", tax1099Type: "LLC", tax1099Name: "Midland Insurance Partners LLC",
     emailStatements: false, directDeposits: false, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: true, piibAgent: false,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -421,7 +417,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "500 Congress Ave", city: "Austin", state: "TX", zip: "78701",
     telephone: "5125559090", email: "b.carlson@apexrisk.com", accountingEmail: "billing@apexrisk.com", statementEmail: "billing@apexrisk.com",
     appointmentDate: "06/14/2024", licenseNo: "LC-55621", licenseExpires: "06/14/2027",
-    npn: "", eoPolicyNo: "EO-8801", eoPolicyExpires: "06/14/2027", taxId: "743210987", tax1099Type: "Corporation", tax1099Name: "Apex Risk Advisors",
+    eoPolicyNo: "EO-8801", eoPolicyExpires: "06/14/2027", taxId: "743210987", tax1099Type: "Corporation", tax1099Name: "Apex Risk Advisors",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
     useConsolidatedBillingId: true, consolidatedBillingId: "CB-9902", isConsolidatedBillingProducer: false,
@@ -432,7 +428,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "18 Market St", city: "Philadelphia", state: "PA", zip: "19107",
     telephone: "2155551045", email: "ops@keystone-uw.com", accountingEmail: "", statementEmail: "",
     appointmentDate: "09/03/2023", licenseNo: "LC-90112", licenseExpires: "09/03/2026",
-    npn: "", eoPolicyNo: "EO-6620", eoPolicyExpires: "09/03/2026", taxId: "334567890", tax1099Type: "Corporation", tax1099Name: "Keystone Underwriters",
+    eoPolicyNo: "EO-6620", eoPolicyExpires: "09/03/2026", taxId: "334567890", tax1099Type: "Corporation", tax1099Name: "Keystone Underwriters",
     emailStatements: true, directDeposits: false, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: false, piibAgent: false,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -444,7 +440,7 @@ const INITIAL_ITC_RECORDS: Record<string, ITCRecord | null> = {
     address: "9 Founders Way", city: "Boston", state: "MA", zip: "02110",
     telephone: "6175551212", email: "info@ironbridge.com", accountingEmail: "acct@ironbridge.com", statementEmail: "acct@ironbridge.com",
     appointmentDate: "02/28/2025", licenseNo: "LC-44412", licenseExpires: "02/28/2028",
-    npn: "", eoPolicyNo: "EO-3341", eoPolicyExpires: "02/28/2027", taxId: "998765432", tax1099Type: "LLC", tax1099Name: "Ironbridge Insurance Group LLC",
+    eoPolicyNo: "EO-3341", eoPolicyExpires: "02/28/2027", taxId: "998765432", tax1099Type: "LLC", tax1099Name: "Ironbridge Insurance Group LLC",
     emailStatements: true, directDeposits: true, directDepositsCommissionOnly: false,
     farmersAgent: false, smartChoiceAgent: false, piibAgent: true,
     useConsolidatedBillingId: false, consolidatedBillingId: "", isConsolidatedBillingProducer: false,
@@ -990,7 +986,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // sees the drift as pending updates the super admin can push. Keeps the
   // parent `agency` object unmodified — this is just the UI's local memory
   // of "what the agency should look like now."
-  type AgencyFieldOverride = Partial<Pick<AgencyDetail, "name" | "street" | "city" | "state" | "zip" | "phone" | "contactEmail" | "licenseNo" | "licenseExp" | "npn" | "eoPolicyNo" | "eoExp">>;
+  type AgencyFieldOverride = Partial<Pick<AgencyDetail, "name" | "street" | "city" | "state" | "zip" | "phone" | "contactEmail" | "licenseNo" | "licenseExp">>;
   // Concurrency model = last-write-wins by design. Save Changes always
   // overwrites the whole override object (see the Save handler below);
   // if two people submit against the same agency, the later Save wins
@@ -1014,12 +1010,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     email: "contactEmail",
     licenseNo: "licenseNo",
     licenseExpires: "licenseExp",
-    // NPN added per Shannon's review. Backend note: ITC translates
-    // NPN into its own License Number column; prototype just stores
-    // under its own `npn` key so the diff reads cleanly in the modal.
-    npn: "npn",
-    eoPolicyNo: "eoPolicyNo",
-    eoPolicyExpires: "eoExp",
   };
   // Inline editing in the Pending Updates modal is available on every
   // field, including the doc-gated ones (Name / Address / City / State /
@@ -1027,19 +1017,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // is reviewing against the uploaded W-9 or License copy in the side
   // panel — if the submitter typed a typo, super admin corrects it here
   // to match the source doc, then Push to ITC.
-  // Small "In review" pill shown next to any field that has an
+  // Small "Pending" pill shown next to any field that has an
   // unpushed override, mirroring the Appointed / DreamTeam badge
   // language so a returning editor can spot at a glance which
-  // fields are staged for ITC review on the next push. (Previously
-  // worded "Pending" — Shannon preferred "In review" so the label
-  // matches the Pending Updates modal's "review" vocabulary.)
+  // fields will move on the next ITC push.
   const pendingTag = (keys: (keyof AgencyFieldOverride)[]) => {
     const isPending = keys.some(k => agencyFieldOverride[k] !== undefined);
     if (!isPending) return null;
     return (
       <span
         className="inline-flex items-center justify-center align-middle ml-2"
-        title="Edited — waiting for ITC review"
+        title="Edited — not yet pushed to ITC"
         style={{
           background: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.08) 63.88%)",
           borderRadius: 9999,
@@ -1058,7 +1046,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             letterSpacing: "0.02em",
           }}
         >
-          In review
+          Pending
         </span>
       </span>
     );
@@ -1265,16 +1253,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
 
   /* ── users tab state ── */
   const [importUsersOpen, setImportUsersOpen] = useState(false);
-  // Legacy BTIS import flow — separate from the CSV/XLSX bulk upload.
-  // When this agency has a legacy BTIS admin page with existing users,
-  // we offer to copy them straight over instead of making the admin
-  // re-enter 100+ users by hand. Two entry points: an auto-detect
-  // banner on first visit to the Users tab, and an "Import from
-  // Legacy" button in the toolbar for later re-opens.
-  const [legacyImportOpen, setLegacyImportOpen] = useState(false);
-  const [legacyBannerDismissed, setLegacyBannerDismissed] = useState(false);
-  const [legacyImportSearch, setLegacyImportSearch] = useState("");
-  const [legacyImportSelected, setLegacyImportSelected] = useState<Set<string>>(new Set());
   // The Bulk Upload modal phases:
   //   "empty"    — paperclip prompt, click/drag to upload
   //   "mapping"  — file uploaded but at least one column didn't auto-match; user maps unmatched columns manually
@@ -2117,56 +2095,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
     });
   const inactiveCount = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && inactiveUserIds.has(u.id)).length;
   const activeCount = mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id) && !inactiveUserIds.has(u.id)).length;
-
-  // Mock roster that the legacy BTIS admin page would return for this
-  // agency. In production this comes from a legacy sync; here we fake
-  // ~18 brokers so the demo looks like a real import. Pre-flag
-  // duplicates against the current NL roster (same email → already in
-  // NorbieLink; skipped by default).
-  const legacyRoster: Array<{ id: string; name: string; email: string; isAdmin: boolean }> = [
-    { id: "l1",  name: "Adriana Padilla",   email: "adriana.padilla@btis.com",    isAdmin: true  },
-    { id: "l2",  name: "Alena Groth",       email: "alena.groth@btis.com",         isAdmin: false },
-    { id: "l3",  name: "Allyson Woody",     email: "allyson.woody@btis.com",       isAdmin: true  },
-    { id: "l4",  name: "Alyssa Mulder",     email: "alyssa.mulder@btis.com",       isAdmin: false },
-    { id: "l5",  name: "Amit K Gupta",      email: "amit.gupta@btis.com",          isAdmin: true  },
-    { id: "l6",  name: "Amy Allen",         email: "amy.allen@btis.com",           isAdmin: false },
-    { id: "l7",  name: "Amy Hadrick",       email: "amy.hadrick@btis.com",         isAdmin: false },
-    { id: "l8",  name: "Andrew Schultz",    email: "andrew.schultz@btis.com",      isAdmin: false },
-    { id: "l9",  name: "Angelica Calvo",    email: "angelica.calvo@btis.com",      isAdmin: true  },
-    { id: "l10", name: "Anil Kumar",        email: "anil.kumar@btis.com",          isAdmin: false },
-    { id: "l11", name: "Ben Carter",        email: "ben.carter@btis.com",          isAdmin: false },
-    { id: "l12", name: "Caroline Ng",       email: "caroline.ng@btis.com",         isAdmin: true  },
-    { id: "l13", name: "David Rossi",       email: "david.rossi@btis.com",         isAdmin: false },
-    { id: "l14", name: "Elena Vargas",      email: "elena.vargas@btis.com",        isAdmin: false },
-    { id: "l15", name: "Frank Oduya",       email: "frank.oduya@btis.com",         isAdmin: false },
-    { id: "l16", name: "Grace Liu",         email: "grace.liu@btis.com",           isAdmin: true  },
-    { id: "l17", name: "Henry Okafor",      email: "henry.okafor@btis.com",        isAdmin: false },
-    { id: "l18", name: "Ivy Robinson",      email: "ivy.robinson@btis.com",        isAdmin: false },
-    // "Jason Smith" matches the existing agency 1 Principal — same
-    // email, so the import flow flags it as a duplicate.
-    { id: "l19", name: "Jason Smith",       email: "jason@acmeins.com",            isAdmin: true  },
-  ];
-  const existingEmails = new Set(mockAgencyUsers.filter(u => u.agencyId === agency.id && !removedUserIds.has(u.id)).map(u => u.email.toLowerCase()));
-  const legacyRosterTagged = legacyRoster.map(u => ({ ...u, duplicate: existingEmails.has(u.email.toLowerCase()) }));
-  const legacyNewCount = legacyRosterTagged.filter(u => !u.duplicate).length;
-  const legacyDupCount = legacyRosterTagged.length - legacyNewCount;
-  const legacyRosterFiltered = legacyRosterTagged.filter(u => {
-    if (!legacyImportSearch) return true;
-    const q = legacyImportSearch.toLowerCase();
-    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-  });
-  const openLegacyImport = () => {
-    // Default-select every non-duplicate user — the common path is "pull them all in".
-    setLegacyImportSelected(new Set(legacyRosterTagged.filter(u => !u.duplicate).map(u => u.id)));
-    setLegacyImportSearch("");
-    setLegacyImportOpen(true);
-  };
-  const closeLegacyImport = () => { setLegacyImportOpen(false); setLegacyImportSearch(""); };
-  const toggleLegacyUser = (id: string) => setLegacyImportSelected(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
 
   const fmtDate = (ts: string) => {
     const d = new Date(ts);
@@ -3553,8 +3481,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <LabelValue label="Agency Name" value={agency.name} />
               <LabelValue label="Agency Code" value={agency.code} />
               <LabelValue label="Agency Type" value={<span style={{ color: c.text }}>{agency.agencyType}</span>} />
-              <LabelValue label="Mailing Address" value={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`} />
-              <LabelValue label="Agency Address" value="Same as Mailing Address" />
+              <LabelValue label="Agency Address" value={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`} />
+              <LabelValue label="Mailing Address" value="Same as Agency Address" />
               <div />
               <div>
                 <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Status:</p>
@@ -3817,7 +3745,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               return (
             <>
             <div className="mb-4">
-              <label style={{ ...labelStyle, marginBottom: 12 }}>Mailing Address:{pendingTag(["street", "city", "state", "zip"])}</label>
+              <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:{pendingTag(["street", "city", "state", "zip"])}</label>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
                   <StyledSelect<Country>
@@ -3875,14 +3803,12 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
             </div>
 
-            {/* Agency Address (secondary — can mirror the mailing address
-                via the "Same as Mailing Address" checkbox. The label block
-                above holds the primary mailing address.) */}
+            {/* Mailing Address */}
             <div className="mb-6">
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Agency Address:</label>
+              <label style={{ ...labelStyle, marginBottom: 8 }}>Mailing Address:</label>
               <div className="flex items-center gap-2 mb-3">
                 <Checkbox checked={eSameAddr} onClick={() => setESameAddr(p => !p)} />
-                <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Mailing Address</span>
+                <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
               </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
@@ -6388,21 +6314,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               return s;
             };
             const ITC_AGENCY_MAP: Array<{ key: keyof ITCRecord; label: string; agencyValue: string }> = record ? [
-              { key: "name",            label: "Name",             agencyValue: effectiveAgency.name },
-              { key: "address",         label: "Address",          agencyValue: effectiveAgency.street },
-              { key: "city",            label: "City",             agencyValue: effectiveAgency.city },
-              { key: "state",           label: "State",            agencyValue: effectiveAgency.state },
-              { key: "zip",             label: "Zip",              agencyValue: effectiveAgency.zip },
-              { key: "telephone",       label: "Telephone",        agencyValue: effectiveAgency.phone },
-              { key: "email",           label: "Email",            agencyValue: effectiveAgency.contactEmail },
-              { key: "licenseNo",       label: "License No",       agencyValue: effectiveAgency.licenseNo },
-              { key: "licenseExpires",  label: "License Expires",  agencyValue: effectiveAgency.licenseExp },
-              // Added per Shannon's review pass. NPN also goes through
-              // review; backend translates it to the ITC License Number
-              // column on push (noted next to OVERRIDE_KEY_FOR_ITC).
-              { key: "npn",             label: "NPN",              agencyValue: effectiveAgency.npn },
-              { key: "eoPolicyNo",      label: "E&O Policy No",    agencyValue: effectiveAgency.eoPolicyNo },
-              { key: "eoPolicyExpires", label: "E&O Policy Expires", agencyValue: effectiveAgency.eoExp },
+              { key: "name",           label: "Name",            agencyValue: effectiveAgency.name },
+              { key: "address",        label: "Address",         agencyValue: effectiveAgency.street },
+              { key: "city",           label: "City",            agencyValue: effectiveAgency.city },
+              { key: "state",          label: "State",           agencyValue: effectiveAgency.state },
+              { key: "zip",            label: "Zip",             agencyValue: effectiveAgency.zip },
+              { key: "telephone",      label: "Telephone",       agencyValue: effectiveAgency.phone },
+              { key: "email",          label: "Email",           agencyValue: effectiveAgency.contactEmail },
+              { key: "licenseNo",      label: "License No",      agencyValue: effectiveAgency.licenseNo },
+              { key: "licenseExpires", label: "License Expires", agencyValue: effectiveAgency.licenseExp },
             ] : [];
             const pendingUpdates = record
               ? ITC_AGENCY_MAP
@@ -6457,10 +6377,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <defs>
                         <linearGradient id="alert-razz-pending" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
-                          {/* Dark-mode razz needs lighter stops so the
-                              gradient doesn't disappear into #0F1120. */}
-                          <stop offset="0%" stopColor={isDark ? "#C9A6FF" : "#5C2ED4"} />
-                          <stop offset="100%" stopColor={isDark ? "#E68BF2" : "#A614C3"} />
+                          <stop offset="0%" stopColor="#5C2ED4" />
+                          <stop offset="100%" stopColor="#A614C3" />
                         </linearGradient>
                       </defs>
                       <circle cx="12" cy="12" r="10" stroke="url(#alert-razz-pending)" />
@@ -6470,9 +6388,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-semibold" style={{
                         ...font,
-                        backgroundImage: isDark
-                          ? "linear-gradient(88.54deg, #C9A6FF 0.1%, #E68BF2 63.88%)"
-                          : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
+                        backgroundImage: "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
                         backgroundClip: "text",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
@@ -7871,67 +7787,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
         {/* ── Users tab ── */}
         {detailTab === "users" && (
           <div className="flex flex-col" onClick={() => { setUserMenuId(null); setUserMenuPos(null); setJobTitleOpen(false); }}>
-            {/* Legacy BTIS auto-detect banner — shown when there are new
-                users on the legacy admin page that haven't been copied
-                to NorbieLink yet. External-admin only (clientMode); the
-                internal super-admin surface doesn't own user migration
-                for an agency, so this banner would just be noise there.
-                Matches the "Pending updates" banner style (neutral card
-                + razz-gradient title + razz-stroked icon) so it reads
-                as one of the standard alert rows. */}
-            {viewMode === "client" && !legacyBannerDismissed && legacyNewCount > 0 && (
-              <div className="rounded-xl p-4 mb-4 flex items-start gap-3"
-                style={{
-                  background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB",
-                  border: `1px solid ${c.border}`,
-                }}>
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <defs>
-                    <linearGradient id="legacy-import-razz" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
-                      <stop offset="0%" stopColor={isDark ? "#C9A6FF" : "#5C2ED4"} />
-                      <stop offset="100%" stopColor={isDark ? "#E68BF2" : "#A614C3"} />
-                    </linearGradient>
-                  </defs>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="url(#legacy-import-razz)" />
-                  <polyline points="7 10 12 15 17 10" stroke="url(#legacy-import-razz)" />
-                  <line x1="12" x2="12" y1="15" y2="3" stroke="url(#legacy-import-razz)" />
-                </svg>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold"
-                    style={{
-                      ...font,
-                      backgroundImage: isDark
-                        ? "linear-gradient(88.54deg, #C9A6FF 0.1%, #E68BF2 63.88%)"
-                        : "linear-gradient(88.54deg, #5C2ED4 0.1%, #A614C3 63.88%)",
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                    }}>
-                    We found {legacyRosterTagged.length} users in your legacy BTIS account
-                  </div>
-                  <div className="text-[12px] mt-0.5" style={{ ...font, color: c.muted }}>
-                    {legacyNewCount} haven&apos;t been added to NorbieLink yet
-                    {legacyDupCount > 0 ? ` (${legacyDupCount} already exist here)` : ""}. Import them in one click instead of re-entering by hand.
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => setLegacyBannerDismissed(true)}
-                    className="px-3 py-1.5 text-[12px] font-semibold rounded-lg transition-colors whitespace-nowrap"
-                    style={{ ...font, color: c.text, background: isDark ? "rgba(255,255,255,0.04)" : "#FFFFFF", border: `1px solid ${c.border}` }}
-                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                    onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "#FFFFFF")}>
-                    Not now
-                  </button>
-                  <button onClick={openLegacyImport}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-white rounded-lg transition-all whitespace-nowrap"
-                    style={{ ...font, background: btnGrad }}
-                    onMouseEnter={e => (e.currentTarget.style.filter = "brightness(1.08)")}
-                    onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                    Review & import
-                  </button>
-                </div>
-              </div>
-            )}
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-stretch overflow-hidden transition-all"
@@ -7965,27 +7820,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
                   : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}
                 onClick={e=>{e.stopPropagation();setImportUsersOpen(true);}}>
                 <Upload className="w-3.5 h-3.5" style={{ color: teal }} />Import Users
-              </button>
-              {/* Legacy import button — available in BOTH views so super
-                  admin can still migrate on behalf of an agency. The
-                  auto-detect BANNER stays client-only (less useful as a
-                  nudge for internal staff), but the manual entry point
-                  is universal. */}
-              <button className="flex items-center gap-[10px] text-[12px] font-semibold transition-all flex-shrink-0"
-                style={{ fontFamily:FONT, height:37, padding:"9px 16px", borderRadius:"5.58px",
-                  border: isDark ? "1.04px solid rgba(255,255,255,0.15)" : "1.04px solid #E5E7EB",
-                  background: isDark
-                    ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
-                    : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF",
-                  color: c.text, boxSizing:"border-box" as const }}
-                onMouseEnter={e=>(e.currentTarget.style.background = isDark
-                  ? "linear-gradient(180deg, rgba(255,255,255,0.18) -0.44%, rgba(192,192,192,0.18) 49.45%, rgba(172,172,172,0.18) 99.33%)"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.15) -0.44%, rgba(192,192,192,0.15) 49.45%, rgba(172,172,172,0.15) 99.33%), #F9FAFB")}
-                onMouseLeave={e=>(e.currentTarget.style.background = isDark
-                  ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}
-                onClick={e=>{e.stopPropagation(); openLegacyImport();}}>
-                <Download className="w-3.5 h-3.5" style={{ color: "#A614C3" }} />Import from Legacy
               </button>
               <div className="ml-auto flex items-center gap-2">
                 {/* Archive toggle removed — the "Deactivate User" action now permanently removes
@@ -8982,161 +8816,6 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             </div>
           </div>
         </div>
-        );
-      })()}
-
-      {/* ── Import from Legacy Modal ── */}
-      {legacyImportOpen && (() => {
-        const selectableIds = legacyRosterTagged.filter(u => !u.duplicate).map(u => u.id);
-        const allSelected = selectableIds.length > 0 && selectableIds.every(id => legacyImportSelected.has(id));
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={closeLegacyImport}>
-            <div className="rounded-2xl w-[720px] max-w-[95vw] max-h-[85vh] overflow-hidden flex flex-col"
-              style={{ background: isDark ? "#1E2240" : "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
-              onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="flex items-center justify-center flex-shrink-0 rounded-lg"
-                    style={{ width: 48, height: 48, background: isDark ? "rgba(201,166,255,0.22)" : "rgba(166,20,195,0.10)" }}>
-                    <Download className="w-[22px] h-[22px]" style={{ color: isDark ? "#E6B8FF" : "#A614C3" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-[18px] font-bold" style={{ ...font, color: c.text }}>Import users from legacy BTIS</h3>
-                    <p className="text-[12.5px] mt-0.5" style={{ ...font, color: c.muted }}>
-                      Pulled users from <span className="font-semibold" style={{ color: c.text }}>BTIS Internal · {agency.code}</span>. Select who to copy over.
-                    </p>
-                  </div>
-                </div>
-                <button onClick={closeLegacyImport} className="p-1.5 rounded-md transition-colors flex-shrink-0" style={{ color: c.muted }}
-                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.text; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.muted; }}>
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Inset divider — stops short of the modal edges on both
-                  sides so the rule doesn't look soldered to the frame. */}
-              <div style={{ height: 1, background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", marginLeft: 24, marginRight: 24 }} />
-
-              {/* Search + select-all row. Both controls are forced to the
-                  same 34px height so the input and button line up. */}
-              <div className="flex items-center gap-3 px-6 py-3">
-                <div className="flex-1 relative" style={{ height: 34 }}>
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.muted }} />
-                  <input value={legacyImportSearch} onChange={e => setLegacyImportSearch(e.target.value)}
-                    placeholder="Search name or email…"
-                    className="w-full outline-none text-[13px]"
-                    style={{ ...font, color: c.text, background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB", border: `1px solid ${c.border}`, borderRadius: 8, padding: "0 10px 0 32px", height: 34, boxSizing: "border-box" }} />
-                </div>
-                <button onClick={() => setLegacyImportSelected(allSelected ? new Set() : new Set(selectableIds))}
-                  className="text-[12px] font-semibold px-4 rounded-md transition-all whitespace-nowrap"
-                  style={{
-                    ...font,
-                    color: isDark ? "#E6B8FF" : "#A614C3",
-                    border: isDark ? "1.04px solid rgba(255,255,255,0.15)" : "1.04px solid #E5E7EB",
-                    background: isDark
-                      ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
-                      : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF",
-                    height: 34,
-                    boxSizing: "border-box",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = isDark
-                    ? "linear-gradient(180deg, rgba(255,255,255,0.18) -0.44%, rgba(192,192,192,0.18) 49.45%, rgba(172,172,172,0.18) 99.33%)"
-                    : "linear-gradient(180deg, rgba(255,255,255,0.15) -0.44%, rgba(192,192,192,0.15) 49.45%, rgba(172,172,172,0.15) 99.33%), #F9FAFB")}
-                  onMouseLeave={e => (e.currentTarget.style.background = isDark
-                    ? "linear-gradient(180deg, rgba(255,255,255,0.10) -0.44%, rgba(192,192,192,0.10) 49.45%, rgba(172,172,172,0.10) 99.33%)"
-                    : "linear-gradient(180deg, rgba(255,255,255,0.1) -0.44%, rgba(192,192,192,0.1) 49.45%, rgba(172,172,172,0.1) 99.33%), #FFFFFF")}>
-                  {allSelected ? "Clear all" : "Select all new"}
-                </button>
-              </div>
-
-              <div style={{ height: 1, background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", marginLeft: 24, marginRight: 24 }} />
-
-              {/* List */}
-              <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
-                {legacyRosterFiltered.length === 0 ? (
-                  <div className="py-12 text-center text-[13px]" style={{ ...font, color: c.muted }}>No users match &ldquo;{legacyImportSearch}&rdquo;.</div>
-                ) : legacyRosterFiltered.map((u, i, arr) => {
-                  const checked = legacyImportSelected.has(u.id);
-                  const disabled = u.duplicate;
-                  const isLast = i === arr.length - 1;
-                  return (
-                    <label key={u.id}
-                      className={`flex items-center gap-3 px-6 py-3 transition-colors ${disabled ? "" : "cursor-pointer"}`}
-                      style={{
-                        // Inset bottom border — skipped on the last row
-                        // so the list doesn't double up against the
-                        // footer divider.
-                        boxShadow: isLast ? "none" : `inset 0 -1px 0 ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-                        marginLeft: 24, marginRight: 24, paddingLeft: 0, paddingRight: 0,
-                        background: disabled ? (isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA") : "transparent",
-                        opacity: disabled ? 0.6 : 1,
-                      }}
-                      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "#FAFAFB"; }}
-                      onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = "transparent"; }}>
-                      <Checkbox checked={checked} onClick={() => { if (!disabled) toggleLegacyUser(u.id); }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-semibold truncate" style={{ ...font, color: c.text }}>{u.name}</span>
-                          {u.isAdmin && (
-                            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                              style={{ ...font, color: isDark ? "#86EFAC" : "#15803D", background: isDark ? "rgba(34,197,94,0.18)" : "rgba(34,197,94,0.10)" }}>
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11.5px] truncate" style={{ ...font, color: c.muted }}>{u.email}</div>
-                      </div>
-                      {u.duplicate && (
-                        <span className="text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1 flex-shrink-0"
-                          style={{ ...font, color: c.muted, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6" }}>
-                          <Check className="w-3 h-3" strokeWidth={2.5} />
-                          Already in NorbieLink
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-
-              <div style={{ height: 1, background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6", marginLeft: 24, marginRight: 24 }} />
-
-              {/* Footer */}
-              <div className="px-6 py-4 flex items-center justify-between flex-shrink-0">
-                <span className="text-[12px]" style={{ ...font, color: c.muted }}>
-                  <span className="font-semibold" style={{ color: c.text }}>{legacyImportSelected.size}</span> of {legacyNewCount} selected
-                  {legacyDupCount > 0 ? ` · ${legacyDupCount} duplicate${legacyDupCount === 1 ? "" : "s"} skipped` : ""}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button onClick={closeLegacyImport}
-                    className="px-4 py-2 text-[12px] font-semibold rounded-md transition-colors"
-                    style={{ ...font, color: c.text, background: "transparent", border: `1px solid ${c.border}` }}
-                    onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                    Cancel
-                  </button>
-                  <button
-                    disabled={legacyImportSelected.size === 0}
-                    onClick={() => {
-                      const count = legacyImportSelected.size;
-                      closeLegacyImport();
-                      setLegacyBannerDismissed(true);
-                      showToast({
-                        title: `${count} ${count === 1 ? "user" : "users"} imported`,
-                        description: `Each will receive an invite email to finish setting up their NorbieLink account.`,
-                      });
-                    }}
-                    className="px-4 py-2 text-[12px] font-semibold text-white rounded-md transition-all"
-                    style={{ ...font, background: btnGrad, opacity: legacyImportSelected.size === 0 ? 0.5 : 1, cursor: legacyImportSelected.size === 0 ? "not-allowed" : "pointer" }}
-                    onMouseEnter={e => { if (legacyImportSelected.size > 0) e.currentTarget.style.filter = "brightness(1.08)"; }}
-                    onMouseLeave={e => (e.currentTarget.style.filter = "none")}>
-                    Import {legacyImportSelected.size || ""} {legacyImportSelected.size === 1 ? "user" : "users"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         );
       })()}
 
@@ -10473,20 +10152,19 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             </div>
           </div>
 
-          {/* Mailing Address (primary — the address ITC uses for
-              statements / 1099s. Agency Address below can mirror it.) */}
+          {/* Agency Address */}
           <div className="mb-4">
-            <label style={{ ...labelStyle, marginBottom: 12 }}>Mailing Address:</label>
+            <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:</label>
             <AddressBlock prefix="a" vals={{ country, street, city, state: stateVal, zip }}
               setters={{ country: setCountry, street: setStreet, city: setCity, state: setStateVal, zip: setZip }} />
           </div>
 
-          {/* Agency Address */}
+          {/* Mailing Address */}
           <div className="mb-6">
-            <label style={{ ...labelStyle, marginBottom: 8 }}>Agency Address:</label>
+            <label style={{ ...labelStyle, marginBottom: 8 }}>Mailing Address:</label>
             <div className="flex items-center gap-2 mb-3">
               <Checkbox checked={sameAddress} onClick={() => setSameAddress(p => !p)} />
-              <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Mailing Address</span>
+              <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
             </div>
             <AddressBlock prefix="m" vals={sameAddress ? { country, street, city, state: stateVal, zip } : { country: mCountry, street: mStreet, city: mCity, state: mState, zip: mZip }}
               setters={{ country: setMCountry, street: setMStreet, city: setMCity, state: setMState, zip: setMZip }} />
