@@ -1017,17 +1017,17 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   // is reviewing against the uploaded W-9 or License copy in the side
   // panel — if the submitter typed a typo, super admin corrects it here
   // to match the source doc, then Push to ITC.
-  // Small "Pending" pill shown next to any field that has an
+  // Small "In review" pill shown next to any field that has an
   // unpushed override, mirroring the Appointed / DreamTeam badge
   // language so a returning editor can spot at a glance which
-  // fields will move on the next ITC push.
+  // fields are staged for ITC review on the next push.
   const pendingTag = (keys: (keyof AgencyFieldOverride)[]) => {
     const isPending = keys.some(k => agencyFieldOverride[k] !== undefined);
     if (!isPending) return null;
     return (
       <span
         className="inline-flex items-center justify-center align-middle ml-2"
-        title="Edited — not yet pushed to ITC"
+        title="Edited — waiting for ITC review"
         style={{
           background: "linear-gradient(88.54deg, rgba(92,46,212,0.08) 0.1%, rgba(166,20,195,0.08) 63.88%)",
           borderRadius: 9999,
@@ -1046,7 +1046,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
             letterSpacing: "0.02em",
           }}
         >
-          Pending
+          In review
         </span>
       </span>
     );
@@ -3481,8 +3481,8 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               <LabelValue label="Agency Name" value={agency.name} />
               <LabelValue label="Agency Code" value={agency.code} />
               <LabelValue label="Agency Type" value={<span style={{ color: c.text }}>{agency.agencyType}</span>} />
-              <LabelValue label="Agency Address" value={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`} />
-              <LabelValue label="Mailing Address" value="Same as Agency Address" />
+              <LabelValue label="Mailing Address" value={`${agency.street}, ${agency.city}, ${agency.state}, ${agency.zip}`} />
+              <LabelValue label="Agency Address" value="Same as Mailing Address" />
               <div />
               <div>
                 <p className="text-[13px] font-semibold mb-2" style={{ ...font, color: c.text }}>Status:</p>
@@ -3745,7 +3745,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               return (
             <>
             <div className="mb-4">
-              <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:{pendingTag(["street", "city", "state", "zip"])}</label>
+              <label style={{ ...labelStyle, marginBottom: 12 }}>Mailing Address:{pendingTag(["street", "city", "state", "zip"])}</label>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
                   <StyledSelect<Country>
@@ -3803,12 +3803,13 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
             </div>
 
-            {/* Mailing Address */}
+            {/* Agency Address (secondary — can mirror the mailing
+                address via the "Same as Mailing Address" checkbox.) */}
             <div className="mb-6">
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Mailing Address:</label>
+              <label style={{ ...labelStyle, marginBottom: 8 }}>Agency Address:</label>
               <div className="flex items-center gap-2 mb-3">
                 <Checkbox checked={eSameAddr} onClick={() => setESameAddr(p => !p)} />
-                <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
+                <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Mailing Address</span>
               </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-6">
@@ -10152,19 +10153,20 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             </div>
           </div>
 
-          {/* Agency Address */}
+          {/* Mailing Address (primary — the address ITC uses for
+              statements / 1099s. Agency Address below can mirror it.) */}
           <div className="mb-4">
-            <label style={{ ...labelStyle, marginBottom: 12 }}>Agency Address:</label>
+            <label style={{ ...labelStyle, marginBottom: 12 }}>Mailing Address:</label>
             <AddressBlock prefix="a" vals={{ country, street, city, state: stateVal, zip }}
               setters={{ country: setCountry, street: setStreet, city: setCity, state: setStateVal, zip: setZip }} />
           </div>
 
-          {/* Mailing Address */}
+          {/* Agency Address */}
           <div className="mb-6">
-            <label style={{ ...labelStyle, marginBottom: 8 }}>Mailing Address:</label>
+            <label style={{ ...labelStyle, marginBottom: 8 }}>Agency Address:</label>
             <div className="flex items-center gap-2 mb-3">
               <Checkbox checked={sameAddress} onClick={() => setSameAddress(p => !p)} />
-              <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Agency Address</span>
+              <span className="text-[13px] font-semibold" style={{ ...font, color: c.text }}>Same as Mailing Address</span>
             </div>
             <AddressBlock prefix="m" vals={sameAddress ? { country, street, city, state: stateVal, zip } : { country: mCountry, street: mStreet, city: mCity, state: mState, zip: mZip }}
               setters={{ country: setMCountry, street: setMStreet, city: setMCity, state: setMState, zip: setMZip }} />
