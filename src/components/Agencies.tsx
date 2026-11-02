@@ -9735,7 +9735,7 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
   const [website, setWebsite]         = useState(initialDraft?.website ?? "");
   const [phone, setPhone]             = useState(initialDraft?.phone ?? "");
   const [tollFree, setTollFree]       = useState(initialDraft?.tollFree ?? "");
-  const [npn, setNpn]                 = useState(initialDraft?.npn ?? "");
+  const [npn] = useState(initialDraft?.npn ?? "");
   const [licenseNo, setLicenseNo]     = useState(initialDraft?.licenseNo ?? "");
   const [licenseExp, setLicenseExp]   = useState(initialDraft?.licenseExp ?? "03/24/2026");
   const [eoPolicyNo, setEoPolicyNo]   = useState(initialDraft?.eoPolicyNo ?? "");
@@ -10303,9 +10303,13 @@ function AddAgencyForm({ isDark, onSaveForLater, onDiscard, initialDraft, c, btn
             </div>
             <div>
               <label style={labelStyle}>NPN:</label>
-              <input value={npn}
-                onChange={e => setNpn(e.target.value)}
-                placeholder="National Producer Number" style={inputStyle} inputMode="numeric" />
+              {/* Locked — NPN is never user-typed. Shown read-only here
+                  (populated by a backend / NIPR source when wired up). */}
+              <div className="relative">
+                <input value={npn || "—"} readOnly aria-readonly="true" title="NPN populated by backend / NIPR"
+                  style={{ ...inputStyle, paddingRight: 34, background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB", color: c.muted, cursor: "not-allowed" }} />
+                <Lock className="w-3.5 h-3.5 absolute pointer-events-none" style={{ right: 10, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+              </div>
             </div>
           </div>
 
