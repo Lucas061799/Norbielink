@@ -958,7 +958,7 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
   const [eWebsite,    setEWebsite]    = useState(agency.website);
   const [ePhone,      setEPhone]      = useState(agency.phone);
   const [eTollFree,   setETollFree]   = useState(agency.tollFree);
-  const [eNpn,        setENpn]        = useState(agency.npn);
+  const [eNpn] = useState(agency.npn);
   const [eLicNo,      setELicNo]      = useState(agency.licenseNo);
   const [eLicExp,     setELicExp]     = useState(agency.licenseExp);
   const [eEoNo,       setEEoNo]       = useState(agency.eoPolicyNo);
@@ -4048,9 +4048,15 @@ function AgencyDetailView({ agency, isDark, onBack, c, btnGrad, stars, onToggleS
               </div>
               <div>
                 <label style={labelStyle}>NPN:</label>
-                {clientLocked
-                  ? <LockedInput value={eNpn || "—"} />
-                  : <input value={eNpn} onChange={e => setENpn(e.target.value)} placeholder="National Producer Number" style={inputStyle} />}
+                {/* Always locked — NPN is never user-typed, admin or
+                    client. Populated by a backend / NIPR source when
+                    wired up. Matches the Add Agency form treatment. */}
+                <div className="relative">
+                  <input value={eNpn || "—"} readOnly aria-readonly="true" title="NPN populated by backend / NIPR"
+                    style={{ ...inputStyle, paddingRight: 34, background: isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB", color: c.muted, cursor: "not-allowed" }} />
+                  <Lock className="w-3.5 h-3.5 absolute pointer-events-none"
+                    style={{ right: 10, top: "50%", transform: "translateY(-50%)", color: c.muted }} />
+                </div>
               </div>
             </div>
 
